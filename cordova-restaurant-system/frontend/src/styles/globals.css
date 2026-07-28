@@ -1,0 +1,109 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #faf8f4;
+  --bg-elevated: #ffffff;
+  --text: #1b241f;
+  --text-muted: #726a5f;
+  --border: #e2dcd0;
+}
+
+.dark {
+  --bg: #141815;
+  --bg-elevated: #1d2320;
+  --text: #f2efe9;
+  --text-muted: #a39a8c;
+  --border: #2c332e;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  transition: background-color 0.2s ease, color 0.2s ease;
+  font-feature-settings: 'cv11', 'ss01';
+}
+
+@layer components {
+  .card {
+    @apply bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl shadow-premium
+      transition-shadow duration-200;
+  }
+  .card-interactive {
+    @apply card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200;
+  }
+  .glass {
+    @apply bg-[var(--bg-elevated)]/80 backdrop-blur-xl border border-[var(--border)]/60;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 font-semibold text-sm
+      transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
+  }
+  /* Warm orange, reserved for primary calls-to-action only — solid fill, restrained shadow, no glow */
+  .btn-primary {
+    @apply btn text-white bg-cta-500 hover:bg-cta-600 shadow-card hover:shadow-card-hover;
+  }
+  .btn-secondary {
+    @apply btn bg-transparent border border-[var(--border)] text-[var(--text)]
+      hover:bg-black/[0.03] dark:hover:bg-white/[0.05] hover:border-brand-400/40;
+  }
+  .btn-ghost {
+    @apply btn bg-transparent hover:bg-black/[0.03] dark:hover:bg-white/[0.05];
+  }
+  .input {
+    @apply w-full rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] px-3.5 py-2.5
+      text-[var(--text)] placeholder:text-[var(--text-muted)] outline-none
+      focus:ring-2 focus:ring-brand-400/40 focus:border-brand-400 transition-all duration-150;
+  }
+  .label {
+    @apply block text-sm font-medium text-[var(--text-muted)] mb-1.5;
+  }
+  .skeleton {
+    @apply relative overflow-hidden bg-black/[0.05] dark:bg-white/[0.05] rounded-lg;
+  }
+  .skeleton::after {
+    content: '';
+    @apply absolute inset-0 -translate-x-full;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: shimmer 1.6s infinite;
+  }
+  .dark .skeleton::after {
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+  }
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+  .page-transition {
+    animation: fadeSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Leaflet map container needs an explicit height or it renders collapsed */
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  border-radius: 1rem;
+  z-index: 0;
+}

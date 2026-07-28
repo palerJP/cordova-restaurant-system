@@ -1,0 +1,12 @@
+node_modules/
+.next/
+.env
+.env.local
+uploads/business-permits/*
+uploads/restaurant-images/*
+uploads/avatars/*
+!uploads/**/.gitkeep
+logs/
+coverage/
+*.log
+.DS_Store
