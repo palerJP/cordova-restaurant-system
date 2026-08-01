@@ -1,13 +1,13 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { UtensilsCrossed, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { ThemeToggle } from './ThemeToggle';
 import { ProfileDropdown } from './ProfileDropdown';
-import { Button } from './ui/Button';
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -23,14 +23,11 @@ export function Navbar() {
   }, []);
 
   const navLinks = [
-    { href: '/', label: 'Browse' },
-    { href: '/recommendations', label: 'For You (AI)' },
+    { href: '/', label: 'Home' },
+    { href: '/recommendations', label: 'AI Recommendations' },
     { href: '/promotions', label: 'Promotions' },
   ];
 
-  // Role-specific links live in the profile dropdown on desktop (see
-  // ProfileDropdown.tsx) to keep the top nav minimal — still listed here
-  // flat for the mobile menu, where a dropdown-within-a-dropdown is awkward.
   const roleLinks: { href: string; label: string }[] =
     user?.role === 'admin'
       ? [{ href: '/admin', label: 'Admin Panel' }]
@@ -45,80 +42,119 @@ export function Navbar() {
 
   return (
     <header
-      className={`sticky top-0 z-40 backdrop-blur-xl bg-[var(--bg)]/85 border-b transition-shadow duration-300 ${
-        scrolled ? 'border-[var(--border)] shadow-premium' : 'border-transparent'
+      className={`sticky top-0 z-50 bg-white/95 dark:bg-[#141815]/95 backdrop-blur-md transition-all duration-200 border-b ${
+        scrolled ? 'border-gray-200 dark:border-gray-800 shadow-sm' : 'border-gray-100 dark:border-gray-800/60'
       }`}
     >
-      <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
-        <Link href="/" className="flex items-center gap-2 font-bold text-lg shrink-0 group">
-          <span className="flex items-center justify-center h-9 w-9 rounded-xl bg-brand-600 text-white group-hover:scale-105 transition-transform">
-            <UtensilsCrossed size={18} strokeWidth={2.4} />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-24 flex items-center justify-between">
+        {/* Brand Logo & Name */}
+        <Link href="/" className="flex items-center gap-3.5 group py-1">
+          <div className="relative h-16 w-16 sm:h-20 sm:w-20 shrink-0 transition-transform duration-300 group-hover:scale-105 filter drop-shadow-sm">
+            <Image
+              src="/cordova_eats_logo.png"
+              alt="CordovaEats Logo"
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
+          <span className="font-serif text-2xl sm:text-3xl font-bold text-[#1b241f] dark:text-white tracking-tight group-hover:text-cordova-green transition-colors">
+            CordovaEats
           </span>
-          <span>Cordova Eats</span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-1 rounded-full border border-[var(--border)] p-1" aria-label="Main navigation">
-          {navLinks.map((link) => (
+        {/* Center / Right Links */}
+        <div className="hidden md:flex items-center gap-6">
+          <nav className="flex items-center gap-5 mr-2">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`text-sm font-medium transition-colors ${
+                  pathname === link.href
+                    ? 'text-cordova-green dark:text-emerald-400 font-semibold'
+                    : 'text-stone-600 dark:text-stone-300 hover:text-cordova-green'
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+
+          <ThemeToggle />
+
+          {user ? (
+            <ProfileDropdown />
+          ) : (
+            <div className="flex items-center gap-4">
+              <Link
+                href="/login"
+                className="text-xs font-semibold text-stone-700 dark:text-stone-200 hover:text-cordova-green transition-colors px-2 py-1"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/register"
+                className="bg-cordova-gold hover:bg-cordova-goldHover text-white text-xs font-semibold px-5 py-2.5 rounded shadow-sm transition-colors duration-200 tracking-wide uppercase"
+              >
+                Sign Up
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* Mobile menu trigger */}
+        <div className="flex items-center gap-2 md:hidden">
+          <ThemeToggle />
+          <button
+            className="p-2 rounded-lg text-stone-700 dark:text-stone-200 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+            onClick={() => setMenuOpen((o) => !o)}
+            aria-label="Toggle menu"
+          >
+            {menuOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Drawer */}
+      {menuOpen && (
+        <div className="md:hidden border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-[#141815] px-6 py-4 space-y-3">
+          {[...navLinks, ...roleLinks].map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className={`px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                pathname === link.href
-                  ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400'
-                  : 'text-[var(--text-muted)] hover:text-[var(--text)]'
-              }`}
+              className="block py-2 text-sm font-medium text-stone-700 dark:text-stone-200 hover:text-cordova-green"
+              onClick={() => setMenuOpen(false)}
             >
               {link.label}
             </Link>
           ))}
-        </nav>
-
-        <div className="hidden md:flex items-center gap-2">
-          <ThemeToggle />
-          {user ? (
-            <ProfileDropdown />
-          ) : (
-            <>
-              <Link href="/login">
-                <Button variant="ghost">Log in</Button>
-              </Link>
-              <Link href="/register">
-                <Button variant="primary">Sign up</Button>
-              </Link>
-            </>
-          )}
-        </div>
-
-        <button
-          className="md:hidden p-2 rounded-lg hover:bg-black/[0.03] dark:hover:bg-white/[0.05] transition-colors"
-          onClick={() => setMenuOpen((o) => !o)}
-          aria-label="Toggle menu"
-          aria-expanded={menuOpen}
-        >
-          {menuOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
-      </div>
-
-      {menuOpen && (
-        <div className="md:hidden border-t border-[var(--border)] px-4 py-3 flex flex-col gap-1">
-          {[...navLinks, ...roleLinks].map((link) => (
-            <Link key={link.href} href={link.href} className="py-2 text-sm font-medium" onClick={() => setMenuOpen(false)}>
-              {link.label}
-            </Link>
-          ))}
-          <div className="flex items-center justify-between pt-2 border-t border-[var(--border)] mt-2">
-            <ThemeToggle />
+          <div className="pt-3 border-t border-gray-100 dark:border-gray-800">
             {user ? (
-              <Button variant="secondary" onClick={() => logout()}>
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  logout();
+                }}
+                className="w-full text-left py-2 text-sm font-medium text-red-600"
+              >
                 Log out
-              </Button>
+              </button>
             ) : (
-              <div className="flex gap-2">
-                <Link href="/login">
-                  <Button variant="ghost">Log in</Button>
+              <div className="flex flex-col gap-2 pt-1">
+                <Link
+                  href="/login"
+                  className="w-full text-center py-2 text-sm font-medium text-stone-700 dark:text-stone-200 border border-stone-200 rounded"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Sign In
                 </Link>
-                <Link href="/register">
-                  <Button variant="primary">Sign up</Button>
+                <Link
+                  href="/register"
+                  className="w-full text-center py-2 text-sm font-semibold text-white bg-cordova-gold hover:bg-cordova-goldHover rounded"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Sign Up
                 </Link>
               </div>
             )}

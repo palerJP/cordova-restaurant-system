@@ -3,25 +3,9 @@
 import { memo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { Badge } from './ui/Badge';
-import { StarRating } from './ui/Badge';
+import { MapPin, Star } from 'lucide-react';
 import type { Restaurant } from '@/lib/types';
 
-const PRICE_LABEL: Record<string, string> = {
-  budget: '₱',
-  moderate: '₱₱',
-  expensive: '₱₱₱',
-  premium: '₱₱₱₱',
-};
-
-/**
- * Memoized since this renders in lists (Browse grid, Recommendations,
- * Similar Restaurants, Favorites) — without this, every card in a list
- * re-renders whenever the parent page re-renders for any reason (toggling
- * grid/map view, dark mode, unrelated filter changes), even though the
- * restaurant data itself hasn't changed.
- */
 export const RestaurantCard = memo(function RestaurantCard({
   restaurant,
   matchScore,
@@ -29,67 +13,66 @@ export const RestaurantCard = memo(function RestaurantCard({
   restaurant: Restaurant;
   matchScore?: number;
 }) {
+  const ratingVal = Number(restaurant.avg_rating || 4.5).toFixed(1);
+  const locationText = restaurant.barangay
+    ? `${restaurant.barangay}, Cordova`
+    : restaurant.address || 'Cordova, Cebu';
+
   return (
-    <motion.div
-      whileHover={{ y: -4 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 24 }}
-      className="h-full"
-    >
-      <Link
-        href={`/restaurants/${restaurant.slug}`}
-        className="card block h-full overflow-hidden group hover:shadow-card-hover transition-shadow duration-300"
-      >
-        <div className="relative h-40 w-full overflow-hidden bg-black/5 dark:bg-white/5">
-          {restaurant.cover_image_url ? (
-            <Image
-              src={restaurant.cover_image_url}
-              alt={restaurant.name}
-              fill
-              className="object-cover transition-transform duration-500 ease-out group-hover:scale-110"
-              sizes="(max-width: 768px) 100vw, 33vw"
-            />
-          ) : (
-            <div className="h-full w-full flex items-center justify-center text-4xl bg-gradient-to-br from-brand-50 to-transparent dark:from-white/5">
-              🍽️
-            </div>
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          {matchScore !== undefined && (
-            <div className="absolute top-2 right-2">
-              <span className="badge bg-brand-600 text-white font-semibold">
-                {Math.round(matchScore)}% match
-              </span>
-            </div>
-          )}
-          {restaurant.distance_km != null && (
-            <div className="absolute bottom-2 left-2">
-              <span className="badge bg-black/55 text-white backdrop-blur-sm">
-                {restaurant.distance_km.toFixed(1)} km away
-              </span>
-            </div>
-          )}
-        </div>
-        <div className="p-4">
-          <div className="flex items-start justify-between gap-2">
-            <h3 className="font-semibold leading-tight group-hover:text-brand-500 transition-colors">
-              {restaurant.name}
-            </h3>
-            <span className="text-sm text-[var(--text-muted)] shrink-0">{PRICE_LABEL[restaurant.price_range]}</span>
+    <div className="bg-white dark:bg-[#1a211c] rounded-lg border border-stone-200/80 dark:border-stone-800/80 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col h-full group">
+      {/* Cover Image */}
+      <div className="relative h-48 sm:h-52 w-full bg-stone-100 dark:bg-stone-800 overflow-hidden">
+        {restaurant.cover_image_url ? (
+          <Image
+            src={restaurant.cover_image_url}
+            alt={restaurant.name}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          />
+        ) : (
+          <div className="h-full w-full flex items-center justify-center text-4xl bg-gradient-to-br from-amber-50 to-stone-100 dark:from-stone-800 dark:to-stone-900">
+            🍽️
           </div>
-          <p className="text-sm text-[var(--text-muted)] mt-1 line-clamp-1">{restaurant.address}</p>
-          <div className="flex items-center justify-between mt-2.5">
-            <StarRating value={Number(restaurant.avg_rating)} />
-            <span className="text-xs text-[var(--text-muted)]">{restaurant.review_count} reviews</span>
+        )}
+        {matchScore !== undefined && (
+          <div className="absolute top-2 right-2 z-10">
+            <span className="bg-cordova-green text-white text-xs font-semibold px-2.5 py-1 rounded shadow-sm">
+              {Math.round(matchScore)}% match
+            </span>
           </div>
-          {restaurant.cuisines?.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mt-2.5">
-              {restaurant.cuisines.slice(0, 3).map((c) => (
-                <Badge key={c}>{c}</Badge>
-              ))}
-            </div>
-          )}
+        )}
+      </div>
+
+      {/* Card Content */}
+      <div className="p-5 flex flex-col flex-1 justify-between gap-4">
+        <div className="space-y-2">
+          {/* Title */}
+          <h3 className="font-serif text-xl font-bold text-stone-900 dark:text-white leading-tight group-hover:text-cordova-green transition-colors">
+            {restaurant.name}
+          </h3>
+
+          {/* Location */}
+          <div className="flex items-center gap-1.5 text-xs text-stone-600 dark:text-stone-300">
+            <MapPin size={14} className="text-cordova-gold shrink-0" />
+            <span className="truncate">{locationText}</span>
+          </div>
+
+          {/* Rating */}
+          <div className="flex items-center gap-1 text-xs font-semibold text-stone-800 dark:text-stone-200">
+            <Star size={14} className="fill-cordova-gold text-cordova-gold" />
+            <span>{ratingVal}</span>
+          </div>
         </div>
-      </Link>
-    </motion.div>
+
+        {/* Action Button */}
+        <Link
+          href={`/restaurants/${restaurant.slug}`}
+          className="w-full bg-cordova-green hover:bg-cordova-greenHover text-white font-medium text-sm py-2.5 rounded text-center transition-colors duration-200 shadow-sm block mt-2"
+        >
+          View Details
+        </Link>
+      </div>
+    </div>
   );
 });

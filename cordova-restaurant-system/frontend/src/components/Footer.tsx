@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
   {
@@ -36,12 +37,22 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
 
 export function Footer() {
   return (
-    <footer className="border-t border-[var(--border)] mt-16 bg-[var(--bg-elevated)]">
+    <footer className="border-t border-stone-200 dark:border-stone-800 mt-16 bg-white dark:bg-[#141815]">
       <div className="max-w-6xl mx-auto px-4 py-12">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
           <div className="col-span-2 sm:col-span-4 mb-2">
-            <Link href="/" className="flex items-center gap-2 font-bold text-lg w-fit">
-              <span aria-hidden>🍴📍</span> Cordova Eats
+            <Link href="/" className="flex items-center gap-3.5 w-fit group">
+              <div className="relative h-16 w-16 shrink-0 transition-transform group-hover:scale-105 filter drop-shadow-sm">
+                <Image
+                  src="/cordova_eats_logo.png"
+                  alt="CordovaEats Logo"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+              <span className="font-serif text-2xl font-bold text-stone-900 dark:text-white">
+                CordovaEats
+              </span>
             </Link>
             <p className="text-sm text-[var(--text-muted)] mt-2 max-w-sm">
               A local recommendation platform connecting diners with accredited restaurants

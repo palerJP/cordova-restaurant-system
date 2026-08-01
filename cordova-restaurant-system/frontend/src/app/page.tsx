@@ -1,52 +1,42 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Sparkles, MapPin, LayoutGrid, Map } from 'lucide-react';
+import {
+  Search,
+  Utensils,
+  Coffee,
+  Hotel,
+  Fish,
+  Camera,
+  MessageCircle,
+} from 'lucide-react';
 import { api } from '@/lib/api';
-import { useDebounce } from '@/hooks/useDebounce';
-import { useGeolocation } from '@/hooks/useGeolocation';
-import { useCuisines } from '@/hooks/useCuisines';
 import { RestaurantCard } from '@/components/RestaurantCard';
 import { RestaurantGridSkeleton } from '@/components/ui/Skeleton';
-import { FilterPanel, Filters } from '@/components/FilterPanel';
 import { Pagination } from '@/components/ui/Pagination';
-import { Button } from '@/components/ui/Button';
-import { MapViewClient } from '@/components/MapViewClient';
 import type { Restaurant, PageMeta } from '@/lib/types';
 
-const DEFAULT_FILTERS: Filters = { q: '', cuisines: [], priceRange: '', dietary: [], services: [], sortBy: 'relevance', maxDistanceKm: null };
-
 export default function HomePage() {
-  const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
-  const debouncedQuery = useDebounce(filters.q, 400);
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [meta, setMeta] = useState<PageMeta | null>(null);
-  const cuisines = useCuisines();
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<'grid' | 'map'>('grid');
-  const { coords, request: requestLocation, loading: geoLoading } = useGeolocation();
 
   const fetchRestaurants = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (debouncedQuery) params.set('q', debouncedQuery);
-      if (filters.cuisines.length) params.set('cuisines', filters.cuisines.join(','));
-      if (filters.priceRange) params.set('priceRange', filters.priceRange);
-      if (filters.dietary.length) params.set('dietary', filters.dietary.join(','));
-      if (filters.services.length) params.set('services', filters.services.join(','));
-      if (filters.sortBy) params.set('sortBy', filters.sortBy);
-      if (coords) {
-        params.set('lat', String(coords.lat));
-        params.set('lng', String(coords.lng));
-        if (filters.maxDistanceKm != null) {
-          params.set('maxDistanceKm', String(filters.maxDistanceKm));
-        }
-      }
+      if (searchQuery.trim()) params.set('q', searchQuery.trim());
+      if (activeCategory) params.set('cuisines', activeCategory);
       params.set('page', String(page));
-      params.set('limit', '9');
+      params.set('limit', '6');
 
       const res = await api.get(`/api/restaurants?${params.toString()}`, { auth: false });
       setRestaurants(res.data);
@@ -57,95 +47,231 @@ export default function HomePage() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedQuery, filters.cuisines, filters.priceRange, filters.dietary, filters.services, filters.sortBy, filters.maxDistanceKm, coords, page]);
+  }, [searchQuery, activeCategory, page]);
 
   useEffect(() => {
     fetchRestaurants();
   }, [fetchRestaurants]);
 
-  useEffect(() => {
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      fetchRestaurants();
+    }
+  };
+
+  const handleCategoryClick = (categorySlug: string) => {
+    if (activeCategory === categorySlug) {
+      setActiveCategory(null);
+    } else {
+      setActiveCategory(categorySlug);
+    }
     setPage(1);
-  }, [debouncedQuery, filters.cuisines, filters.priceRange, filters.dietary, filters.services, filters.sortBy, filters.maxDistanceKm]);
+  };
 
   return (
-    <div>
-      <section className="relative -mx-4 px-4 pt-10 pb-8 mb-8 bg-beige-50 dark:bg-transparent overflow-hidden">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-        >
-          <div className="inline-flex items-center gap-1.5 badge bg-brand-500/10 text-brand-600 dark:text-brand-400 mb-4">
-            <Sparkles size={13} /> AI-Powered Recommendations
-          </div>
-          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-ink-900 dark:text-white">
-            Discover local restaurants
-            <br className="hidden sm:block" /> in <span className="text-brand-500">Cordova</span>
-          </h1>
-          <p className="text-[var(--text-muted)] mt-3 max-w-xl text-base sm:text-lg">
-            Browse accredited restaurants, or let our AI recommendation engine match you to a place based on your
-            budget, cuisine and dietary needs.
-          </p>
-          <div className="flex flex-wrap gap-3 mt-6">
-            <Button variant="secondary" onClick={requestLocation} loading={geoLoading}>
-              <MapPin size={16} /> Use my location for nearby results
-            </Button>
-            <div className="inline-flex rounded-xl border border-[var(--border)] overflow-hidden bg-[var(--bg-elevated)] shadow-premium">
-              <button
-                className={`px-4 py-2 text-sm font-medium transition-colors flex items-center gap-1.5 ${view === 'grid' ? 'bg-brand-500 text-white' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
-                onClick={() => setView('grid')}
-              >
-                <LayoutGrid size={14} /> Grid
-              </button>
-              <button
-                className={`px-4 py-2 text-sm font-medium transition-colors flex items-center gap-1.5 ${view === 'map' ? 'bg-brand-500 text-white' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
-                onClick={() => setView('map')}
-              >
-                <Map size={14} /> Map
-              </button>
-            </div>
-          </div>
-        </motion.div>
+    <div className="min-h-screen bg-cordova-cream dark:bg-[#121614] pb-16 relative">
+      {/* HERO SECTION */}
+      <section className="relative w-full h-[520px] sm:h-[600px] flex items-center justify-center overflow-hidden">
+        {/* Background Image */}
+        <Image
+          src="/hero_background.png"
+          alt="CordovaEats Dining Experience"
+          fill
+          priority
+          className="object-cover object-center"
+        />
+
+        {/* Dark Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/45 to-black/75" />
+
+        {/* Hero Content */}
+        <div className="relative z-10 text-center px-4 max-w-4xl mx-auto flex flex-col items-center">
+          {/* Large Hero Emblem */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6 }}
+            className="relative h-28 w-28 sm:h-36 sm:w-36 mb-2 filter drop-shadow-2xl"
+          >
+            <Image
+              src="/cordova_eats_logo.png"
+              alt="CordovaEats Emblem"
+              fill
+              className="object-contain"
+              priority
+            />
+          </motion.div>
+
+          {/* Main Title */}
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.1 }}
+            className="font-serif text-5xl sm:text-7xl font-bold text-white tracking-tight drop-shadow-md mb-2"
+          >
+            CordovaEats
+          </motion.h1>
+
+          {/* Subtitle Line */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.2 }}
+            className="flex items-center gap-3 my-2"
+          >
+            <span className="h-[1px] w-8 sm:w-12 bg-cordova-gold/80" />
+            <span className="text-cordova-gold font-semibold tracking-[0.25em] uppercase text-xs sm:text-sm">
+              CORDOVA&apos;S CULINARY JOURNEY
+            </span>
+            <span className="h-[1px] w-8 sm:w-12 bg-cordova-gold/80" />
+          </motion.div>
+
+          {/* Tagline / Description */}
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.3 }}
+            className="italic text-gray-200 font-serif text-sm sm:text-lg max-w-2xl mt-2 leading-relaxed opacity-95"
+          >
+            Where island flavors meet sophisticated dining. Discover authentic seafood, traditional
+            Filipino cuisine, and artisan cafés along the CCLEX Bridge route.
+          </motion.p>
+        </div>
+
+        {/* Bottom Fade Gradient into page background */}
+        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-cordova-cream dark:from-[#121614] to-transparent pointer-events-none" />
       </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
-        <aside className="lg:sticky lg:top-20 self-start">
-          <FilterPanel filters={filters} onChange={setFilters} cuisines={cuisines} hasLocation={!!coords} />
-        </aside>
+      {/* SEARCH BAR SECTION */}
+      <section className="relative z-20 -mt-10 px-4 max-w-3xl mx-auto">
+        <form
+          onSubmit={handleSearchSubmit}
+          className="bg-white dark:bg-[#1a211c] rounded border border-stone-200 dark:border-stone-800 shadow-lg p-2 flex items-center gap-2"
+        >
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search for restaurants, cuisines, or dishes..."
+            className="flex-1 px-4 py-3 bg-transparent text-stone-800 dark:text-stone-100 placeholder:text-stone-400 text-sm outline-none font-sans"
+          />
+          <button
+            type="submit"
+            className="bg-cordova-gold hover:bg-cordova-goldHover text-white p-3.5 rounded transition-colors duration-200 shrink-0"
+            aria-label="Search"
+          >
+            <Search size={18} />
+          </button>
+        </form>
+      </section>
 
-        <section>
-          {loading ? (
-            <RestaurantGridSkeleton count={9} />
-          ) : restaurants.length === 0 ? (
-            <div className="text-center py-16 text-[var(--text-muted)]">
-              <p className="text-4xl mb-3">🔍</p>
-              <p>No restaurants matched your filters. Try broadening your search.</p>
+      {/* EXPLORE BY CATEGORY SECTION */}
+      <section className="max-w-6xl mx-auto px-4 mt-20">
+        <div className="text-center mb-10">
+          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-stone-900 dark:text-white">
+            Explore by Category
+          </h2>
+          <div className="h-0.5 w-16 bg-cordova-gold mx-auto mt-3" />
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-5 max-w-4xl mx-auto">
+          {[
+            { id: 'restaurants', label: 'Restaurants', icon: Utensils, cuisine: 'Filipino' },
+            { id: 'cafes', label: 'Cafés', icon: Coffee, cuisine: 'Coffee & Desserts' },
+            { id: 'resorts', label: 'Resorts', icon: Hotel, cuisine: 'Resort Dining' },
+            { id: 'seafood', label: 'Seafood', icon: Fish, cuisine: 'Seafood' },
+          ].map((cat) => {
+            const IconComp = cat.icon;
+            const isSelected = activeCategory === cat.cuisine;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => handleCategoryClick(cat.cuisine)}
+                className={`bg-white dark:bg-[#1a211c] border rounded-lg p-6 sm:p-8 flex flex-col items-center justify-center gap-3.5 transition-all duration-300 group shadow-sm hover:shadow-md ${
+                  isSelected
+                    ? 'border-cordova-gold ring-2 ring-cordova-gold/30 bg-amber-50/40 dark:bg-amber-950/20'
+                    : 'border-stone-200/80 dark:border-stone-800/80 hover:border-cordova-gold'
+                }`}
+              >
+                <div className="text-cordova-gold group-hover:scale-110 transition-transform duration-300">
+                  <IconComp size={32} strokeWidth={1.75} />
+                </div>
+                <span className="font-serif text-base font-bold text-stone-800 dark:text-stone-200 group-hover:text-cordova-green transition-colors">
+                  {cat.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ALL ESTABLISHMENTS SECTION */}
+      <section className="max-w-6xl mx-auto px-4 mt-20">
+        <div className="mb-10">
+          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-stone-900 dark:text-white">
+            {activeCategory ? `${activeCategory} Establishments` : 'All Establishments'}
+          </h2>
+          <div className="h-0.5 w-16 bg-cordova-gold mt-3" />
+        </div>
+
+        {loading ? (
+          <RestaurantGridSkeleton count={6} />
+        ) : restaurants.length === 0 ? (
+          <div className="bg-white dark:bg-[#1a211c] rounded-lg border border-stone-200 dark:border-stone-800 p-12 text-center text-stone-500 max-w-md mx-auto">
+            <p className="text-3xl mb-3">🍽️</p>
+            <p className="font-serif text-lg font-medium text-stone-800 dark:text-stone-200 mb-1">
+              No establishments found
+            </p>
+            <p className="text-xs text-stone-500">
+              Try adjusting your search query or selecting a different category.
+            </p>
+            {(activeCategory || searchQuery) && (
+              <button
+                onClick={() => {
+                  setActiveCategory(null);
+                  setSearchQuery('');
+                  setPage(1);
+                }}
+                className="mt-4 text-xs font-semibold text-cordova-green hover:underline"
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {restaurants.map((restaurant, idx) => (
+                <motion.div
+                  key={restaurant.id}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: Math.min(idx, 6) * 0.05 }}
+                >
+                  <RestaurantCard restaurant={restaurant} />
+                </motion.div>
+              ))}
             </div>
-          ) : view === 'map' ? (
-            <MapViewClient
-              restaurants={restaurants}
-              height="600px"
-              userLocation={coords ? { lat: coords.lat, lng: coords.lng } : undefined}
-            />
-          ) : (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-                {restaurants.map((r, i) => (
-                  <motion.div
-                    key={r.id}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: Math.min(i, 8) * 0.04, ease: [0.16, 1, 0.3, 1] }}
-                  >
-                    <RestaurantCard restaurant={r} />
-                  </motion.div>
-                ))}
+
+            {meta && meta.totalPages > 1 && (
+              <div className="mt-12 flex justify-center">
+                <Pagination meta={meta} onPageChange={setPage} />
               </div>
-              {meta && <Pagination meta={meta} onPageChange={setPage} />}
-            </>
-          )}
-        </section>
-      </div>
+            )}
+          </>
+        )}
+      </section>
+
+      {/* FLOATING CHAT BUTTON (FAB) */}
+      <button
+        onClick={() => router.push('/recommendations')}
+        title="AI Food Assistant"
+        className="fixed bottom-6 right-6 z-50 bg-[#F59E0B] hover:bg-[#D97706] text-white p-4 rounded-full shadow-xl hover:scale-110 active:scale-95 transition-all duration-300 flex items-center justify-center"
+        aria-label="AI Food Assistant"
+      >
+        <MessageCircle size={24} fill="currentColor" className="text-white" />
+      </button>
     </div>
   );
 }

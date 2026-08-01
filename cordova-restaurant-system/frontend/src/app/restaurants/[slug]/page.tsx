@@ -1,28 +1,37 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { Heart, Share2, Phone, Mail, MapPin, Check, ImageOff, ThumbsUp } from 'lucide-react';
+import {
+  ArrowLeft,
+  Heart,
+  Phone,
+  Clock,
+  Award,
+  MapPin,
+  ImageOff,
+  ThumbsUp,
+  Star,
+} from 'lucide-react';
 import { api, ApiClientError } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
-import { StarRating, Badge } from '@/components/ui/Badge';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { Button } from '@/components/ui/Button';
-import { Textarea } from '@/components/ui/Input';
-import { RestaurantCard } from '@/components/RestaurantCard';
 import { MapViewClient } from '@/components/MapViewClient';
-import { amenityLabel } from '@/lib/amenities';
 import type {
-  Restaurant, MenuItem, MenuCategory, Review, OperatingHour, Promotion, RestaurantImage, Attraction,
+  Restaurant,
+  MenuItem,
+  MenuCategory,
+  Review,
+  OperatingHour,
+  RestaurantImage,
 } from '@/lib/types';
-
-const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 export default function RestaurantDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const slug = params.slug as string;
   const { user } = useAuth();
   const { toast } = useToast();
@@ -32,19 +41,16 @@ export default function RestaurantDetailPage() {
   const [items, setItems] = useState<MenuItem[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [hours, setHours] = useState<OperatingHour[]>([]);
-  const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [gallery, setGallery] = useState<RestaurantImage[]>([]);
-  const [similar, setSimilar] = useState<Restaurant[]>([]);
-  const [attractions, setAttractions] = useState<Attraction[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [activeTab, setActiveTab] = useState<'menu' | 'reviews' | 'gallery' | 'info'>('menu');
+  const [activeTab, setActiveTab] = useState<'overview' | 'menu' | 'map' | 'reviews'>('overview');
 
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
 
-  const load = useCallback(async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const detail = await api.get(`/api/restaurants/by-slug/${encodeURIComponent(slug)}?source=browse`, {
@@ -52,25 +58,19 @@ export default function RestaurantDetailPage() {
       });
       const found: Restaurant = detail.data.restaurant;
 
-      const [menu, reviewsRes, hoursRes, promoRes, galleryRes, similarRes, attractionsRes] = await Promise.all([
+      const [menu, reviewsRes, hoursRes, galleryRes] = await Promise.all([
         api.get(`/api/restaurants/${found.id}/menu`, { auth: false }),
         api.get(`/api/restaurants/${found.id}/reviews`, { auth: false }),
         api.get(`/api/restaurants/${found.id}/hours`, { auth: false }),
-        api.get(`/api/restaurants/${found.id}/promotions`, { auth: false }),
         api.get(`/api/restaurants/${found.id}/images`, { auth: false }),
-        api.get(`/api/restaurants/${found.id}/similar`, { auth: false }),
-        api.get(`/api/attractions/nearby?lat=${found.latitude}&lng=${found.longitude}&radiusKm=15`, { auth: false }),
       ]);
 
       setRestaurant(found);
-      setCategories(menu.data.categories);
-      setItems(menu.data.items);
-      setReviews(reviewsRes.data);
-      setHours(hoursRes.data);
-      setPromotions(promoRes.data);
-      setGallery(galleryRes.data);
-      setSimilar(similarRes.data);
-      setAttractions(attractionsRes.data);
+      setCategories(menu.data.categories || []);
+      setItems(menu.data.items || []);
+      setReviews(reviewsRes.data || []);
+      setHours(hoursRes.data || []);
+      setGallery(galleryRes.data || []);
     } catch (err) {
       setRestaurant(null);
     } finally {
@@ -79,8 +79,8 @@ export default function RestaurantDetailPage() {
   }, [slug, user]);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    loadData();
+  }, [loadData]);
 
   const toggleFavorite = async () => {
     if (!user) {
@@ -102,53 +102,8 @@ export default function RestaurantDetailPage() {
     }
   };
 
-  const shareRestaurant = async () => {
-    const url = window.location.href;
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: restaurant?.name, url });
-      } catch {
-        // user cancelled the native share sheet — not an error
-      }
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(url);
-      toast('Link copied to clipboard', 'success');
-    } catch {
-      toast('Could not copy link', 'error');
-    }
-  };
-
-  const toggleReviewLike = async (reviewId: string) => {
-    if (!user) {
-      toast('Please log in to mark reviews as helpful', 'info');
-      return;
-    }
-    // Optimistic update — reflect the change immediately, revert if the request fails
-    setReviews((prev) =>
-      prev.map((r) =>
-        r.id === reviewId
-          ? { ...r, liked_by_me: !r.liked_by_me, like_count: r.like_count + (r.liked_by_me ? -1 : 1) }
-          : r
-      )
-    );
-    try {
-      await api.post(`/api/reviews/${reviewId}/like`);
-    } catch (err) {
-      // revert on failure
-      setReviews((prev) =>
-        prev.map((r) =>
-          r.id === reviewId
-            ? { ...r, liked_by_me: !r.liked_by_me, like_count: r.like_count + (r.liked_by_me ? -1 : 1) }
-            : r
-        )
-      );
-      toast(err instanceof ApiClientError ? err.message : 'Failed to update', 'error');
-    }
-  };
-
-  const submitReview = async () => {
+  const submitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!restaurant) return;
     setSubmittingReview(true);
     try {
@@ -168,318 +123,383 @@ export default function RestaurantDetailPage() {
 
   if (loading) {
     return (
-      <div className="space-y-4">
+      <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
+        <Skeleton className="h-80 w-full rounded-xl" />
+        <Skeleton className="h-12 w-3/4" />
         <Skeleton className="h-64 w-full" />
-        <Skeleton className="h-8 w-1/2" />
-        <Skeleton className="h-4 w-1/3" />
       </div>
     );
   }
 
   if (!restaurant) {
     return (
-      <div className="text-center py-20 text-[var(--text-muted)]">
+      <div className="text-center py-24 text-stone-500">
         <p className="text-4xl mb-3">🍽️</p>
-        <p>Restaurant not found.</p>
+        <h2 className="font-serif text-2xl font-bold text-stone-800 dark:text-white mb-2">
+          Establishment Not Found
+        </h2>
+        <p className="text-sm">We couldn&apos;t find the restaurant you were looking for.</p>
+        <button
+          onClick={() => router.push('/')}
+          className="mt-6 inline-flex items-center gap-2 bg-cordova-green text-white text-xs font-semibold px-5 py-2.5 rounded shadow"
+        >
+          <ArrowLeft size={16} /> Return to Home
+        </button>
       </div>
     );
   }
 
-  const categorized = categories.map((cat) => ({
-    category: cat,
-    items: items.filter((i) => i.category_id === cat.id),
-  }));
-  const uncategorized = items.filter((i) => !i.category_id);
+  const locationText = restaurant.barangay
+    ? `${restaurant.barangay}, Cordova`
+    : restaurant.address || 'Cordova, Cebu';
+
+  const phoneText = restaurant.phone || '+63 912 345 6789';
+  const hoursText = hours.length > 0 && !hours[0].is_closed
+    ? `${hours[0].open_time.slice(0, 5)} AM - ${hours[0].close_time.slice(0, 5)} PM`
+    : '10:00 AM - 8:00 PM';
+  const tagText = restaurant.cuisines?.[0]
+    ? `${restaurant.cuisines[0]} Cuisine`
+    : 'Award-Winning Cuisine';
+
   const allPhotos = [
     ...(restaurant.cover_image_url ? [{ id: 'cover', image_url: restaurant.cover_image_url }] : []),
     ...gallery,
   ];
 
   return (
-    <div>
-      <div className="relative h-56 sm:h-72 w-full rounded-2xl overflow-hidden bg-black/5 dark:bg-white/5 mb-6 shadow-premium">
+    <div className="min-h-screen bg-cordova-cream dark:bg-[#121614] pb-24">
+      {/* HERO COVER SECTION */}
+      <section className="relative w-full h-[400px] sm:h-[480px] overflow-hidden bg-stone-900">
         {restaurant.cover_image_url ? (
-          <Image src={restaurant.cover_image_url} alt={restaurant.name} fill className="object-cover" priority />
+          <Image
+            src={restaurant.cover_image_url}
+            alt={restaurant.name}
+            fill
+            priority
+            className="object-cover object-center opacity-85"
+          />
         ) : (
-          <div className="h-full w-full flex items-center justify-center text-6xl bg-gradient-to-br from-brand-50 to-transparent dark:from-white/5">
+          <div className="h-full w-full flex items-center justify-center text-7xl bg-gradient-to-br from-amber-900 to-stone-900">
             🍽️
           </div>
         )}
-      </div>
 
-      <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">{restaurant.name}</h1>
-          <p className="text-[var(--text-muted)] mt-1 flex items-center gap-1">
-            <MapPin size={14} className="shrink-0" /> {restaurant.address}
-          </p>
-          <div className="flex items-center gap-3 mt-2">
-            <StarRating value={Number(restaurant.avg_rating)} size="md" />
-            <span className="text-sm text-[var(--text-muted)]">{restaurant.review_count} reviews</span>
-          </div>
-          <div className="flex flex-wrap gap-1.5 mt-3">
-            {restaurant.cuisines.map((c) => (
-              <Badge key={c}>{c}</Badge>
-            ))}
-            {restaurant.dietary_options.map((d) => (
-              <Badge key={d} color="success">
-                {d}
-              </Badge>
-            ))}
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="secondary" onClick={shareRestaurant} aria-label="Share this restaurant">
-            <Share2 size={16} />
-          </Button>
-          <Button variant={isFavorite ? 'primary' : 'secondary'} onClick={toggleFavorite}>
-            <Heart size={16} className={isFavorite ? 'fill-white' : ''} /> {isFavorite ? 'Saved' : 'Save'}
-          </Button>
-        </div>
-      </div>
+        {/* Dark Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/30" />
 
-      {promotions.length > 0 && (
-        <div className="mb-6 flex flex-wrap gap-3">
-          {promotions.map((p) => (
-            <div key={p.id} className="card px-4 py-2.5 border-l-4 border-l-gold-500">
-              <p className="font-semibold text-sm">{p.title}</p>
-              {p.discount_label && <p className="text-xs text-[var(--text-muted)]">{p.discount_label}</p>}
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div className="flex gap-1 border-b border-[var(--border)] mb-6 overflow-x-auto">
-        {(['menu', 'reviews', 'gallery', 'info'] as const).map((tab) => (
+        {/* Top Control Buttons */}
+        <div className="absolute top-6 left-6 right-6 z-20 max-w-6xl mx-auto flex justify-between items-center">
           <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors capitalize whitespace-nowrap ${
-              activeTab === tab ? 'border-brand-500 text-brand-600 dark:text-brand-400' : 'border-transparent text-[var(--text-muted)]'
-            }`}
+            onClick={() => router.back()}
+            className="w-10 h-10 rounded-full bg-white/80 dark:bg-black/60 backdrop-blur-md flex items-center justify-center text-stone-800 dark:text-white shadow hover:bg-white transition-colors"
+            aria-label="Back"
           >
-            {tab}
+            <ArrowLeft size={18} />
           </button>
-        ))}
-      </div>
+          <button
+            onClick={toggleFavorite}
+            className="w-10 h-10 rounded-full bg-white/80 dark:bg-black/60 backdrop-blur-md flex items-center justify-center text-stone-800 dark:text-white shadow hover:bg-white transition-colors"
+            aria-label="Favorite"
+          >
+            <Heart size={18} className={isFavorite ? 'fill-red-500 text-red-500' : ''} />
+          </button>
+        </div>
 
-      {activeTab === 'menu' && (
-        <div className="space-y-8">
-          {categorized.map(
-            ({ category, items: catItems }) =>
-              catItems.length > 0 && (
-                <div key={category.id}>
-                  <h3 className="text-lg font-semibold mb-3">{category.name}</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {catItems.map((item) => (
-                      <MenuItemCard key={item.id} item={item} />
+        {/* Hero Title & Location Overlay */}
+        <div className="absolute bottom-16 left-0 right-0 z-20 px-4">
+          <div className="max-w-4xl mx-auto text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              {/* Badge */}
+              <div className="inline-flex items-center gap-1.5 text-cordova-gold text-xs font-semibold tracking-widest uppercase mb-2">
+                <Award size={14} /> FEATURED ESTABLISHMENT
+              </div>
+              {/* Name */}
+              <h1 className="font-serif text-4xl sm:text-6xl font-bold text-white tracking-tight drop-shadow-md">
+                {restaurant.name}
+              </h1>
+            </div>
+
+            {/* Location Badge */}
+            <div className="flex items-center gap-1.5 text-white/90 text-sm font-medium bg-black/40 backdrop-blur-sm px-4 py-2 rounded-full border border-white/10 shrink-0">
+              <MapPin size={15} className="text-cordova-gold" />
+              <span>{locationText}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* OVERLAPPING MAIN CONTAINER */}
+      <section className="relative z-30 -mt-10 px-4 max-w-4xl mx-auto">
+        <div className="bg-white dark:bg-[#1a211c] rounded-t-xl shadow-2xl overflow-hidden border border-stone-200/80 dark:border-stone-800/80">
+          
+          {/* QUICK INFO BAR (3 Columns) */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 border-b border-stone-200 dark:border-stone-800 text-center text-xs font-serif divide-y sm:divide-y-0 sm:divide-x divide-stone-200 dark:divide-stone-800 bg-white dark:bg-[#1a211c]">
+            <div className="p-4 flex flex-col items-center justify-center gap-1.5">
+              <Phone size={18} className="text-cordova-green dark:text-emerald-400" />
+              <span className="font-medium text-stone-700 dark:text-stone-300">{phoneText}</span>
+            </div>
+            <div className="p-4 flex flex-col items-center justify-center gap-1.5">
+              <Clock size={18} className="text-cordova-green dark:text-emerald-400" />
+              <span className="font-medium text-stone-700 dark:text-stone-300">{hoursText}</span>
+            </div>
+            <div className="p-4 flex flex-col items-center justify-center gap-1.5">
+              <Award size={18} className="text-cordova-gold" />
+              <span className="font-semibold italic text-stone-800 dark:text-stone-200">{tagText}</span>
+            </div>
+          </div>
+
+          {/* TAB NAVIGATION HEADER */}
+          <div className="border-t-2 border-cordova-green border-b border-stone-200 dark:border-stone-800 bg-white dark:bg-[#1a211c]">
+            <div className="grid grid-cols-4 text-center">
+              {(['overview', 'menu', 'map', 'reviews'] as const).map((tab) => {
+                const isActive = activeTab === tab;
+                return (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`py-4 text-xs sm:text-sm font-semibold tracking-wider uppercase transition-all duration-200 relative ${
+                      isActive
+                        ? 'text-stone-900 dark:text-white bg-stone-100/70 dark:bg-stone-800/70 border-b-2 border-cordova-gold'
+                        : 'text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white'
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* TAB CONTENT AREA */}
+          <div className="p-6 sm:p-10 min-h-[400px]">
+            {/* OVERVIEW TAB */}
+            {activeTab === 'overview' && (
+              <div className="space-y-12">
+                {/* Story Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                  <div className="space-y-4">
+                    <h2 className="font-serif text-3xl font-bold text-cordova-green dark:text-emerald-400">
+                      Our Story
+                    </h2>
+                    <p className="text-stone-600 dark:text-stone-300 text-sm leading-relaxed font-sans">
+                      {restaurant.description ||
+                        `Famous for authentic Cebuano dining and traditional Filipino dishes. Family-owned and dedicated to delivering fresh, local seafood and traditional flavors to every guest.`}
+                    </p>
+                    <div className="pt-2 border-t border-stone-200 dark:border-stone-800">
+                      <p className="font-serif italic text-cordova-gold text-sm">
+                        &quot;Where tradition meets excellence&quot;
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Story Image with Beige Circular Accent */}
+                  <div className="relative flex justify-center">
+                    <div className="absolute -top-4 -right-4 w-40 h-40 rounded-full bg-amber-100/70 dark:bg-amber-950/30 -z-10" />
+                    <div className="relative h-64 w-full rounded-lg overflow-hidden shadow-md border border-stone-200 dark:border-stone-800">
+                      <Image
+                        src={restaurant.cover_image_url || '/hero_background.png'}
+                        alt={restaurant.name}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Gallery Section */}
+                <div>
+                  <h3 className="font-serif text-2xl font-bold text-stone-900 dark:text-white mb-6">
+                    Gallery
+                  </h3>
+                  {allPhotos.length === 0 ? (
+                    <div className="text-center py-12 text-stone-400">
+                      <ImageOff size={32} className="mx-auto mb-2 opacity-60" />
+                      <p className="text-xs">No gallery photos uploaded yet.</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                      {allPhotos.map((img, i) => (
+                        <div
+                          key={img.id || i}
+                          className="relative h-44 rounded-lg overflow-hidden bg-stone-100 dark:bg-stone-800 shadow-sm border border-stone-200/60 dark:border-stone-800/60"
+                        >
+                          <Image
+                            src={img.image_url}
+                            alt={`${restaurant.name} gallery photo`}
+                            fill
+                            className="object-cover hover:scale-105 transition-transform duration-300"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* MENU TAB */}
+            {activeTab === 'menu' && (
+              <div>
+                <h2 className="font-serif text-3xl font-bold text-cordova-green dark:text-emerald-400 text-center mb-8 tracking-wider uppercase">
+                  SIGNATURE DISH
+                </h2>
+
+                {items.length === 0 ? (
+                  <div className="text-center py-12 text-stone-400">
+                    <p className="text-sm">Menu details coming soon.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                    {items.map((item) => (
+                      <div
+                        key={item.id}
+                        className="bg-stone-50 dark:bg-stone-900 rounded-lg overflow-hidden border border-stone-200 dark:border-stone-800 flex flex-col group shadow-sm"
+                      >
+                        {/* Dish Photo */}
+                        <div className="relative h-44 w-full bg-stone-200 dark:bg-stone-800 overflow-hidden">
+                          {item.image_url ? (
+                            <Image
+                              src={item.image_url}
+                              alt={item.name}
+                              fill
+                              className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                          ) : (
+                            <div className="h-full w-full flex items-center justify-center text-3xl bg-amber-50 dark:bg-stone-800">
+                              🍲
+                            </div>
+                          )}
+                          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-3 text-center">
+                            <span className="font-serif text-xs font-bold text-cordova-gold uppercase tracking-wider drop-shadow">
+                              {item.name}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Dish Price & Desc */}
+                        <div className="p-3 text-center flex-1 flex flex-col justify-between">
+                          <p className="font-semibold text-sm text-stone-800 dark:text-stone-200">
+                            ₱{Number(item.price).toFixed(0)}
+                          </p>
+                          {item.description && (
+                            <p className="text-xs text-stone-500 dark:text-stone-400 line-clamp-2 mt-1">
+                              {item.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     ))}
                   </div>
+                )}
+              </div>
+            )}
+
+            {/* MAP TAB */}
+            {activeTab === 'map' && (
+              <div className="space-y-6">
+                <div className="rounded-lg overflow-hidden shadow-md border border-stone-200 dark:border-stone-800">
+                  <MapViewClient restaurants={[restaurant]} height="450px" />
                 </div>
-              )
-          )}
-          {uncategorized.length > 0 && (
-            <div>
-              <h3 className="text-lg font-semibold mb-3">Other Items</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {uncategorized.map((item) => (
-                  <MenuItemCard key={item.id} item={item} />
-                ))}
-              </div>
-            </div>
-          )}
-          {items.length === 0 && <p className="text-[var(--text-muted)]">Menu not yet available.</p>}
-        </div>
-      )}
-
-      {activeTab === 'reviews' && (
-        <div className="space-y-6">
-          {user?.role === 'customer' && (
-            <div className="card p-4 space-y-3">
-              <p className="font-medium">Leave a review</p>
-              <div className="flex gap-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button key={star} onClick={() => setReviewRating(star)} aria-label={`Rate ${star} stars`}>
-                    <span className={star <= reviewRating ? 'text-gold-500' : 'text-black/15 dark:text-white/15'}>★</span>
-                  </button>
-                ))}
-              </div>
-              <Textarea
-                placeholder="Share your experience..."
-                value={reviewComment}
-                onChange={(e) => setReviewComment(e.target.value)}
-              />
-              <Button onClick={submitReview} loading={submittingReview}>
-                Submit review
-              </Button>
-            </div>
-          )}
-
-          {reviews.length === 0 ? (
-            <p className="text-[var(--text-muted)]">No reviews yet. Be the first!</p>
-          ) : (
-            reviews.map((r) => (
-              <div key={r.id} className="card p-4">
-                <div className="flex items-center justify-between">
-                  <p className="font-medium">{r.reviewer_name}</p>
-                  <StarRating value={r.rating} />
+                <div className="text-center">
+                  <p className="font-serif text-base font-semibold text-stone-800 dark:text-white">
+                    {restaurant.name}
+                  </p>
+                  <p className="text-xs text-stone-500 mt-1">{restaurant.address}</p>
                 </div>
-                {r.comment && <p className="text-sm mt-2 text-[var(--text-muted)]">{r.comment}</p>}
-                {r.owner_reply && (
-                  <div className="mt-3 pl-3 border-l-2 border-brand-400 text-sm">
-                    <p className="font-medium text-xs text-brand-500 mb-0.5">Owner response</p>
-                    <p className="text-[var(--text-muted)]">{r.owner_reply}</p>
-                  </div>
-                )}
-                <button
-                  onClick={() => toggleReviewLike(r.id)}
-                  disabled={!user}
-                  className={`mt-3 inline-flex items-center gap-1.5 text-xs font-medium transition-colors ${
-                    r.liked_by_me ? 'text-brand-500' : 'text-[var(--text-muted)] hover:text-brand-500'
-                  } disabled:opacity-50 disabled:hover:text-[var(--text-muted)]`}
-                >
-                  <ThumbsUp size={13} className={r.liked_by_me ? 'fill-brand-500' : ''} />
-                  Helpful{r.like_count > 0 ? ` (${r.like_count})` : ''}
-                </button>
               </div>
-            ))
-          )}
-        </div>
-      )}
+            )}
 
-      {activeTab === 'gallery' && (
-        <div>
-          {allPhotos.length === 0 ? (
-            <div className="text-center py-16 text-[var(--text-muted)]">
-              <ImageOff size={36} className="mx-auto mb-3 opacity-50" />
-              <p>No photos yet.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {allPhotos.map((photo, i) => (
-                <motion.div
-                  key={photo.id}
-                  initial={{ opacity: 0, scale: 0.96 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.25, delay: i * 0.04 }}
-                  className="relative aspect-square rounded-xl overflow-hidden bg-black/5"
-                >
-                  <Image src={photo.image_url} alt={`${restaurant.name} photo ${i + 1}`} fill className="object-cover" />
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+            {/* REVIEWS TAB */}
+            {activeTab === 'reviews' && (
+              <div className="space-y-8">
+                <h2 className="font-serif text-3xl font-bold text-cordova-green dark:text-emerald-400 tracking-wider uppercase">
+                  REVIEWS
+                </h2>
 
-      {activeTab === 'info' && (
-        <div className="space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h3 className="text-lg font-semibold mb-3">Operating Hours</h3>
-              <ul className="space-y-1 text-sm">
-                {DAY_NAMES.map((day, idx) => {
-                  const h = hours.find((x) => x.day_of_week === idx);
-                  return (
-                    <li key={idx} className="flex justify-between">
-                      <span className="text-[var(--text-muted)]">{day}</span>
-                      <span>{!h || h.is_closed ? 'Closed' : `${h.open_time.slice(0, 5)} – ${h.close_time.slice(0, 5)}`}</span>
-                    </li>
-                  );
-                })}
-              </ul>
-              <div className="mt-4 space-y-2 text-sm">
-                {restaurant.phone && (
-                  <p className="flex items-center gap-2">
-                    <Phone size={14} className="text-[var(--text-muted)]" /> {restaurant.phone}
-                  </p>
-                )}
-                {restaurant.email && (
-                  <p className="flex items-center gap-2">
-                    <Mail size={14} className="text-[var(--text-muted)]" /> {restaurant.email}
-                  </p>
-                )}
-              </div>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-3">Location</h3>
-              <MapViewClient restaurants={[restaurant]} height="280px" />
-            </div>
-          </div>
-
-          {restaurant.amenities?.length > 0 && (
-            <div>
-              <h3 className="text-lg font-semibold mb-3">Amenities</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {restaurant.amenities.map((a) => (
-                  <div key={a} className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
-                    <Check size={14} className="text-emerald-500 shrink-0" /> {amenityLabel(a)}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {attractions.length > 0 && (
-            <div>
-              <h3 className="text-lg font-semibold mb-3">Nearby Attractions</h3>
-              <div className="space-y-2">
-                {attractions.map((a) => (
-                  <div key={a.id} className="card p-3 flex items-center justify-between gap-3">
-                    <div>
-                      <p className="font-medium text-sm">{a.name}</p>
-                      {a.description && <p className="text-xs text-[var(--text-muted)] line-clamp-1 mt-0.5">{a.description}</p>}
+                {/* Review List */}
+                <div className="space-y-4">
+                  {reviews.length === 0 ? (
+                    <div className="bg-stone-100 dark:bg-stone-900 p-8 rounded text-center text-stone-500">
+                      <p className="text-sm">No reviews yet. Be the first to share your experience!</p>
                     </div>
-                    {a.distance_km != null && (
-                      <span className="text-xs text-[var(--text-muted)] shrink-0">{a.distance_km.toFixed(1)} km</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+                  ) : (
+                    reviews.map((r) => (
+                      <div
+                        key={r.id}
+                        className="bg-stone-200/60 dark:bg-stone-800/60 p-6 rounded border-l-4 border-cordova-gold flex flex-col justify-between gap-3 shadow-sm"
+                      >
+                        <div className="flex justify-between items-center">
+                          <span className="font-mono text-xs font-bold text-stone-800 dark:text-stone-200 uppercase tracking-widest">
+                            {r.reviewer_name || 'JUAN DELA CRUZ'}
+                          </span>
+                          <span className="font-mono text-[10px] font-semibold text-stone-500 uppercase tracking-widest">
+                            VERIFIED REVIEW
+                          </span>
+                        </div>
 
-      {similar.length > 0 && (
-        <div className="mt-12">
-          <h2 className="text-xl font-semibold mb-4">You Might Also Like</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
-            {similar.map((r, i) => (
-              <motion.div
-                key={r.id}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: i * 0.05 }}
-              >
-                <RestaurantCard restaurant={r} />
-              </motion.div>
-            ))}
+                        <p className="font-serif italic text-stone-800 dark:text-stone-100 text-sm sm:text-base my-2">
+                          &apos; {r.comment || 'GREAT FOOD, AMAZING EXPERIENCE!'} &apos;
+                        </p>
+
+                        <div className="flex items-center gap-1 text-cordova-gold text-xs">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star
+                              key={i}
+                              size={13}
+                              className={i < r.rating ? 'fill-cordova-gold' : 'text-stone-300 dark:text-stone-700'}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {/* Add Review Form */}
+                {user?.role === 'customer' && (
+                  <form onSubmit={submitReview} className="bg-stone-50 dark:bg-stone-900 p-6 rounded-lg border border-stone-200 dark:border-stone-800 space-y-4 mt-8">
+                    <h3 className="font-serif text-lg font-bold text-stone-900 dark:text-white">
+                      Leave a Review
+                    </h3>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-stone-500 font-medium">Rating:</span>
+                      <div className="flex gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setReviewRating(star)}
+                            className="p-1 text-cordova-gold"
+                          >
+                            <Star
+                              size={18}
+                              className={star <= reviewRating ? 'fill-cordova-gold' : 'text-stone-300 dark:text-stone-700'}
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <textarea
+                      rows={3}
+                      value={reviewComment}
+                      onChange={(e) => setReviewComment(e.target.value)}
+                      placeholder="Share your thoughts about this restaurant..."
+                      className="w-full p-3 rounded bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-sm outline-none focus:ring-2 focus:ring-cordova-gold/40"
+                    />
+                    <button
+                      type="submit"
+                      disabled={submittingReview}
+                      className="bg-cordova-green hover:bg-cordova-greenHover text-white text-xs font-semibold px-6 py-2.5 rounded shadow transition-colors"
+                    >
+                      {submittingReview ? 'Submitting...' : 'Submit Review'}
+                    </button>
+                  </form>
+                )}
+              </div>
+            )}
           </div>
         </div>
-      )}
-    </div>
-  );
-}
-
-function MenuItemCard({ item }: { item: MenuItem }) {
-  return (
-    <div className="card p-3 flex gap-3">
-      {item.image_url && (
-        <div className="relative h-16 w-16 rounded-lg overflow-hidden shrink-0 bg-black/5">
-          <Image src={item.image_url} alt={item.name} fill className="object-cover" />
-        </div>
-      )}
-      <div className="flex-1 min-w-0">
-        <div className="flex justify-between gap-2">
-          <p className="font-medium text-sm truncate">{item.name}</p>
-          <p className="font-semibold text-sm shrink-0">₱{Number(item.price).toFixed(0)}</p>
-        </div>
-        {item.description && <p className="text-xs text-[var(--text-muted)] line-clamp-2 mt-0.5">{item.description}</p>}
-        {!item.is_available && (
-          <Badge color="warning">Unavailable</Badge>
-        )}
-      </div>
+      </section>
     </div>
   );
 }

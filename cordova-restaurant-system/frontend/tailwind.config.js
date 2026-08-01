@@ -50,9 +50,18 @@ module.exports = {
           900: '#1b241f', // warm dark neutral for headings — deep forest undertone, not navy
           800: '#26302b',
         },
+        cordova: {
+          green: '#1B5232',
+          greenHover: '#143E26',
+          gold: '#D4A017',
+          goldHover: '#B8860B',
+          cream: '#FAF6F0',
+          dark: '#1C2620',
+        },
       },
       fontFamily: {
         sans: ['var(--font-inter)', 'ui-sans-serif', 'system-ui', 'Segoe UI', 'Roboto', 'sans-serif'],
+        serif: ['var(--font-playfair)', 'Playfair Display', 'Georgia', 'serif'],
       },
       borderRadius: { xl: '0.75rem', '2xl': '1rem', '3xl': '1.5rem' },
       boxShadow: {
