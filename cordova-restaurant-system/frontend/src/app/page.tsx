@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
@@ -11,10 +10,11 @@ import {
   Coffee,
   Hotel,
   Fish,
-  Camera,
-  MessageCircle,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth-context';
 import { RestaurantCard } from '@/components/RestaurantCard';
 import { RestaurantGridSkeleton } from '@/components/ui/Skeleton';
 import { Pagination } from '@/components/ui/Pagination';
@@ -22,12 +22,18 @@ import type { Restaurant, PageMeta } from '@/lib/types';
 
 export default function HomePage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [meta, setMeta] = useState<PageMeta | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Recommended For You Carousel State & Ref
+  const [recommendations, setRecommendations] = useState<{ restaurant: Restaurant; score: number }[]>([]);
+  const [recLoading, setRecLoading] = useState(true);
+  const recScrollRef = useRef<HTMLDivElement>(null);
 
   const fetchRestaurants = useCallback(async () => {
     setLoading(true);
@@ -41,7 +47,7 @@ export default function HomePage() {
       const res = await api.get(`/api/restaurants?${params.toString()}`, { auth: false });
       setRestaurants(res.data);
       setMeta(res.meta);
-    } catch (err) {
+    } catch {
       setRestaurants([]);
       setMeta(null);
     } finally {
@@ -49,9 +55,40 @@ export default function HomePage() {
     }
   }, [searchQuery, activeCategory, page]);
 
+  const fetchRecommendations = useCallback(async () => {
+    setRecLoading(true);
+    try {
+      // Fetch up to 10 recommended restaurants based on set preferences
+      const res = await api.post('/api/recommendations', { limit: 10 }, { auth: !!user });
+      if (res.data && Array.isArray(res.data)) {
+        setRecommendations(
+          res.data.map((r: any) => ({
+            restaurant: r.restaurant,
+            score: r.score,
+          }))
+        );
+      }
+    } catch {
+      setRecommendations([]);
+    } finally {
+      setRecLoading(false);
+    }
+  }, [user]);
+
   useEffect(() => {
     fetchRestaurants();
   }, [fetchRestaurants]);
+
+  useEffect(() => {
+    fetchRecommendations();
+  }, [fetchRecommendations]);
+
+  const scrollRec = (direction: 'left' | 'right') => {
+    if (recScrollRef.current) {
+      const scrollAmount = direction === 'left' ? -350 : 350;
+      recScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -177,10 +214,10 @@ export default function HomePage() {
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-5 max-w-4xl mx-auto">
           {[
-            { id: 'restaurants', label: 'Restaurants', icon: Utensils, cuisine: 'Filipino' },
-            { id: 'cafes', label: 'Cafés', icon: Coffee, cuisine: 'Coffee & Desserts' },
-            { id: 'resorts', label: 'Resorts', icon: Hotel, cuisine: 'Resort Dining' },
-            { id: 'seafood', label: 'Seafood', icon: Fish, cuisine: 'Seafood' },
+            { id: 'restaurants', label: 'Restaurants', icon: Utensils, cuisine: 'restaurants' },
+            { id: 'cafes', label: 'Cafés', icon: Coffee, cuisine: 'cafes' },
+            { id: 'resorts', label: 'Resorts', icon: Hotel, cuisine: 'resorts' },
+            { id: 'seafood', label: 'Seafood', icon: Fish, cuisine: 'seafood' },
           ].map((cat) => {
             const IconComp = cat.icon;
             const isSelected = activeCategory === cat.cuisine;
@@ -206,10 +243,80 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* RECOMMENDED FOR YOU SWIPEABLE CAROUSEL SECTION */}
+      <section className="max-w-6xl mx-auto px-4 mt-20">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
+          <div>
+            <h2 className="font-serif text-3xl sm:text-4xl font-bold text-stone-900 dark:text-white">
+              Recommended For You
+            </h2>
+            <div className="h-0.5 w-16 bg-cordova-gold mt-3" />
+          </div>
+
+          {/* Swipe / Carousel Control Arrows */}
+          {recommendations.length > 0 && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => scrollRec('left')}
+                className="p-2.5 rounded-full bg-white dark:bg-[#1a211c] border border-stone-200 dark:border-stone-800 shadow-sm hover:bg-cordova-green hover:text-white dark:hover:bg-cordova-green transition-colors text-stone-700 dark:text-stone-300"
+                aria-label="Scroll left"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <button
+                onClick={() => scrollRec('right')}
+                className="p-2.5 rounded-full bg-white dark:bg-[#1a211c] border border-stone-200 dark:border-stone-800 shadow-sm hover:bg-cordova-green hover:text-white dark:hover:bg-cordova-green transition-colors text-stone-700 dark:text-stone-300"
+                aria-label="Scroll right"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {recLoading ? (
+          <RestaurantGridSkeleton count={3} />
+        ) : recommendations.length > 0 ? (
+          /* Horizontal Swipeable Container */
+          <div
+            ref={recScrollRef}
+            className="flex gap-6 overflow-x-auto snap-x snap-mandatory scrollbar-none pb-4 pt-2 px-1 scroll-smooth"
+          >
+            {recommendations.map(({ restaurant, score }, idx) => (
+              <motion.div
+                key={restaurant.id}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.35, delay: Math.min(idx, 8) * 0.06 }}
+                className="snap-start shrink-0 w-[290px] sm:w-[320px] lg:w-[350px]"
+              >
+                <RestaurantCard restaurant={restaurant} matchScore={score} />
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white dark:bg-[#1a211c] rounded-lg border border-stone-200 dark:border-stone-800 p-8 text-center text-stone-500 max-w-md mx-auto">
+            <p className="text-2xl mb-2">✨</p>
+            <p className="font-serif font-medium text-stone-800 dark:text-stone-200 mb-1">
+              Personalize Your Experience
+            </p>
+            <p className="text-xs text-stone-500 mb-4">
+              Set your food preferences to get personalized restaurant recommendations.
+            </p>
+            <button
+              onClick={() => router.push('/preferences')}
+              className="bg-cordova-green hover:bg-cordova-greenHover text-white text-xs font-semibold px-5 py-2.5 rounded shadow"
+            >
+              Set Preferences
+            </button>
+          </div>
+        )}
+      </section>
+
       {/* ALL ESTABLISHMENTS SECTION */}
       <section className="max-w-6xl mx-auto px-4 mt-20">
         <div className="mb-10">
-          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-stone-900 dark:text-white">
+          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-stone-900 dark:text-white capitalize">
             {activeCategory ? `${activeCategory} Establishments` : 'All Establishments'}
           </h2>
           <div className="h-0.5 w-16 bg-cordova-gold mt-3" />
@@ -262,16 +369,6 @@ export default function HomePage() {
           </>
         )}
       </section>
-
-      {/* FLOATING CHAT BUTTON (FAB) */}
-      <button
-        onClick={() => router.push('/recommendations')}
-        title="AI Food Assistant"
-        className="fixed bottom-6 right-6 z-50 bg-[#F59E0B] hover:bg-[#D97706] text-white p-4 rounded-full shadow-xl hover:scale-110 active:scale-95 transition-all duration-300 flex items-center justify-center"
-        aria-label="AI Food Assistant"
-      >
-        <MessageCircle size={24} fill="currentColor" className="text-white" />
-      </button>
     </div>
   );
 }

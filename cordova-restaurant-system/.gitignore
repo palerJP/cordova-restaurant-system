@@ -9,4 +9,5 @@ uploads/avatars/*
 logs/
 coverage/
 *.log
+*.tsbuildinfo
 .DS_Store

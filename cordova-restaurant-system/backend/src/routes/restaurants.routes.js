@@ -91,7 +91,13 @@ router.post(
   validate(createPromotionValidator),
   promotionController.create
 );
-router.patch('/:restaurantId/promotions/:id', requireAuth, requireRole('owner', 'admin'), promotionController.update);
+router.patch(
+  '/:restaurantId/promotions/:id',
+  requireAuth,
+  requireRole('owner', 'admin'),
+  uploadRestaurantImage.single('image'),
+  promotionController.update
+);
 router.delete('/:restaurantId/promotions/:id', requireAuth, requireRole('owner', 'admin'), promotionController.remove);
 
 // ---- Operating hours (nested) ----

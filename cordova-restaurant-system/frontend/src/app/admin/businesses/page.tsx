@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { api, ApiClientError } from '@/lib/api';
 import { useToast } from '@/lib/toast-context';
-import { RequireRole } from '@/components/RequireRole';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Input';
@@ -60,8 +59,10 @@ export default function BusinessVerificationPage() {
   };
 
   return (
-    <RequireRole roles={['admin']}>
-      <h1 className="text-2xl font-bold mb-6">Business Permit & Registration Verification</h1>
+    <div>
+      <h1 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900 dark:text-white mb-6">
+        Business Permit & Registration Verification
+      </h1>
 
       <div className="flex gap-2 mb-6">
         {(['pending', 'verified', 'rejected', 'suspended'] as const).map((s) => (
@@ -74,16 +75,16 @@ export default function BusinessVerificationPage() {
       {loading ? (
         <Skeleton className="h-64 w-full" />
       ) : restaurants.length === 0 ? (
-        <p className="text-[var(--text-muted)]">No businesses with status &ldquo;{status}&rdquo;.</p>
+        <p className="text-stone-500">No businesses with status &ldquo;{status}&rdquo;.</p>
       ) : (
         <div className="space-y-3">
           {restaurants.map((r) => (
-            <div key={r.id} className="card p-4 flex flex-wrap items-center justify-between gap-3">
+            <div key={r.id} className="bg-white dark:bg-[#1a211c] border border-stone-200 dark:border-stone-800 rounded-lg p-5 flex flex-wrap items-center justify-between gap-3 shadow-sm">
               <div>
-                <p className="font-medium">{r.name}</p>
-                <p className="text-sm text-[var(--text-muted)]">{r.address}</p>
+                <p className="font-serif font-bold text-base text-stone-900 dark:text-white">{r.name}</p>
+                <p className="text-sm text-stone-500">{r.address}</p>
                 {r.business_permit_url && (
-                  <a href={r.business_permit_url} target="_blank" rel="noreferrer" className="text-xs text-brand-500 hover:underline">
+                  <a href={r.business_permit_url} target="_blank" rel="noreferrer" className="text-xs text-cordova-green hover:underline mt-1 inline-block font-semibold">
                     View permit document →
                   </a>
                 )}
@@ -114,6 +115,6 @@ export default function BusinessVerificationPage() {
           </Button>
         </div>
       </Modal>
-    </RequireRole>
+    </div>
   );
 }

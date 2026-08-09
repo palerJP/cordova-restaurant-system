@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { api, ApiClientError } from '@/lib/api';
 import { useToast } from '@/lib/toast-context';
-import { RequireRole } from '@/components/RequireRole';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -51,12 +50,14 @@ export default function AdminUsersPage() {
   };
 
   return (
-    <RequireRole roles={['admin']}>
-      <h1 className="text-2xl font-bold mb-6">User Account Management</h1>
+    <div>
+      <h1 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900 dark:text-white mb-6">
+        User Account Management
+      </h1>
 
       <div className="flex flex-wrap gap-3 mb-6">
         <Input placeholder="Search by name or email..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           {['', 'customer', 'owner', 'admin'].map((r) => (
             <button key={r} onClick={() => setRoleFilter(r)}>
               <Badge color={roleFilter === r ? 'brand' : 'neutral'}>{r || 'all'}</Badge>
@@ -68,10 +69,10 @@ export default function AdminUsersPage() {
       {loading ? (
         <Skeleton className="h-64 w-full" />
       ) : (
-        <div className="overflow-x-auto card">
+        <div className="overflow-x-auto bg-white dark:bg-[#1a211c] border border-stone-200 dark:border-stone-800 rounded-lg shadow-sm">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left border-b border-[var(--border)]">
+              <tr className="text-left border-b border-stone-200 dark:border-stone-800 font-serif">
                 <th className="p-3">Name</th>
                 <th className="p-3">Email</th>
                 <th className="p-3">Role</th>
@@ -81,16 +82,16 @@ export default function AdminUsersPage() {
             </thead>
             <tbody>
               {users.map((u) => (
-                <tr key={u.id} className="border-b border-[var(--border)] last:border-0">
-                  <td className="p-3">{u.full_name}</td>
-                  <td className="p-3 text-[var(--text-muted)]">{u.email}</td>
+                <tr key={u.id} className="border-b border-stone-100 dark:border-stone-800/60 last:border-0 hover:bg-stone-50 dark:hover:bg-stone-800/40">
+                  <td className="p-3 font-medium">{u.full_name}</td>
+                  <td className="p-3 text-stone-500">{u.email}</td>
                   <td className="p-3">
                     <Badge>{u.role}</Badge>
                   </td>
                   <td className="p-3">
                     <Badge color={u.is_active ? 'success' : 'danger'}>{u.is_active ? 'active' : 'inactive'}</Badge>
                   </td>
-                  <td className="p-3">
+                  <td className="p-3 text-right">
                     {u.role !== 'admin' && (
                       <Button variant="secondary" onClick={() => toggleActive(u)}>
                         {u.is_active ? 'Deactivate' : 'Activate'}
@@ -103,6 +104,6 @@ export default function AdminUsersPage() {
           </table>
         </div>
       )}
-    </RequireRole>
+    </div>
   );
 }

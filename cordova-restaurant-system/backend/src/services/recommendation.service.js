@@ -131,6 +131,12 @@ async function getRecommendations(params) {
     passesHardFilters(r, { dietaryRestrictions, requiredServices, maxDistanceKm: userLat != null ? maxDistanceKm : null })
   );
 
+  // If hard filtering eliminated all candidates (e.g. strict dietary restrictions not in DB),
+  // fall back to candidates so the AI engine always returns the best available matches.
+  if (filtered.length === 0) {
+    filtered = candidates;
+  }
+
   // Optional "open now" filter — checked per-restaurant against operating_hours
   if (onlyOpenNow) {
     const now = new Date();

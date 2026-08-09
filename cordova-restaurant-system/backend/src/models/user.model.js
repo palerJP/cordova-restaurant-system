@@ -1,6 +1,6 @@
 const { query } = require('../config/db');
 
-const PUBLIC_FIELDS = `id, email, full_name, phone, role, avatar_url, is_active,
+const PUBLIC_FIELDS = `id, email, full_name, phone, role, avatar_url, is_active, accepts_marketing,
   email_verified_at, last_login_at, created_at`;
 
 async function findById(id) {
@@ -13,12 +13,12 @@ async function findByEmail(email) {
   return rows[0] || null;
 }
 
-async function create({ email, passwordHash, fullName, role = 'customer', phone = null }) {
+async function create({ email, passwordHash, fullName, role = 'customer', phone = null, acceptsMarketing = true }) {
   const { rows } = await query(
-    `INSERT INTO users (email, password_hash, full_name, role, phone)
-     VALUES ($1, $2, $3, $4, $5)
+    `INSERT INTO users (email, password_hash, full_name, role, phone, accepts_marketing)
+     VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING ${PUBLIC_FIELDS}`,
-    [email.toLowerCase(), passwordHash, fullName, role, phone]
+    [email.toLowerCase(), passwordHash, fullName, role, phone, acceptsMarketing]
   );
   return rows[0];
 }

@@ -27,6 +27,7 @@ import type {
   Review,
   OperatingHour,
   RestaurantImage,
+  Promotion,
 } from '@/lib/types';
 
 export default function RestaurantDetailPage() {
@@ -42,6 +43,7 @@ export default function RestaurantDetailPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [hours, setHours] = useState<OperatingHour[]>([]);
   const [gallery, setGallery] = useState<RestaurantImage[]>([]);
+  const [activePromotions, setActivePromotions] = useState<Promotion[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'menu' | 'map' | 'reviews'>('overview');
@@ -58,11 +60,12 @@ export default function RestaurantDetailPage() {
       });
       const found: Restaurant = detail.data.restaurant;
 
-      const [menu, reviewsRes, hoursRes, galleryRes] = await Promise.all([
+      const [menu, reviewsRes, hoursRes, galleryRes, promoRes] = await Promise.all([
         api.get(`/api/restaurants/${found.id}/menu`, { auth: false }),
         api.get(`/api/restaurants/${found.id}/reviews`, { auth: false }),
         api.get(`/api/restaurants/${found.id}/hours`, { auth: false }),
         api.get(`/api/restaurants/${found.id}/images`, { auth: false }),
+        api.get(`/api/restaurants/${found.id}/promotions`, { auth: false }),
       ]);
 
       setRestaurant(found);
@@ -71,6 +74,12 @@ export default function RestaurantDetailPage() {
       setReviews(reviewsRes.data || []);
       setHours(hoursRes.data || []);
       setGallery(galleryRes.data || []);
+
+      const today = new Date().toISOString().slice(0, 10);
+      const activePromos = (promoRes.data || []).filter(
+        (p: Promotion) => p.status === 'active' && p.end_date >= today
+      );
+      setActivePromotions(activePromos);
     } catch (err) {
       setRestaurant(null);
     } finally {
@@ -230,6 +239,30 @@ export default function RestaurantDetailPage() {
 
       {/* OVERLAPPING MAIN CONTAINER */}
       <section className="relative z-30 -mt-10 px-4 max-w-4xl mx-auto">
+        {/* ACTIVE PROMOTION BANNER IF AVAILABLE */}
+        {activePromotions.length > 0 && (
+          <div className="mb-4 bg-gradient-to-r from-amber-500 via-cordova-gold to-amber-600 rounded-xl p-4 sm:p-5 text-white shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border border-amber-300/40">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1.5 bg-black/25 text-amber-200 text-[11px] font-extrabold px-2.5 py-0.5 rounded uppercase tracking-wider">
+                🎁 Active Special Promotion
+              </div>
+              <h3 className="font-serif text-lg sm:text-xl font-bold drop-shadow">
+                {activePromotions[0].title}
+              </h3>
+              {activePromotions[0].description && (
+                <p className="text-xs text-amber-50/95 max-w-xl leading-relaxed font-sans">
+                  {activePromotions[0].description}
+                </p>
+              )}
+            </div>
+            {activePromotions[0].discount_label && (
+              <span className="bg-white text-stone-900 font-extrabold text-xs px-3.5 py-1.5 rounded-lg shadow-md shrink-0 uppercase tracking-wider">
+                {activePromotions[0].discount_label}
+              </span>
+            )}
+          </div>
+        )}
+
         <div className="bg-white dark:bg-[#1a211c] rounded-t-xl shadow-2xl overflow-hidden border border-stone-200/80 dark:border-stone-800/80">
           
           {/* QUICK INFO BAR (3 Columns) */}

@@ -37,14 +37,21 @@ const create = asyncHandler(async (req, res) => {
   const promotion = await promotionModel.create(req.params.restaurantId, {
     ...req.body,
     imageUrl,
-    status: req.body.publish ? 'active' : 'draft',
+    status: 'active',
   });
   res.status(201).json({ success: true, message: 'Promotion created', data: { promotion } });
 });
 
 const update = asyncHandler(async (req, res) => {
   await assertOwnership(req.params.restaurantId, req.user.id, req.user.role);
-  const promotion = await promotionModel.update(req.params.id, req.params.restaurantId, req.body);
+
+  let updateData = { ...req.body };
+  if (req.file) {
+    const processed = await uploadService.processImage(req.file, { maxWidth: 1000 });
+    updateData.imageUrl = uploadService.publicUrlFor(processed);
+  }
+
+  const promotion = await promotionModel.update(req.params.id, req.params.restaurantId, updateData);
   if (!promotion) throw ApiError.notFound('Promotion not found');
   res.json({ success: true, message: 'Promotion updated', data: { promotion } });
 });

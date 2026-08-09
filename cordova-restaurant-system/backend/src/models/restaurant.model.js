@@ -73,11 +73,36 @@ async function search({
     params.push(priceRange);
   }
   if (cuisineSlugs.length) {
-    conditions.push(`EXISTS (
-      SELECT 1 FROM restaurant_cuisines rc JOIN cuisines c ON c.id = rc.cuisine_id
-      WHERE rc.restaurant_id = r.id AND c.slug = ANY($${idx++})
+    const expandedSlugs = new Set();
+    for (const item of cuisineSlugs) {
+      const lower = item.toLowerCase().trim();
+      if (lower === 'restaurants' || lower === 'filipino') {
+        expandedSlugs.add('filipino');
+        expandedSlugs.add('cebuano-local');
+        expandedSlugs.add('grill-bbq');
+      } else if (lower === 'seafood') {
+        expandedSlugs.add('seafood');
+      } else if (lower === 'cafes' || lower === 'cafés' || lower === 'cafe' || lower === 'coffee & desserts' || lower === 'cafe-desserts') {
+        expandedSlugs.add('cafe-desserts');
+      } else if (lower === 'resorts' || lower === 'resort' || lower === 'resort dining' || lower === 'resort-dining') {
+        expandedSlugs.add('resort-dining');
+      } else {
+        expandedSlugs.add(lower);
+      }
+    }
+    const slugsArr = Array.from(expandedSlugs);
+    const patternArr = slugsArr.map((s) => `%${s}%`);
+
+    conditions.push(`(
+      EXISTS (
+        SELECT 1 FROM restaurant_cuisines rc JOIN cuisines c ON c.id = rc.cuisine_id
+        WHERE rc.restaurant_id = r.id AND (c.slug = ANY($${idx}) OR c.name ILIKE ANY($${idx + 1}))
+      )
+      OR r.name ILIKE ANY($${idx + 1})
+      OR r.description ILIKE ANY($${idx + 1})
     )`);
-    params.push(cuisineSlugs);
+    params.push(slugsArr, patternArr);
+    idx += 2;
   }
   if (dietaryOptions.length) {
     conditions.push(`EXISTS (

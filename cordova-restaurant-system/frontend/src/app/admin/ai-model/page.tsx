@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { api, ApiClientError } from '@/lib/api';
 import { useToast } from '@/lib/toast-context';
-import { RequireRole } from '@/components/RequireRole';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
 
@@ -49,9 +48,11 @@ export default function AiModelPage() {
   };
 
   return (
-    <RequireRole roles={['admin']}>
-      <h1 className="text-2xl font-bold mb-1">AI Recommendation Model Tuning</h1>
-      <p className="text-[var(--text-muted)] mb-6 text-sm max-w-2xl">
+    <div>
+      <h1 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900 dark:text-white mb-2">
+        AI Recommendation Model Tuning
+      </h1>
+      <p className="text-stone-500 mb-6 text-sm max-w-2xl">
         Adjust how much each factor influences a restaurant&apos;s match score. Weights must sum to 1.0 (100%).
         Changes apply immediately to all future recommendation requests.
       </p>
@@ -59,12 +60,12 @@ export default function AiModelPage() {
       {!weights ? (
         <Skeleton className="h-64 w-full max-w-lg" />
       ) : (
-        <div className="card p-6 max-w-lg space-y-5">
+        <div className="bg-white dark:bg-[#1a211c] border border-stone-200 dark:border-stone-800 rounded-lg p-6 max-w-lg space-y-5 shadow-sm">
           {FACTORS.map((f) => (
             <div key={f.key}>
-              <div className="flex justify-between text-sm mb-1">
+              <div className="flex justify-between text-sm mb-1 font-medium text-stone-800 dark:text-stone-200">
                 <label htmlFor={f.key}>{f.label}</label>
-                <span className="font-medium">{Math.round(weights[f.key] * 100)}%</span>
+                <span className="font-bold text-cordova-green dark:text-emerald-400">{Math.round(weights[f.key] * 100)}%</span>
               </div>
               <input
                 id={f.key}
@@ -74,12 +75,12 @@ export default function AiModelPage() {
                 step={0.01}
                 value={weights[f.key]}
                 onChange={(e) => setWeights({ ...weights, [f.key]: parseFloat(e.target.value) })}
-                className="w-full accent-brand-500"
+                className="w-full accent-cordova-green cursor-pointer"
               />
             </div>
           ))}
 
-          <div className={`text-sm font-medium ${isValid ? 'text-emerald-500' : 'text-red-500'}`}>
+          <div className={`text-sm font-semibold ${isValid ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}`}>
             Total: {Math.round(sum * 100)}% {isValid ? '✓ valid' : '— must equal 100%'}
           </div>
 
@@ -88,6 +89,6 @@ export default function AiModelPage() {
           </Button>
         </div>
       )}
-    </RequireRole>
+    </div>
   );
 }

@@ -14,7 +14,7 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
     title: 'Explore',
     links: [
       { label: 'Browse Restaurants', href: '/' },
-      { label: 'AI Recommendations', href: '/recommendations' },
+      { label: 'Recommended Restaurants', href: '/preferences' },
       { label: 'Current Promotions', href: '/promotions' },
     ],
   },

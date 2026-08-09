@@ -24,7 +24,6 @@ export function Navbar() {
 
   const navLinks = [
     { href: '/', label: 'Home' },
-    { href: '/recommendations', label: 'AI Recommendations' },
     { href: '/promotions', label: 'Promotions' },
   ];
 

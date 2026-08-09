@@ -1,9 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { api } from '@/lib/api';
-import { RequireRole } from '@/components/RequireRole';
 import { Skeleton } from '@/components/ui/Skeleton';
 
 export default function AdminOverviewPage() {
@@ -14,16 +12,10 @@ export default function AdminOverviewPage() {
   }, []);
 
   return (
-    <RequireRole roles={['admin']}>
-      <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
-
-      <nav className="flex flex-wrap gap-2 mb-8">
-        <AdminNavLink href="/admin" label="Overview" />
-        <AdminNavLink href="/admin/businesses" label="Business Verification" />
-        <AdminNavLink href="/admin/reviews" label="Review Moderation" />
-        <AdminNavLink href="/admin/users" label="Users" />
-        <AdminNavLink href="/admin/ai-model" label="AI Model Tuning" />
-      </nav>
+    <div>
+      <h1 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900 dark:text-white mb-6">
+        Admin Dashboard Overview
+      </h1>
 
       {!data ? (
         <Skeleton className="h-64 w-full" />
@@ -41,21 +33,21 @@ export default function AdminOverviewPage() {
           </div>
 
           <div>
-            <h2 className="text-lg font-semibold mb-3">Top Cuisine Demand (30d)</h2>
-            <div className="card p-4 space-y-2">
+            <h2 className="font-serif text-xl font-bold text-stone-900 dark:text-white mb-3">Top Cuisine Demand (30d)</h2>
+            <div className="bg-white dark:bg-[#1a211c] rounded-lg border border-stone-200 dark:border-stone-800 p-5 space-y-3 shadow-sm">
               {data.topCuisineDemand.length === 0 ? (
-                <p className="text-sm text-[var(--text-muted)]">No search data yet.</p>
+                <p className="text-sm text-stone-500">No search data yet.</p>
               ) : (
                 data.topCuisineDemand.map((c: any) => (
                   <div key={c.name} className="flex items-center gap-3">
-                    <span className="w-32 text-sm shrink-0">{c.name}</span>
-                    <div className="flex-1 h-2 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
+                    <span className="w-32 text-sm font-medium text-stone-700 dark:text-stone-300 shrink-0">{c.name}</span>
+                    <div className="flex-1 h-2.5 rounded-full bg-stone-100 dark:bg-stone-800 overflow-hidden">
                       <div
-                        className="h-full bg-brand-500"
+                        className="h-full bg-cordova-green"
                         style={{ width: `${Math.min(100, (c.search_count / (data.topCuisineDemand[0]?.search_count || 1)) * 100)}%` }}
                       />
                     </div>
-                    <span className="text-sm text-[var(--text-muted)] w-10 text-right">{c.search_count}</span>
+                    <span className="text-xs font-semibold text-stone-500 w-10 text-right">{c.search_count}</span>
                   </div>
                 ))
               )}
@@ -63,15 +55,16 @@ export default function AdminOverviewPage() {
           </div>
 
           <div>
-            <h2 className="text-lg font-semibold mb-3">Peak Search Hours (30d)</h2>
-            <div className="card p-4 flex items-end gap-1 h-32">
+            <h2 className="font-serif text-xl font-bold text-stone-900 dark:text-white mb-3">Peak Search Hours (30d)</h2>
+            <div className="bg-white dark:bg-[#1a211c] rounded-lg border border-stone-200 dark:border-stone-800 p-5 flex items-end gap-1.5 h-40 shadow-sm">
               {Array.from({ length: 24 }).map((_, hour) => {
                 const entry = data.peakSearchHours.find((h: any) => h.hour === hour);
                 const max = Math.max(...data.peakSearchHours.map((h: any) => h.searches), 1);
-                const height = entry ? (entry.searches / max) * 100 : 2;
+                const height = entry ? (entry.searches / max) * 100 : 4;
                 return (
                   <div key={hour} className="flex-1 flex flex-col items-center justify-end h-full" title={`${hour}:00 — ${entry?.searches || 0} searches`}>
-                    <div className="w-full bg-brand-400 rounded-t" style={{ height: `${height}%` }} />
+                    <div className="w-full bg-cordova-gold hover:bg-cordova-goldHover rounded-t transition-all" style={{ height: `${height}%` }} />
+                    <span className="text-[9px] text-stone-400 mt-1">{hour}h</span>
                   </div>
                 );
               })}
@@ -79,23 +72,15 @@ export default function AdminOverviewPage() {
           </div>
         </div>
       )}
-    </RequireRole>
-  );
-}
-
-function AdminNavLink({ href, label }: { href: string; label: string }) {
-  return (
-    <Link href={href} className="px-3 py-1.5 rounded-lg text-sm font-medium bg-black/5 dark:bg-white/10 hover:bg-brand-500/10 hover:text-brand-600">
-      {label}
-    </Link>
+    </div>
   );
 }
 
 function StatCard({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
   return (
-    <div className={`card p-4 ${highlight ? 'border-l-4 border-l-brand-500' : ''}`}>
-      <p className="text-2xl font-bold">{value}</p>
-      <p className="text-xs text-[var(--text-muted)] mt-1">{label}</p>
+    <div className={`bg-white dark:bg-[#1a211c] rounded-lg p-5 border shadow-sm ${highlight ? 'border-l-4 border-l-cordova-gold border-stone-200 dark:border-stone-800' : 'border-stone-200 dark:border-stone-800'}`}>
+      <p className="font-serif text-3xl font-bold text-stone-900 dark:text-white">{value}</p>
+      <p className="text-xs font-medium text-stone-500 mt-1">{label}</p>
     </div>
   );
 }

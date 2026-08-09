@@ -25,7 +25,7 @@ async function issueTokenPair(user, meta = {}) {
   return { accessToken, refreshToken };
 }
 
-async function register({ email, password, fullName, role = 'customer', phone }) {
+async function register({ email, password, fullName, role = 'customer', phone, acceptsMarketing = true }) {
   if (role === 'admin') {
     // Admin accounts must never be self-service registered.
     throw ApiError.forbidden('Cannot self-register as admin');
@@ -35,7 +35,7 @@ async function register({ email, password, fullName, role = 'customer', phone })
     throw ApiError.conflict('An account with this email already exists');
   }
   const passwordHash = await hashPassword(password);
-  const user = await userModel.create({ email, passwordHash, fullName, role, phone });
+  const user = await userModel.create({ email, passwordHash, fullName, role, phone, acceptsMarketing });
   return user;
 }
 

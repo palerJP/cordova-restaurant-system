@@ -399,28 +399,69 @@ function PromotionsTab({ restaurantId }: { restaurantId: string }) {
   const { toast } = useToast();
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState({ title: '', discountLabel: '', startDate: '', endDate: '' });
+  const [renewTarget, setRenewTarget] = useState<Promotion | null>(null);
+  const [renewEndDate, setRenewEndDate] = useState('');
+
+  const [form, setForm] = useState({
+    title: '',
+    description: '',
+    discountLabel: '',
+    startDate: new Date().toISOString().slice(0, 10),
+    endDate: '',
+  });
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
     try {
       const res = await api.get(`/api/restaurants/${restaurantId}/promotions`, { auth: false });
       setPromotions(res.data);
-    } catch (err) {
+    } catch {
       toast('Failed to load promotions', 'error');
     }
-  }, [restaurantId]);
+  }, [restaurantId, toast]);
 
   useEffect(() => {
     load();
   }, [load]);
 
   const create = async () => {
+    if (!form.title.trim() || !form.startDate || !form.endDate) {
+      toast('Please provide a title, start date, and end date', 'error');
+      return;
+    }
+    if (new Date(form.endDate) < new Date(form.startDate)) {
+      toast('End date must be on or after start date', 'error');
+      return;
+    }
+
     setSaving(true);
     try {
-      await api.post(`/api/restaurants/${restaurantId}/promotions`, { ...form, publish: true });
-      toast('Promotion published', 'success');
+      if (imageFile) {
+        const formData = new FormData();
+        formData.append('title', form.title);
+        if (form.description) formData.append('description', form.description);
+        if (form.discountLabel) formData.append('discountLabel', form.discountLabel);
+        formData.append('startDate', form.startDate);
+        formData.append('endDate', form.endDate);
+        formData.append('publish', 'true');
+        formData.append('image', imageFile);
+
+        await api.post(`/api/restaurants/${restaurantId}/promotions`, formData, { isFormData: true });
+      } else {
+        await api.post(`/api/restaurants/${restaurantId}/promotions`, { ...form, publish: true });
+      }
+
+      toast('Promotion created and published!', 'success');
       setModalOpen(false);
+      setForm({
+        title: '',
+        description: '',
+        discountLabel: '',
+        startDate: new Date().toISOString().slice(0, 10),
+        endDate: '',
+      });
+      setImageFile(null);
       load();
     } catch (err) {
       toast(err instanceof ApiClientError ? err.message : 'Failed to create promotion', 'error');
@@ -429,49 +470,183 @@ function PromotionsTab({ restaurantId }: { restaurantId: string }) {
     }
   };
 
-  const remove = async (promoId: string) => {
-    await api.delete(`/api/restaurants/${restaurantId}/promotions/${promoId}`);
-    toast('Promotion deleted', 'info');
-    load();
+  const renewPromotion = async () => {
+    if (!renewTarget || !renewEndDate) return;
+    setSaving(true);
+    try {
+      await api.patch(`/api/restaurants/${restaurantId}/promotions/${renewTarget.id}`, {
+        endDate: renewEndDate,
+        status: 'active',
+      });
+      toast('Promotion renewed and reactivated!', 'success');
+      setRenewTarget(null);
+      setRenewEndDate('');
+      load();
+    } catch (err) {
+      toast(err instanceof ApiClientError ? err.message : 'Failed to renew promotion', 'error');
+    } finally {
+      setSaving(false);
+    }
   };
 
+  const remove = async (promoId: string) => {
+    try {
+      await api.delete(`/api/restaurants/${restaurantId}/promotions/${promoId}`);
+      toast('Promotion deleted', 'info');
+      load();
+    } catch (err) {
+      toast(err instanceof ApiClientError ? err.message : 'Delete failed', 'error');
+    }
+  };
+
+  const today = new Date().toISOString().slice(0, 10);
+
   return (
-    <div>
-      <Button onClick={() => setModalOpen(true)} className="mb-4">
-        + New promotion
-      </Button>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {promotions.map((p) => (
-          <div key={p.id} className="card p-4">
-            <div className="flex justify-between items-start">
-              <p className="font-medium">{p.title}</p>
-              <button onClick={() => remove(p.id)} className="text-red-500 text-xs hover:underline">
-                Delete
-              </button>
-            </div>
-            <p className="text-xs text-[var(--text-muted)] mt-1">
-              {p.start_date} → {p.end_date}
-            </p>
-            <Badge color={p.status === 'active' ? 'success' : 'neutral'}>{p.status}</Badge>
-          </div>
-        ))}
-        {promotions.length === 0 && <p className="text-[var(--text-muted)]">No promotions yet.</p>}
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-stone-50 dark:bg-stone-800/40 p-4 rounded-xl border border-stone-200 dark:border-stone-800">
+        <div>
+          <h3 className="font-serif font-bold text-lg text-stone-900 dark:text-white">Restaurant Promotions</h3>
+          <p className="text-xs text-stone-500">
+            Promotions are automatically published to diners and <strong>automatically removed from public view</strong> when their end date expires.
+          </p>
+        </div>
+        <Button onClick={() => setModalOpen(true)} className="bg-cordova-green hover:bg-cordova-greenHover text-white">
+          + Create New Promotion
+        </Button>
       </div>
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Create promotion">
-        <div className="space-y-3">
-          <Input label="Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {promotions.map((p) => {
+          const isExpired = p.status === 'expired' || p.end_date < today;
+          const isActive = p.status === 'active' && !isExpired;
+
+          return (
+            <div key={p.id} className="bg-white dark:bg-[#1a211c] border border-stone-200 dark:border-stone-800 rounded-xl p-4 shadow-sm flex flex-col justify-between gap-3">
+              <div className="space-y-2">
+                {p.image_url && (
+                  <div className="relative h-32 w-full rounded-lg overflow-hidden bg-stone-100 dark:bg-stone-800">
+                    <Image src={p.image_url} alt={p.title} fill className="object-cover" />
+                  </div>
+                )}
+                <div className="flex items-start justify-between gap-2">
+                  <h4 className="font-serif font-bold text-base text-stone-900 dark:text-white">{p.title}</h4>
+                  <Badge color={isActive ? 'success' : isExpired ? 'danger' : 'neutral'}>
+                    {isActive ? 'Active' : isExpired ? 'Expired' : p.status}
+                  </Badge>
+                </div>
+                {p.discount_label && (
+                  <span className="inline-block bg-cordova-gold/15 text-cordova-gold text-xs font-bold px-2.5 py-1 rounded-md">
+                    {p.discount_label}
+                  </span>
+                )}
+                {p.description && <p className="text-xs text-stone-600 dark:text-stone-300">{p.description}</p>}
+                <p className="text-xs text-stone-500">
+                  Duration: <span className="font-medium text-stone-700 dark:text-stone-300">{p.start_date}</span> to <span className="font-medium text-stone-700 dark:text-stone-300">{p.end_date}</span>
+                </p>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-stone-100 dark:border-stone-800">
+                {isExpired && (
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setRenewTarget(p);
+                      setRenewEndDate(new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10));
+                    }}
+                    className="text-xs py-1 px-3"
+                  >
+                    🔄 Extend / Renew
+                  </Button>
+                )}
+                <button
+                  onClick={() => remove(p.id)}
+                  className="text-xs text-red-600 dark:text-red-400 hover:underline font-medium px-2 py-1"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          );
+        })}
+        {promotions.length === 0 && (
+          <div className="col-span-full py-12 text-center text-stone-500 bg-white dark:bg-[#1a211c] border border-stone-200 dark:border-stone-800 rounded-xl">
+            <p className="text-3xl mb-2">🎁</p>
+            <p className="font-serif font-medium text-stone-800 dark:text-stone-200">No promotions published yet</p>
+            <p className="text-xs text-stone-400 mt-1">Create your first promotion banner to attract diners!</p>
+          </div>
+        )}
+      </div>
+
+      {/* Create Promotion Modal */}
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Create Restaurant Promotion">
+        <div className="space-y-4">
           <Input
-            label="Discount label (e.g. '20% OFF')"
+            label="Promotion Title"
+            placeholder="e.g. Weekend Seafood Special"
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+            required
+          />
+          <Textarea
+            label="Description / Special Perks"
+            placeholder="e.g. Free appetizer for orders above ₱500..."
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+          />
+          <Input
+            label="Discount Label (Badge text)"
+            placeholder="e.g. 20% OFF or BUY 1 GET 1"
             value={form.discountLabel}
             onChange={(e) => setForm({ ...form, discountLabel: e.target.value })}
           />
           <div className="grid grid-cols-2 gap-3">
-            <Input label="Start date" type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} />
-            <Input label="End date" type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} />
+            <Input
+              label="Start Date"
+              type="date"
+              value={form.startDate}
+              onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+              required
+            />
+            <Input
+              label="End Date (Expiry Date)"
+              type="date"
+              value={form.endDate}
+              onChange={(e) => setForm({ ...form, endDate: e.target.value })}
+              required
+            />
           </div>
-          <Button onClick={create} loading={saving} className="w-full">
-            Publish promotion
+          <div>
+            <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1">
+              Banner / Promotional Image (Optional)
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+              className="w-full text-xs text-stone-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-stone-100 file:text-stone-700 hover:file:bg-stone-200 cursor-pointer"
+            />
+          </div>
+          <Button onClick={create} loading={saving} className="w-full bg-cordova-green hover:bg-cordova-greenHover text-white">
+            Publish Promotion
+          </Button>
+        </div>
+      </Modal>
+
+      {/* Extend / Renew Modal */}
+      <Modal open={!!renewTarget} onClose={() => setRenewTarget(null)} title={`Renew ${renewTarget?.title}`}>
+        <div className="space-y-4">
+          <p className="text-xs text-stone-500">
+            Set a new expiry date to reactivate this promotion immediately on the public promotions feed.
+          </p>
+          <Input
+            label="New Expiry Date"
+            type="date"
+            value={renewEndDate}
+            onChange={(e) => setRenewEndDate(e.target.value)}
+            required
+          />
+          <Button onClick={renewPromotion} loading={saving} className="w-full bg-cordova-green hover:bg-cordova-greenHover text-white">
+            Reactivate Promotion
           </Button>
         </div>
       </Modal>
