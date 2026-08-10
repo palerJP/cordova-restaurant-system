@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import {
@@ -14,6 +15,7 @@ import {
   ImageOff,
   ThumbsUp,
   Star,
+  Sparkles,
 } from 'lucide-react';
 import { api, ApiClientError } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
@@ -260,6 +262,37 @@ export default function RestaurantDetailPage() {
                 {activePromotions[0].discount_label}
               </span>
             )}
+          </div>
+        )}
+
+        {/* GUEST SIGN IN / SIGN UP PROMPT BANNER */}
+        {!user && (
+          <div className="mb-4 bg-gradient-to-r from-[#1b241f] via-stone-900 to-[#1b241f] rounded-xl p-5 sm:p-6 text-white shadow-xl border border-cordova-gold/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="space-y-1.5">
+              <div className="inline-flex items-center gap-1.5 text-cordova-gold text-xs font-bold uppercase tracking-wider">
+                <Sparkles size={16} /> Unlock Best Features
+              </div>
+              <h3 className="font-serif text-lg sm:text-xl font-bold text-white">
+                Sign in to get personalized recommendations, save favorites & post verified reviews!
+              </h3>
+              <p className="text-xs text-stone-300">
+                Create an account or sign in to experience all interactive CordovaEats features.
+              </p>
+            </div>
+            <div className="flex items-center gap-2.5 shrink-0">
+              <Link
+                href="/login"
+                className="text-xs font-semibold text-white hover:text-cordova-gold transition-colors px-3.5 py-2 border border-white/20 rounded-lg"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/register"
+                className="bg-cordova-gold hover:bg-cordova-goldHover text-white text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition-colors uppercase tracking-wider"
+              >
+                Sign Up
+              </Link>
+            </div>
           </div>
         )}
 

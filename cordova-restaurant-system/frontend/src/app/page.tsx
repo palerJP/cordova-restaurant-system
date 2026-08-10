@@ -243,75 +243,77 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* RECOMMENDED FOR YOU SWIPEABLE CAROUSEL SECTION */}
-      <section className="max-w-6xl mx-auto px-4 mt-20">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
-          <div>
-            <h2 className="font-serif text-3xl sm:text-4xl font-bold text-stone-900 dark:text-white">
-              Recommended For You
-            </h2>
-            <div className="h-0.5 w-16 bg-cordova-gold mt-3" />
+      {/* RECOMMENDED FOR YOU SWIPEABLE CAROUSEL SECTION (LOGGED IN USERS ONLY) */}
+      {user && (
+        <section className="max-w-6xl mx-auto px-4 mt-20">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
+            <div>
+              <h2 className="font-serif text-3xl sm:text-4xl font-bold text-stone-900 dark:text-white">
+                Recommended For You
+              </h2>
+              <div className="h-0.5 w-16 bg-cordova-gold mt-3" />
+            </div>
+
+            {/* Swipe / Carousel Control Arrows */}
+            {recommendations.length > 0 && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => scrollRec('left')}
+                  className="p-2.5 rounded-full bg-white dark:bg-[#1a211c] border border-stone-200 dark:border-stone-800 shadow-sm hover:bg-cordova-green hover:text-white dark:hover:bg-cordova-green transition-colors text-stone-700 dark:text-stone-300"
+                  aria-label="Scroll left"
+                >
+                  <ChevronLeft size={20} />
+                </button>
+                <button
+                  onClick={() => scrollRec('right')}
+                  className="p-2.5 rounded-full bg-white dark:bg-[#1a211c] border border-stone-200 dark:border-stone-800 shadow-sm hover:bg-cordova-green hover:text-white dark:hover:bg-cordova-green transition-colors text-stone-700 dark:text-stone-300"
+                  aria-label="Scroll right"
+                >
+                  <ChevronRight size={20} />
+                </button>
+              </div>
+            )}
           </div>
 
-          {/* Swipe / Carousel Control Arrows */}
-          {recommendations.length > 0 && (
-            <div className="flex items-center gap-2">
+          {recLoading ? (
+            <RestaurantGridSkeleton count={3} />
+          ) : recommendations.length > 0 ? (
+            /* Horizontal Swipeable Container */
+            <div
+              ref={recScrollRef}
+              className="flex gap-6 overflow-x-auto snap-x snap-mandatory scrollbar-none pb-4 pt-2 px-1 scroll-smooth"
+            >
+              {recommendations.map(({ restaurant, score }, idx) => (
+                <motion.div
+                  key={restaurant.id}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.35, delay: Math.min(idx, 8) * 0.06 }}
+                  className="snap-start shrink-0 w-[290px] sm:w-[320px] lg:w-[350px]"
+                >
+                  <RestaurantCard restaurant={restaurant} matchScore={score} />
+                </motion.div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-[#1a211c] rounded-lg border border-stone-200 dark:border-stone-800 p-8 text-center text-stone-500 max-w-md mx-auto">
+              <p className="text-2xl mb-2">✨</p>
+              <p className="font-serif font-medium text-stone-800 dark:text-stone-200 mb-1">
+                Personalize Your Experience
+              </p>
+              <p className="text-xs text-stone-500 mb-4">
+                Set your food preferences to get personalized restaurant recommendations.
+              </p>
               <button
-                onClick={() => scrollRec('left')}
-                className="p-2.5 rounded-full bg-white dark:bg-[#1a211c] border border-stone-200 dark:border-stone-800 shadow-sm hover:bg-cordova-green hover:text-white dark:hover:bg-cordova-green transition-colors text-stone-700 dark:text-stone-300"
-                aria-label="Scroll left"
+                onClick={() => router.push('/preferences')}
+                className="bg-cordova-green hover:bg-cordova-greenHover text-white text-xs font-semibold px-5 py-2.5 rounded shadow"
               >
-                <ChevronLeft size={20} />
-              </button>
-              <button
-                onClick={() => scrollRec('right')}
-                className="p-2.5 rounded-full bg-white dark:bg-[#1a211c] border border-stone-200 dark:border-stone-800 shadow-sm hover:bg-cordova-green hover:text-white dark:hover:bg-cordova-green transition-colors text-stone-700 dark:text-stone-300"
-                aria-label="Scroll right"
-              >
-                <ChevronRight size={20} />
+                Set Preferences
               </button>
             </div>
           )}
-        </div>
-
-        {recLoading ? (
-          <RestaurantGridSkeleton count={3} />
-        ) : recommendations.length > 0 ? (
-          /* Horizontal Swipeable Container */
-          <div
-            ref={recScrollRef}
-            className="flex gap-6 overflow-x-auto snap-x snap-mandatory scrollbar-none pb-4 pt-2 px-1 scroll-smooth"
-          >
-            {recommendations.map(({ restaurant, score }, idx) => (
-              <motion.div
-                key={restaurant.id}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.35, delay: Math.min(idx, 8) * 0.06 }}
-                className="snap-start shrink-0 w-[290px] sm:w-[320px] lg:w-[350px]"
-              >
-                <RestaurantCard restaurant={restaurant} matchScore={score} />
-              </motion.div>
-            ))}
-          </div>
-        ) : (
-          <div className="bg-white dark:bg-[#1a211c] rounded-lg border border-stone-200 dark:border-stone-800 p-8 text-center text-stone-500 max-w-md mx-auto">
-            <p className="text-2xl mb-2">✨</p>
-            <p className="font-serif font-medium text-stone-800 dark:text-stone-200 mb-1">
-              Personalize Your Experience
-            </p>
-            <p className="text-xs text-stone-500 mb-4">
-              Set your food preferences to get personalized restaurant recommendations.
-            </p>
-            <button
-              onClick={() => router.push('/preferences')}
-              className="bg-cordova-green hover:bg-cordova-greenHover text-white text-xs font-semibold px-5 py-2.5 rounded shadow"
-            >
-              Set Preferences
-            </button>
-          </div>
-        )}
-      </section>
+        </section>
+      )}
 
       {/* ALL ESTABLISHMENTS SECTION */}
       <section className="max-w-6xl mx-auto px-4 mt-20">
