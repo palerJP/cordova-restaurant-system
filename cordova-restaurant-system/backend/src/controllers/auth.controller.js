@@ -10,7 +10,7 @@ function refreshCookieOptions() {
     secure: env.cookie.secure,
     sameSite: 'lax',
     path: '/api/auth',
-    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days, matches JWT_REFRESH_EXPIRES_IN default
+    maxAge: 30 * 24 * 60 * 60 * 1000,
   };
 }
 
@@ -20,13 +20,57 @@ function requestMeta(req) {
 
 const register = asyncHandler(async (req, res) => {
   const user = await authService.register(req.body);
-  res.status(201).json({ success: true, message: 'Account created successfully', data: { user } });
+  res.status(201).json({
+    success: true,
+    message: 'Registration successful! Please check your email to verify your account.',
+    data: { user },
+  });
 });
 
 const login = asyncHandler(async (req, res) => {
   const { user, accessToken, refreshToken } = await authService.login(req.body, requestMeta(req));
   res.cookie(REFRESH_COOKIE_NAME, refreshToken, refreshCookieOptions());
   res.json({ success: true, message: 'Logged in successfully', data: { user, accessToken } });
+});
+
+const verifyEmail = asyncHandler(async (req, res) => {
+  const token = req.query.token || req.body.token;
+  const user = await authService.verifyEmail(token);
+  res.json({
+    success: true,
+    message: 'Your email has been verified successfully! You now have full access.',
+    data: { user },
+  });
+});
+
+const resendVerification = asyncHandler(async (req, res) => {
+  const result = await authService.resendVerification(req.user.id);
+  res.json({ success: true, message: result.message });
+});
+
+const forgotPassword = asyncHandler(async (req, res) => {
+  const result = await authService.forgotPassword(req.body.email);
+  res.json({ success: true, message: result.message });
+});
+
+const resetPassword = asyncHandler(async (req, res) => {
+  const result = await authService.resetPassword({
+    token: req.body.token,
+    newPassword: req.body.newPassword,
+  });
+  res.json({ success: true, message: result.message });
+});
+
+const googleOAuth = asyncHandler(async (req, res) => {
+  const { user, accessToken, refreshToken } = await authService.googleOAuth(req.body, requestMeta(req));
+  res.cookie(REFRESH_COOKIE_NAME, refreshToken, refreshCookieOptions());
+  res.json({ success: true, message: 'Google sign in successful', data: { user, accessToken } });
+});
+
+const facebookOAuth = asyncHandler(async (req, res) => {
+  const { user, accessToken, refreshToken } = await authService.facebookOAuth(req.body, requestMeta(req));
+  res.cookie(REFRESH_COOKIE_NAME, refreshToken, refreshCookieOptions());
+  res.json({ success: true, message: 'Facebook sign in successful', data: { user, accessToken } });
 });
 
 const refresh = asyncHandler(async (req, res) => {
@@ -52,4 +96,17 @@ const me = asyncHandler(async (req, res) => {
   res.json({ success: true, data: { user: req.user } });
 });
 
-module.exports = { register, login, refresh, logout, changePassword, me };
+module.exports = {
+  register,
+  login,
+  verifyEmail,
+  resendVerification,
+  forgotPassword,
+  resetPassword,
+  googleOAuth,
+  facebookOAuth,
+  refresh,
+  logout,
+  changePassword,
+  me,
+};

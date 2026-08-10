@@ -9,6 +9,12 @@ interface AuthContextValue {
   loading: boolean;
   login: (email: string, password: string) => Promise<User>;
   register: (data: { email: string; password: string; fullName: string; role?: 'customer' | 'owner'; phone?: string; acceptsMarketing?: boolean }) => Promise<void>;
+  loginWithGoogle: (credential: string) => Promise<User>;
+  loginWithFacebook: (accessToken: string) => Promise<User>;
+  verifyEmail: (token: string) => Promise<User>;
+  resendVerificationEmail: () => Promise<void>;
+  forgotPassword: (email: string) => Promise<string>;
+  resetPassword: (token: string, newPassword: string) => Promise<string>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -21,7 +27,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const bootstrap = useCallback(async () => {
     try {
-      // Attempt silent refresh using the httpOnly cookie set on a previous visit.
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/auth/refresh`, {
         method: 'POST',
         credentials: 'include',
@@ -32,7 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(json.data.user);
       }
     } catch {
-      // no valid session — that's fine, user stays logged out
+      // User stays logged out
     } finally {
       setLoading(false);
     }
@@ -59,6 +64,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  const loginWithGoogle = useCallback(async (credential: string) => {
+    const res = await api.post('/api/auth/google', { credential }, { auth: false });
+    setAccessToken(res.data.accessToken);
+    setUser(res.data.user);
+    return res.data.user as User;
+  }, []);
+
+  const loginWithFacebook = useCallback(async (accessToken: string) => {
+    const res = await api.post('/api/auth/facebook', { accessToken }, { auth: false });
+    setAccessToken(res.data.accessToken);
+    setUser(res.data.user);
+    return res.data.user as User;
+  }, []);
+
+  const verifyEmail = useCallback(async (token: string) => {
+    const res = await api.post('/api/auth/verify-email', { token }, { auth: false });
+    if (res.data?.user) {
+      setUser(res.data.user);
+    }
+    return res.data?.user as User;
+  }, []);
+
+  const resendVerificationEmail = useCallback(async () => {
+    await api.post('/api/auth/resend-verification');
+  }, []);
+
+  const forgotPassword = useCallback(async (email: string) => {
+    const res = await api.post('/api/auth/forgot-password', { email }, { auth: false });
+    return res.message || 'Password reset link dispatched.';
+  }, []);
+
+  const resetPassword = useCallback(async (token: string, newPassword: string) => {
+    const res = await api.post('/api/auth/reset-password', { token, newPassword }, { auth: false });
+    return res.message || 'Password reset successfully.';
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await api.post('/api/auth/logout');
@@ -78,7 +119,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        login,
+        register,
+        loginWithGoogle,
+        loginWithFacebook,
+        verifyEmail,
+        resendVerificationEmail,
+        forgotPassword,
+        resetPassword,
+        logout,
+        refreshUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

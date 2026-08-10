@@ -1,7 +1,7 @@
 const { query } = require('../config/db');
 
 const PUBLIC_FIELDS = `id, email, full_name, phone, role, avatar_url, is_active, accepts_marketing,
-  email_verified_at, last_login_at, created_at`;
+  email_verified, google_id, facebook_id, email_verified_at, last_login_at, created_at`;
 
 async function findById(id) {
   const { rows } = await query(`SELECT * FROM users WHERE id = $1`, [id]);
@@ -13,12 +13,66 @@ async function findByEmail(email) {
   return rows[0] || null;
 }
 
-async function create({ email, passwordHash, fullName, role = 'customer', phone = null, acceptsMarketing = true }) {
+async function findByGoogleId(googleId) {
+  const { rows } = await query(`SELECT * FROM users WHERE google_id = $1`, [googleId]);
+  return rows[0] || null;
+}
+
+async function findByFacebookId(facebookId) {
+  const { rows } = await query(`SELECT * FROM users WHERE facebook_id = $1`, [facebookId]);
+  return rows[0] || null;
+}
+
+async function create({ email, passwordHash, fullName, role = 'customer', phone = null, acceptsMarketing = true, emailVerified = false }) {
   const { rows } = await query(
-    `INSERT INTO users (email, password_hash, full_name, role, phone, accepts_marketing)
-     VALUES ($1, $2, $3, $4, $5, $6)
+    `INSERT INTO users (email, password_hash, full_name, role, phone, accepts_marketing, email_verified)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
      RETURNING ${PUBLIC_FIELDS}`,
-    [email.toLowerCase(), passwordHash, fullName, role, phone, acceptsMarketing]
+    [email.toLowerCase(), passwordHash, fullName, role, phone, acceptsMarketing, emailVerified]
+  );
+  return rows[0];
+}
+
+async function createOAuthUser({ email, fullName, googleId = null, facebookId = null, avatarUrl = null, acceptsMarketing = true }) {
+  const { rows } = await query(
+    `INSERT INTO users (email, password_hash, full_name, role, google_id, facebook_id, avatar_url, email_verified, accepts_marketing)
+     VALUES ($1, NULL, $2, 'customer', $3, $4, $5, TRUE, $6)
+     RETURNING ${PUBLIC_FIELDS}`,
+    [email.toLowerCase(), fullName, googleId, facebookId, avatarUrl, acceptsMarketing]
+  );
+  return rows[0];
+}
+
+async function linkGoogleAccount(userId, googleId, avatarUrl = null) {
+  const { rows } = await query(
+    `UPDATE users SET 
+       google_id = $2, 
+       email_verified = TRUE,
+       avatar_url = COALESCE($3, avatar_url) 
+     WHERE id = $1 
+     RETURNING ${PUBLIC_FIELDS}`,
+    [userId, googleId, avatarUrl]
+  );
+  return rows[0];
+}
+
+async function linkFacebookAccount(userId, facebookId, avatarUrl = null) {
+  const { rows } = await query(
+    `UPDATE users SET 
+       facebook_id = $2, 
+       email_verified = TRUE,
+       avatar_url = COALESCE($3, avatar_url) 
+     WHERE id = $1 
+     RETURNING ${PUBLIC_FIELDS}`,
+    [userId, facebookId, avatarUrl]
+  );
+  return rows[0];
+}
+
+async function updateEmailVerified(userId, isVerified = true) {
+  const { rows } = await query(
+    `UPDATE users SET email_verified = $2, email_verified_at = CASE WHEN $2 THEN NOW() ELSE email_verified_at END WHERE id = $1 RETURNING ${PUBLIC_FIELDS}`,
+    [userId, isVerified]
   );
   return rows[0];
 }
@@ -117,7 +171,13 @@ module.exports = {
   PUBLIC_FIELDS,
   findById,
   findByEmail,
+  findByGoogleId,
+  findByFacebookId,
   create,
+  createOAuthUser,
+  linkGoogleAccount,
+  linkFacebookAccount,
+  updateEmailVerified,
   updateProfile,
   updatePassword,
   touchLastLogin,

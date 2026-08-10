@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useState, ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 
-type ToastType = 'success' | 'error' | 'info';
+type ToastType = 'success' | 'error' | 'info' | 'warning';
 interface Toast {
   id: number;
   type: ToastType;
@@ -12,6 +12,7 @@ interface Toast {
 
 interface ToastContextValue {
   toast: (message: string, type?: ToastType) => void;
+  showToast: (message: string, type?: ToastType) => void;
 }
 
 const ToastContext = createContext<ToastContextValue | undefined>(undefined);
@@ -30,7 +31,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <ToastContext.Provider value={{ toast }}>
+    <ToastContext.Provider value={{ toast, showToast: toast }}>
       {children}
       <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 w-[calc(100%-2rem)] max-w-sm">
         <AnimatePresence>

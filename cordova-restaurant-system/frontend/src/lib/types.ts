@@ -11,6 +11,9 @@ export interface User {
   role: UserRole;
   avatar_url?: string;
   is_active: boolean;
+  email_verified?: boolean;
+  google_id?: string;
+  facebook_id?: string;
   created_at: string;
 }
 
