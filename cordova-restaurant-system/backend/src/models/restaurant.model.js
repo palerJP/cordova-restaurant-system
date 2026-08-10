@@ -85,19 +85,44 @@ async function search({
         expandedSlugs.add('filipino');
         expandedSlugs.add('cebuano-local');
         expandedSlugs.add('grill-bbq');
+        expandedSlugs.add('resort-dining');
+        expandedSlugs.add('seafood');
         expandedPatterns.add('%restaurant%');
         expandedPatterns.add('%filipino%');
+        expandedPatterns.add('%grill%');
+        expandedPatterns.add('%eats%');
       } else if (lower === 'seafood' || lower === 'seafoods') {
         expandedSlugs.add('seafood');
         expandedPatterns.add('%seafood%');
+        expandedPatterns.add('%fish%');
+        expandedPatterns.add('%bakasi%');
+        expandedPatterns.add('%shrimp%');
+        expandedPatterns.add('%crab%');
       } else if (lower === 'cafes' || lower === 'cafés' || lower === 'cafe' || lower === 'coffee & desserts' || lower === 'cafe-desserts') {
         expandedSlugs.add('cafe-desserts');
         expandedPatterns.add('%cafe%');
         expandedPatterns.add('%café%');
         expandedPatterns.add('%coffee%');
+        expandedPatterns.add('%tea%');
+        expandedPatterns.add('%milktea%');
+        expandedPatterns.add('%dessert%');
       } else if (lower === 'resorts' || lower === 'resort' || lower === 'resort dining' || lower === 'resort-dining') {
         expandedSlugs.add('resort-dining');
         expandedPatterns.add('%resort%');
+        expandedPatterns.add('%floating%');
+        expandedPatterns.add('%seaview%');
+        expandedPatterns.add('%beach%');
+        expandedPatterns.add('%sea%');
+      } else if (lower === 'grill-bbq' || lower === 'grill' || lower === 'bbq') {
+        expandedSlugs.add('grill-bbq');
+        expandedPatterns.add('%grill%');
+        expandedPatterns.add('%bbq%');
+        expandedPatterns.add('%barbecue%');
+        expandedPatterns.add('%lechon%');
+      } else if (lower === 'pizza-pasta' || lower === 'pizza' || lower === 'pasta') {
+        expandedSlugs.add('pizza-pasta');
+        expandedPatterns.add('%pizza%');
+        expandedPatterns.add('%pasta%');
       }
     }
 

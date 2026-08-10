@@ -10,6 +10,8 @@ import {
   Coffee,
   Hotel,
   Fish,
+  Flame,
+  Pizza,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
@@ -42,7 +44,7 @@ export default function HomePage() {
       if (searchQuery.trim()) params.set('q', searchQuery.trim());
       if (activeCategory) params.set('cuisines', activeCategory);
       params.set('page', String(page));
-      params.set('limit', '6');
+      params.set('limit', '12');
 
       const res = await api.get(`/api/restaurants?${params.toString()}`, { auth: false });
       setRestaurants(res.data);
@@ -212,12 +214,14 @@ export default function HomePage() {
           <div className="h-0.5 w-16 bg-cordova-gold mx-auto mt-3" />
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-5 max-w-4xl mx-auto">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 max-w-6xl mx-auto">
           {[
             { id: 'restaurants', label: 'Restaurants', icon: Utensils, cuisine: 'restaurants' },
+            { id: 'seafood', label: 'Seafood', icon: Fish, cuisine: 'seafood' },
             { id: 'cafes', label: 'Cafés', icon: Coffee, cuisine: 'cafes' },
             { id: 'resorts', label: 'Resorts', icon: Hotel, cuisine: 'resorts' },
-            { id: 'seafood', label: 'Seafood', icon: Fish, cuisine: 'seafood' },
+            { id: 'grill', label: 'Grill & BBQ', icon: Flame, cuisine: 'grill-bbq' },
+            { id: 'pizza', label: 'Pizza & Pasta', icon: Pizza, cuisine: 'pizza-pasta' },
           ].map((cat) => {
             const IconComp = cat.icon;
             const isSelected = activeCategory === cat.cuisine;
@@ -225,16 +229,16 @@ export default function HomePage() {
               <button
                 key={cat.id}
                 onClick={() => handleCategoryClick(cat.cuisine)}
-                className={`bg-white dark:bg-[#1a211c] border rounded-lg p-6 sm:p-8 flex flex-col items-center justify-center gap-3.5 transition-all duration-300 group shadow-sm hover:shadow-md ${
+                className={`bg-white dark:bg-[#1a211c] border rounded-lg p-5 flex flex-col items-center justify-center gap-3 transition-all duration-300 group shadow-sm hover:shadow-md ${
                   isSelected
                     ? 'border-cordova-gold ring-2 ring-cordova-gold/30 bg-amber-50/40 dark:bg-amber-950/20'
                     : 'border-stone-200/80 dark:border-stone-800/80 hover:border-cordova-gold'
                 }`}
               >
                 <div className="text-cordova-gold group-hover:scale-110 transition-transform duration-300">
-                  <IconComp size={32} strokeWidth={1.75} />
+                  <IconComp size={28} strokeWidth={1.75} />
                 </div>
-                <span className="font-serif text-base font-bold text-stone-800 dark:text-stone-200 group-hover:text-cordova-green transition-colors">
+                <span className="font-serif text-xs sm:text-sm font-bold text-center text-stone-800 dark:text-stone-200 group-hover:text-cordova-green transition-colors">
                   {cat.label}
                 </span>
               </button>
