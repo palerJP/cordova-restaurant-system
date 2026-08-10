@@ -74,24 +74,35 @@ async function search({
   }
   if (cuisineSlugs.length) {
     const expandedSlugs = new Set();
+    const expandedPatterns = new Set();
+
     for (const item of cuisineSlugs) {
       const lower = item.toLowerCase().trim();
-      if (lower === 'restaurants' || lower === 'filipino') {
+      expandedSlugs.add(lower);
+      expandedPatterns.add(`%${lower}%`);
+
+      if (lower === 'restaurants' || lower === 'filipino' || lower === 'restaurant') {
         expandedSlugs.add('filipino');
         expandedSlugs.add('cebuano-local');
         expandedSlugs.add('grill-bbq');
-      } else if (lower === 'seafood') {
+        expandedPatterns.add('%restaurant%');
+        expandedPatterns.add('%filipino%');
+      } else if (lower === 'seafood' || lower === 'seafoods') {
         expandedSlugs.add('seafood');
+        expandedPatterns.add('%seafood%');
       } else if (lower === 'cafes' || lower === 'cafés' || lower === 'cafe' || lower === 'coffee & desserts' || lower === 'cafe-desserts') {
         expandedSlugs.add('cafe-desserts');
+        expandedPatterns.add('%cafe%');
+        expandedPatterns.add('%café%');
+        expandedPatterns.add('%coffee%');
       } else if (lower === 'resorts' || lower === 'resort' || lower === 'resort dining' || lower === 'resort-dining') {
         expandedSlugs.add('resort-dining');
-      } else {
-        expandedSlugs.add(lower);
+        expandedPatterns.add('%resort%');
       }
     }
+
     const slugsArr = Array.from(expandedSlugs);
-    const patternArr = slugsArr.map((s) => `%${s}%`);
+    const patternArr = Array.from(expandedPatterns);
 
     conditions.push(`(
       EXISTS (
