@@ -42,10 +42,11 @@ const COLUMNS: FooterColumn[] = [
     ],
   },
   {
-    title: 'Legal',
+    title: 'Legal & Privacy',
     links: [
       { label: 'Terms of Use', href: '/terms' },
       { label: 'Privacy Policy', href: '/privacy' },
+      { label: 'Cookie Policy', href: '/cookies' },
     ],
   },
 ];
@@ -90,8 +91,11 @@ export function Footer() {
                 <h3 className="text-sm font-semibold mb-3 text-stone-900 dark:text-stone-100">{col.title}</h3>
                 <ul className="space-y-2">
                   {visibleLinks.map((link) => (
-                    <li key={link.href}>
-                      <Link href={link.href} className="text-sm text-stone-500 dark:text-stone-400 hover:text-cordova-green dark:hover:text-emerald-400 transition-colors">
+                    <li key={link.label}>
+                      <Link
+                        href={link.href}
+                        className="text-sm text-stone-500 dark:text-stone-400 hover:text-cordova-green dark:hover:text-emerald-400 transition-colors"
+                      >
                         {link.label}
                       </Link>
                     </li>

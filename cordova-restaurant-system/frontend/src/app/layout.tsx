@@ -5,8 +5,10 @@ import 'leaflet/dist/leaflet.css';
 import { AuthProvider } from '@/lib/auth-context';
 import { ThemeProvider } from '@/lib/theme-context';
 import { ToastProvider } from '@/lib/toast-context';
+import { CookieConsentProvider } from '@/lib/cookie-consent-context';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import { CookieBanner } from '@/components/cookies/CookieBanner';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -52,9 +54,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           <ToastProvider>
             <AuthProvider>
-              <Navbar />
-              <main className="min-h-[70vh]">{children}</main>
-              <Footer />
+              <CookieConsentProvider>
+                <Navbar />
+                <main className="min-h-[70vh]">{children}</main>
+                <Footer />
+                <CookieBanner />
+              </CookieConsentProvider>
             </AuthProvider>
           </ToastProvider>
         </ThemeProvider>
