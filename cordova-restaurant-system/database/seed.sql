@@ -588,3 +588,375 @@ INSERT INTO menu_items (restaurant_id, category_id, name, description, price, im
 ('9bd735b4-1ee0-4dd9-a498-157f6007cd80', '941d3d29-72b6-4c2d-9400-65e07cc463a4', 'Java Chip Ice Blended', 'A cool, blended beverage featuring, chocolate chips, a smooth & creamy consistency', 235, 'https://images.deliveryhero.io/image/global-menu-service/FP_PH/vendor/nsz5/product/100233753/6e6fc486-7b5b-44f7-ab12-d89a8f2b1ec6.jpg', true, ARRAY[]::text[]),
 ('9bd735b4-1ee0-4dd9-a498-157f6007cd80', '941d3d29-72b6-4c2d-9400-65e07cc463a4', 'Pistachio Ice Blended', 'Creamy ice blended drink with rich pistachio flavor topped with whipped cream', 235, 'https://images.deliveryhero.io/image/global-menu-service/FP_PH/vendor/nsz5/product/9aeea749-b755-420f-8700-8bb677e0508e.jpg', true, ARRAY[]::text[])
 ON CONFLICT DO NOTHING;
+
+-- Eat n Repeat Menu Categories
+INSERT INTO menu_categories (id, restaurant_id, name, sort_order) VALUES
+('119887f5-ed7a-4be7-a25d-654b78f10905', '44444444-4444-4444-a444-444444444446', 'Coffee & Espresso', 1),
+('b8bcce17-d0f6-427a-abb8-eec8c9d609fe', '44444444-4444-4444-a444-444444444446', 'Milktea & Boba', 2),
+('e1140759-f6d6-4fb2-b8e2-cc38b8daa51d', '44444444-4444-4444-a444-444444444446', 'Rice Bowls & Meals', 3),
+('fe7f3ed4-6724-425d-80f6-c0721770142b', '44444444-4444-4444-a444-444444444446', 'Pastries & Desserts', 4),
+('13a2968b-b7b5-41f4-b7bf-8f3bc9c8024f', '44444444-4444-4444-a444-444444444446', 'Sides & Bites', 5)
+ON CONFLICT DO NOTHING;
+
+-- Eat n Repeat Menu Items (from eatnrepeat.online)
+INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags) VALUES
+('44444444-4444-4444-a444-444444444446', '119887f5-ed7a-4be7-a25d-654b78f10905', 'House Special Latte', 'Silky double shot espresso with velvety steamed milk and vanilla bean', 145.00, 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=600&auto=format&fit=crop', true, ARRAY['vegetarian']::text[]),
+('44444444-4444-4444-a444-444444444446', '119887f5-ed7a-4be7-a25d-654b78f10905', 'Cordova Cold Brew', '16-hour slow-steeped single origin beans served over crystal ice', 135.00, 'https://images.unsplash.com/photo-1461023058943-07cb14a60039?w=600&auto=format&fit=crop', true, ARRAY['vegan','vegetarian']::text[]),
+('44444444-4444-4444-a444-444444444446', 'b8bcce17-d0f6-427a-abb8-eec8c9d609fe', 'Uji Matcha Milktea', 'Creamy authentic Japanese matcha topped with cheese foam', 139.00, 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=600&auto=format&fit=crop', true, ARRAY['vegetarian']::text[]),
+('44444444-4444-4444-a444-444444444446', 'b8bcce17-d0f6-427a-abb8-eec8c9d609fe', 'Brown Sugar Boba Milk', 'Warm brown sugar tapioca pearls with cold fresh farm milk', 149.00, 'https://images.unsplash.com/photo-1558857563-b371033873b8?w=600&auto=format&fit=crop', true, ARRAY['vegetarian']::text[]),
+('44444444-4444-4444-a444-444444444446', 'e1140759-f6d6-4fb2-b8e2-cc38b8daa51d', 'Signature Chicken Inasal Rice Bowl', 'Flame-grilled marinated chicken thigh with annatto rice and spiced vinegar', 189.00, 'https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?w=600&auto=format&fit=crop', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444446', 'e1140759-f6d6-4fb2-b8e2-cc38b8daa51d', 'Spam & Egg Comfort Bowl', 'Thick slice fried Spam, sunny side egg over garlic fried rice', 165.00, 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444446', 'fe7f3ed4-6724-425d-80f6-c0721770142b', 'French Butter Croissant', 'Flaky golden multi-layered croissant baked fresh every morning', 95.00, 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=600&auto=format&fit=crop', true, ARRAY['vegetarian']::text[]),
+('44444444-4444-4444-a444-444444444446', '13a2968b-b7b5-41f4-b7bf-8f3bc9c8024f', 'Garlic Parmesan Truffle Fries', 'Golden crispy skin-on fries tossed in garlic parmesan & truffle oil', 119.00, 'https://images.unsplash.com/photo-1576107232684-1279f3908594?w=600&auto=format&fit=crop', true, ARRAY['vegetarian']::text[])
+ON CONFLICT DO NOTHING;
+
+-- STUFFED N' FRIED Cordova Menu Categories
+INSERT INTO menu_categories (id, restaurant_id, name, sort_order) VALUES
+('d65b05ca-45ef-4df8-9db7-2cb826b47ce3', '44444444-4444-4444-a444-444444444448', 'Sooo Sulit Meals', 1),
+('f47a527a-dde5-4046-bdc1-8d53e8e69caf', '44444444-4444-4444-a444-444444444448', 'Pork Section', 2),
+('9bf18ca1-9ad8-4935-91ec-e414bd064510', '44444444-4444-4444-a444-444444444448', 'Ad-Ons', 3)
+ON CONFLICT DO NOTHING;
+
+-- STUFFED N' FRIED Cordova Menu Items (from Foodpanda)
+INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags) VALUES
+('44444444-4444-4444-a444-444444444448', 'd65b05ca-45ef-4df8-9db7-2cb826b47ce3', 'Classic meal 1', 'Qtr slice of batter-fried chicken, 3 pcs puso, 1oz garlic vinegar & 1 bottled water or coke swakto', 219.00, 'https://images.deliveryhero.io/image/global-menu-service/FP_PH/vendor/dxb3/product/9695ec80-4750-4a81-8319-0babb1b74161.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444448', 'd65b05ca-45ef-4df8-9db7-2cb826b47ce3', 'Ultimate meal 1', 'Qtr slice of batter-fried chicken, 4 pcs puso, 2pcs ngohiong, 1oz garlic vinegar & 1 bottled water or coke swakto', 249.00, 'https://images.deliveryhero.io/image/global-menu-service/FP_PH/vendor/dxb3/product/dfd0482e-0732-4a41-9f00-281bcddbb20e.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444448', 'd65b05ca-45ef-4df8-9db7-2cb826b47ce3', 'Half Batter-fried chicken', 'Half crispy batter-fried chicken with a savory, juicy inside, perfect for sharing.', 279.00, 'https://images.deliveryhero.io/image/global-menu-service/FP_PH/vendor/dxb3/product/2bf40ef6-f921-4288-922c-dfaae8dd29c2.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444448', 'd65b05ca-45ef-4df8-9db7-2cb826b47ce3', 'Family platter', '1 Batter-fried whole chicken, 520g Lechon kawali, 3pcs ngohiong, 12pcs puso, garlic vinegar, 1.5L coke', 1299.00, 'https://images.deliveryhero.io/image/global-menu-service/FP_PH/vendor/dxb3/product/11bb2f2b-388e-409b-b52a-9f1294ae65b3.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444448', 'd65b05ca-45ef-4df8-9db7-2cb826b47ce3', 'Spicy Batter-fried Whole Chicken', 'Crispy, spicy batter-fried whole chicken with bold flavors and tender meat', 539.00, 'https://images.deliveryhero.io/image/global-menu-service/FP_PH/vendor/dxb3/product/a76336a5-7280-470f-9df6-51e2ded76dcf.jpg', true, ARRAY['spicy']::text[]),
+('44444444-4444-4444-a444-444444444448', 'd65b05ca-45ef-4df8-9db7-2cb826b47ce3', 'Barkada Meal 1', '1 Whole batter-fried chicken, Garlic vinegar, 8pcs puso & 1 Coke 1.5 liter', 562.00, 'https://images.deliveryhero.io/image/fd-ph/Products/72881538.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444448', 'd65b05ca-45ef-4df8-9db7-2cb826b47ce3', '1 Whole Batter-fried Chicken', 'Marinated with our own 15 mixed spices, Stuffed with fresh onions, garlic, lemon grass and spring onions. Super crunchy outside and juicy inside', 499.00, 'https://images.deliveryhero.io/image/fd-ph/Products/72881539.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444448', 'f47a527a-dde5-4046-bdc1-8d53e8e69caf', 'Spicy Crispy Fried lechon kawali', 'Crispy, spicy fried lechon kawali with flavorful seasoning and a smoky crunch', 469.00, 'https://images.deliveryhero.io/image/global-menu-service/FP_PH/vendor/dxb3/product/c74973f2-2d45-445c-b7a7-0966db31ede4.jpg', true, ARRAY['spicy']::text[]),
+('44444444-4444-4444-a444-444444444448', 'f47a527a-dde5-4046-bdc1-8d53e8e69caf', 'Crispy Fried Lechon Kawali', 'Pork Belly Deep-fried until crisp and golden brown, yet soft and tender inside. Served with Garlic Vinegar on the side.', 429.00, 'https://images.deliveryhero.io/image/fd-ph/Products/72881534.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444448', 'f47a527a-dde5-4046-bdc1-8d53e8e69caf', 'Barkada Meal 2', '780g Lechon kawali, 8pcs puso, garlic vinegar, 1.5L coke', 849.00, 'https://images.deliveryhero.io/image/fd-ph/products/72881535.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444448', 'f47a527a-dde5-4046-bdc1-8d53e8e69caf', 'Classic Meal 2 (CM2)', '260g Lechon kawali, 3pcs puso, garlic vinegar, swakto', 279.00, 'https://images.deliveryhero.io/image/fd-ph/Products/78151007.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444448', 'f47a527a-dde5-4046-bdc1-8d53e8e69caf', 'Ultimate Meal 2 (UM2)', '260g Lechon kawali, 2pcs ngohiong, 4pcs puso, garlic vinegar, swakto', 329.00, 'https://images.deliveryhero.io/image/fd-ph/Products/78151051.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444448', '9bf18ca1-9ad8-4935-91ec-e414bd064510', 'Puso', '1pc puso or hanging rice', 10.00, 'https://images.deliveryhero.io/image/fd-ph/Products/89135816.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444448', '9bf18ca1-9ad8-4935-91ec-e414bd064510', 'Special Ngohiong', '1pc special ngohiong, garlic vinegar', 29.00, 'https://images.deliveryhero.io/image/fd-ph/Products/89135869.jpg', true, ARRAY[]::text[])
+ON CONFLICT DO NOTHING;
+
+
+-- Taytayan Pinoy Restaurant Menu Categories
+INSERT INTO menu_categories (id, restaurant_id, name, sort_order) VALUES
+('d9de3d6b-d24c-4f40-b134-e2fe282bee71', '44444444-4444-4444-a444-444444444447', 'Short Orders & Appetizers', 1),
+('77718c1e-b5de-4818-9d4b-f18a06da0c21', '44444444-4444-4444-a444-444444444447', 'All Day Breakfast', 2),
+('508cf884-8c71-4149-acc0-94696091e12f', '44444444-4444-4444-a444-444444444447', 'Native Soups & Broths', 3),
+('1cd60931-8dd3-46ff-8b52-355ce6360465', '44444444-4444-4444-a444-444444444447', 'Manok Bisaya (Native Chicken)', 4),
+('9a780d84-aa7c-4eba-9d35-5dd4858e977f', '44444444-4444-4444-a444-444444444447', 'Seafood Specialties', 5),
+('9a4fc497-d4cb-4531-a351-9e571dc5b8a9', '44444444-4444-4444-a444-444444444447', 'Kanding (Goat Dishes)', 6),
+('41f98936-5816-4f5d-adf3-b16c78229834', '44444444-4444-4444-a444-444444444447', 'Charcoal Grilled & BBQ', 7),
+('d9429b73-a5a3-4441-9eb1-df367a3403f2', '44444444-4444-4444-a444-444444444447', 'Meat & Pork Dishes', 8),
+('24dda49e-7c7b-48df-995f-8247f434b65c', '44444444-4444-4444-a444-444444444447', 'Rice & Extras', 9),
+('517d21ac-e4e8-4def-8681-c7cdb29390a5', '44444444-4444-4444-a444-444444444447', 'Beverages & Cold Drinks', 10),
+('a201b274-bf37-4fa1-a6c7-5e9a16008fc3', '44444444-4444-4444-a444-444444444447', 'Coffee', 11)
+ON CONFLICT DO NOTHING;
+
+-- Taytayan Pinoy Restaurant Menu Items (from Foodpanda)
+INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags) VALUES
+('44444444-4444-4444-a444-444444444447', 'd9de3d6b-d24c-4f40-b134-e2fe282bee71', 'chicharon bulaklak', 'For reference: Crispy chicharon bulaklak with a rich, savory bite.', 312.00, 'https://images.deliveryhero.io/image/fd-ph/Products/64548739.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', 'd9de3d6b-d24c-4f40-b134-e2fe282bee71', 'pancit canton/gisado', 'For reference: Stir-fried noodles with vegetables, meat, and savory sauce, a flavorful Filipino comfort dish.', 324.00, 'https://images.deliveryhero.io/image/fd-ph/Products/64548742.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', 'd9de3d6b-d24c-4f40-b134-e2fe282bee71', 'french fries', 'For reference: Golden and crispy potato fries.', 90.00, 'https://images.deliveryhero.io/image/fd-ph/Products/64548750.jpg', true, ARRAY['vegetarian']::text[]),
+('44444444-4444-4444-a444-444444444447', 'd9de3d6b-d24c-4f40-b134-e2fe282bee71', 'chop suey', 'For reference: Chop suey with stir-fried vegetables.', 336.00, 'https://images.deliveryhero.io/image/fd-ph/Products/64548755.jpg', true, ARRAY['vegetarian']::text[]),
+('44444444-4444-4444-a444-444444444447', 'd9de3d6b-d24c-4f40-b134-e2fe282bee71', 'pinakbet', 'For reference: Flavorful pinakbet with a mix of fresh vegetables.', 276.00, 'https://images.deliveryhero.io/image/fd-ph/Products/64548763.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', 'd9de3d6b-d24c-4f40-b134-e2fe282bee71', 'spring rolls', 'For reference only: Crispy fried or fresh rolls filled with vegetables and sometimes meat.', 144.00, 'https://images.deliveryhero.io/image/fd-ph/Products/64548766.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', 'd9de3d6b-d24c-4f40-b134-e2fe282bee71', 'lomi', 'For reference: Enjoy a hearty bowl of Filipino-style noodle soup with tender meat, vegetables, and a savory broth.', 336.00, 'https://images.deliveryhero.io/image/fd-ph/products/64548772.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', 'd9de3d6b-d24c-4f40-b134-e2fe282bee71', 'calamares', 'For reference: Delicious deep-fried squid rings.', 408.00, 'https://images.deliveryhero.io/image/fd-ph/Products/64548774.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', 'd9de3d6b-d24c-4f40-b134-e2fe282bee71', 'lumpia shanghai', 'For reference only: Delight in the crispy and flavorful goodness of Lumpia Shanghai!', 324.00, 'https://images.deliveryhero.io/image/fd-ph/Products/64548778.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', 'd9de3d6b-d24c-4f40-b134-e2fe282bee71', 'kropek', 'For reference only: Dive into a delightful snacking experience with the Kropek, the light and airy shrimp chips that pack a punch of umami goodness.', 70.00, 'https://images.deliveryhero.io/image/fd-ph/Products/64548784.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', 'd9de3d6b-d24c-4f40-b134-e2fe282bee71', 'eggplant salad', 'For reference: Smoky and tangy eggplant salad with fresh flavors.', 216.00, 'https://images.deliveryhero.io/image/fd-ph/Products/64548787.jpg', true, ARRAY['vegetarian']::text[]),
+('44444444-4444-4444-a444-444444444447', '77718c1e-b5de-4818-9d4b-f18a06da0c21', 'chorizo binungkag', 'For reference: Spicy sausage mixed with eggs, served with rice and vegetables for a hearty meal.', 264.00, 'https://images.deliveryhero.io/image/fd-ph/LH/qm4q-listing.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '77718c1e-b5de-4818-9d4b-f18a06da0c21', 'corned beef', 'For reference: A savory, tender corned beef dish with a rich familiar taste.', 264.00, 'https://images.deliveryhero.io/image/fd-ph/products/64548791.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '508cf884-8c71-4149-acc0-94696091e12f', 'utan bisaya', 'For reference: Hearty vegetable soup with a rich flavor.', 276.00, 'https://images.deliveryhero.io/image/fd-ph/Products/64548748.jpg', true, ARRAY['vegetarian']::text[]),
+('44444444-4444-4444-a444-444444444447', '508cf884-8c71-4149-acc0-94696091e12f', 'balbacua', 'For reference only: Indulge in the authentic taste of the Balbacua, a culinary delight that showcases the unique blend of local herbs and spices.', 384.00, 'https://images.deliveryhero.io/image/fd-ph/Products/64548758.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '508cf884-8c71-4149-acc0-94696091e12f', 'cansi', 'For reference: Sour and savory with a deeply comforting beef broth.', 540.00, 'https://images.deliveryhero.io/image/fd-ph/LH/qm4q-listing.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '508cf884-8c71-4149-acc0-94696091e12f', 'sinigang shrimp', 'For reference only: Sinigang shrimp, a flavorful and tangy seafood soup.', 420.00, 'https://images.deliveryhero.io/image/fd-ph/LH/qm4q-listing.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '508cf884-8c71-4149-acc0-94696091e12f', 'sinigang pork', 'For reference: Pork in sour tamarind soup.', 408.00, 'https://images.deliveryhero.io/image/fd-ph/products/64548785.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '508cf884-8c71-4149-acc0-94696091e12f', 'tambayan', 'For reference: A savory broth with tender meat, vegetables, and aromatic spices, perfect for sharing.', 276.00, 'https://images.deliveryhero.io/image/fd-ph/Products/64548786.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '508cf884-8c71-4149-acc0-94696091e12f', 'linarang bakasi', 'For reference: Rich, savory, zesty, and satisfying.', 228.00, 'https://images.deliveryhero.io/image/fd-ph/LH/qm4q-listing.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '508cf884-8c71-4149-acc0-94696091e12f', 'pocher0', 'For reference: A flavorful broth with tender meat, vegetables, and aromatic herbs, served hot.', 648.00, 'https://images.deliveryhero.io/image/fd-ph/Products/64548793.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '1cd60931-8dd3-46ff-8b52-355ce6360465', 'deep fried', 'For reference: Crispy fried chicken served with a flavorful dipping sauce and traditional sides.', 564.00, 'https://images.deliveryhero.io/image/fd-ph/products/64548746.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '1cd60931-8dd3-46ff-8b52-355ce6360465', 'tinola', 'For reference only: A comforting Filipino soup made with chicken, green papaya, and leafy greens in a ginger-flavored broth.', 456.00, 'https://images.deliveryhero.io/image/fd-ph/Products/64548769.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '9a780d84-aa7c-4eba-9d35-5dd4858e977f', 'crispy squid', 'For reference: Deep-fried crispy baby squid.', 408.00, 'https://images.deliveryhero.io/image/fd-ph/Products/64548740.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '9a780d84-aa7c-4eba-9d35-5dd4858e977f', 'squid adobao', 'For reference: Savory Squid Adobao.', 408.00, 'https://images.deliveryhero.io/image/fd-ph/Products/64548776.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '9a780d84-aa7c-4eba-9d35-5dd4858e977f', 'shrimp in garlic', 'For reference: Succulent shrimp sautéed in aromatic garlic, creating a flavorful and savory seafood delight.', 360.00, 'https://images.deliveryhero.io/image/fd-ph/LH/qm4q-listing.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '9a780d84-aa7c-4eba-9d35-5dd4858e977f', 'sa-ang', 'For reference: A flavorful dish featuring marinated meat, grilled to perfection, often served with fresh herbs.', 288.00, 'https://images.deliveryhero.io/image/fd-ph/Products/64548782.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '9a780d84-aa7c-4eba-9d35-5dd4858e977f', 'baked scallops', 'For reference: Indulge in the succulent flavors of Baked Scallops.', 252.00, 'https://images.deliveryhero.io/image/fd-ph/Products/64548797.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '9a4fc497-d4cb-4531-a351-9e571dc5b8a9', 'sinampalocan', 'For reference: A sour tamarind soup with tender goat meat and vegetables, served hot.', 372.00, 'https://images.deliveryhero.io/image/fd-ph/Products/64548741.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '9a4fc497-d4cb-4531-a351-9e571dc5b8a9', 'kilawin', 'For reference: A tangy and refreshing dish, perfect for those who enjoy a zesty, citrus-marinated flavor.', 252.00, 'https://images.deliveryhero.io/image/fd-ph/Products/64548757.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '9a4fc497-d4cb-4531-a351-9e571dc5b8a9', 'kaldereta', 'For reference: Filipino-style tomato-based stew.', 468.00, 'https://images.deliveryhero.io/image/fd-ph/Products/64548783.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '41f98936-5816-4f5d-adf3-b16c78229834', 'pork barbeque', 'For reference: Tender pork barbecue with a smoky, slightly sweet glaze, perfect for a flavorful bite.', 70.00, 'https://images.deliveryhero.io/image/fd-ph/Products/64548752.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '41f98936-5816-4f5d-adf3-b16c78229834', 'tuna panga - small', 'For reference: Grilled small tuna belly, tender and flavorful, served with a zesty sauce.', 156.00, 'https://images.deliveryhero.io/image/fd-ph/LH/qm4q-listing.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '41f98936-5816-4f5d-adf3-b16c78229834', 'spicy isaw', 'For reference: Grilled skewers of marinated intestines, seasoned with spices, offering a smoky and savory flavor.', 60.00, 'https://images.deliveryhero.io/image/fd-ph/Products/64548762.jpg', true, ARRAY['spicy']::text[]),
+('44444444-4444-4444-a444-444444444447', '41f98936-5816-4f5d-adf3-b16c78229834', 'tuna panga - large', 'For reference: Grilled large tuna belly, tender and flavorful, served with a zesty sauce.', 324.00, 'https://images.deliveryhero.io/image/fd-ph/LH/qm4q-listing.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '41f98936-5816-4f5d-adf3-b16c78229834', 'grilled squid', 'For reference only: Savor the irresistible goodness of this Grilled Squid, as the tender and smoky flavor leaves a lasting impression.', 408.00, 'https://images.deliveryhero.io/image/fd-ph/LH/qm4q-listing.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', 'd9429b73-a5a3-4441-9eb1-df367a3403f2', 'crispy pata', 'For reference: Crispy pata with a crunchy skin and tender, flavorful meat.', 780.00, 'https://images.deliveryhero.io/image/fd-ph/Products/64548751.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', 'd9429b73-a5a3-4441-9eb1-df367a3403f2', 'sizzling sisig', 'For reference: Crispy and flavorful sizzling sisig.', 252.00, 'https://images.deliveryhero.io/image/fd-ph/Products/64548754.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', 'd9429b73-a5a3-4441-9eb1-df367a3403f2', 'chili chicken', 'For reference: Spicy chicken dish, often deep-fried and tossed in a tangy chili sauce.', 420.00, 'https://images.deliveryhero.io/image/fd-ph/Products/64548768.jpg', true, ARRAY['spicy']::text[]),
+('44444444-4444-4444-a444-444444444447', 'd9429b73-a5a3-4441-9eb1-df367a3403f2', 'lechon kawali', 'For reference only: Delicious crispy pork belly.', 408.00, 'https://images.deliveryhero.io/image/fd-ph/Products/64548770.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', 'd9429b73-a5a3-4441-9eb1-df367a3403f2', 'battered chicken', 'For reference: Crispy Battered Chicken.', 384.00, 'https://images.deliveryhero.io/image/fd-ph/Products/64548779.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', 'd9429b73-a5a3-4441-9eb1-df367a3403f2', 'sweet & sour pork', 'For reference: Tangy and savory sweet & sour pork with a perfect balance of flavors.', 432.00, 'https://images.deliveryhero.io/image/fd-ph/Products/64548792.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', 'd9429b73-a5a3-4441-9eb1-df367a3403f2', 'Dinuguan', 'New', 210.00, 'https://images.deliveryhero.io/image/fd-ph/Products/91320169.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '24dda49e-7c7b-48df-995f-8247f434b65c', 'taytayan fried rice', 'For reference: Savory fried rice with vegetables, spices, and a hint of smokiness, served hot.', 250.00, 'https://images.deliveryhero.io/image/fd-ph/LH/qm4q-listing.jpg', true, ARRAY['vegetarian']::text[]),
+('44444444-4444-4444-a444-444444444447', '24dda49e-7c7b-48df-995f-8247f434b65c', 'unli rice (per cup)', 'For reference: Unlimited rice served by the cup, perfect for hearty meals and satisfying appetites.', 50.00, 'https://images.deliveryhero.io/image/fd-ph/LH/qm4q-listing.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '517d21ac-e4e8-4def-8681-c7cdb29390a5', '1L Coke', 'For reference: Quench your thirst with Coke.', 90.00, 'https://images.deliveryhero.io/image/fd-ph/products/64548743.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '517d21ac-e4e8-4def-8681-c7cdb29390a5', 'Coke Mismo', 'For reference: Classic Coke Mismo with a crisp, refreshing taste.', 50.00, 'https://images.deliveryhero.io/image/fd-ph/products/66831510.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '517d21ac-e4e8-4def-8681-c7cdb29390a5', 'Coke Zero', 'For reference: Crisp and refreshing cola with zero sugar.', 80.00, 'https://images.deliveryhero.io/image/fd-ph/products/67182399.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '517d21ac-e4e8-4def-8681-c7cdb29390a5', 'Sprite Mismo', 'For reference: A cold and fizzy Sprite in a convenient bottle.', 50.00, 'https://images.deliveryhero.io/image/fd-ph/products/66831512.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '517d21ac-e4e8-4def-8681-c7cdb29390a5', 'bottled water', 'For reference: Refreshing bottled water to keep you hydrated throughout the day.', 30.00, 'https://images.deliveryhero.io/image/fd-ph/products/64548744.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '517d21ac-e4e8-4def-8681-c7cdb29390a5', 'shakes', 'For reference: Cold and creamy with smooth, sweet flavors.', 110.00, 'https://images.deliveryhero.io/image/fd-ph/LH/qm4q-listing.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '517d21ac-e4e8-4def-8681-c7cdb29390a5', 'Del Monte Pineapple Juice', 'For Reference: Refreshing pineapple juice from Del Monte.', 80.00, 'https://images.deliveryhero.io/image/fd-ph/products/67182384.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '517d21ac-e4e8-4def-8681-c7cdb29390a5', 'Del Monte Mango Juice', 'For reference: Sweet and juicy with a tropical mango burst.', 80.00, 'https://images.deliveryhero.io/image/fd-ph/products/67182387.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '517d21ac-e4e8-4def-8681-c7cdb29390a5', 'Del Monte 4 Season', 'For reference: Refreshing Del Monte 4 Season.', 80.00, 'https://images.deliveryhero.io/image/fd-ph/products/67182388.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '517d21ac-e4e8-4def-8681-c7cdb29390a5', 'Del Monte Pineapple Orange Juice', 'For reference: A refreshing blend of sweet pineapple and tangy orange for a tropical juice experience.', 80.00, 'https://images.deliveryhero.io/image/fd-ph/products/67182393.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '517d21ac-e4e8-4def-8681-c7cdb29390a5', 'San Mig Light', 'For reference: Light and crisp San Mig Light with a smooth malt flavor.', 80.00, 'https://images.deliveryhero.io/image/fd-ph/products/67182395.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '517d21ac-e4e8-4def-8681-c7cdb29390a5', 'San Mig Pilsen', 'For reference only: San Miguel Pale Pilsen is the original Pilsen beer, representing a classic style that has stood the test of time and captivated beer enthusiasts worldwide.', 80.00, 'https://images.deliveryhero.io/image/fd-ph/products/67182396.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', '517d21ac-e4e8-4def-8681-c7cdb29390a5', 'Red Horse Stallion', 'For reference: A smooth, strong beer with a rich flavor, perfect for those who love a bold brew.', 80.00, 'https://images.deliveryhero.io/image/fd-ph/products/67182397.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', 'a201b274-bf37-4fa1-a6c7-5e9a16008fc3', 'cafe latte', 'For reference: Velvety cafe latte with a smooth coffee-milk balance.', 95.00, 'https://images.deliveryhero.io/image/fd-ph/LH/qm4q-listing.jpg', true, ARRAY['vegetarian']::text[]),
+('44444444-4444-4444-a444-444444444447', 'a201b274-bf37-4fa1-a6c7-5e9a16008fc3', 'americano', 'For reference only: Bold and rich coffee with a smooth finish.', 90.00, 'https://images.deliveryhero.io/image/fd-ph/LH/qm4q-listing.jpg', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-444444444447', 'a201b274-bf37-4fa1-a6c7-5e9a16008fc3', 'cappuccino', 'For Reference: A rich, bold espresso flavor balanced with milk, creating a smooth and velvety coffee experience.', 95.00, 'https://images.deliveryhero.io/image/fd-ph/Products/64548767.jpg', true, ARRAY['vegetarian']::text[]),
+('44444444-4444-4444-a444-444444444447', 'a201b274-bf37-4fa1-a6c7-5e9a16008fc3', 'coffee press (unli)', 'For reference: Unlimited brewed coffee served in a press, rich in flavor and aroma.', 95.00, 'https://images.deliveryhero.io/image/fd-ph/LH/qm4q-listing.jpg', true, ARRAY['vegetarian']::text[]),
+('44444444-4444-4444-a444-444444444447', 'a201b274-bf37-4fa1-a6c7-5e9a16008fc3', 'espresso', 'For reference: Strong, bold espresso with deep, roasted coffee flavors.', 90.00, 'https://images.deliveryhero.io/image/fd-ph/LH/qm4q-listing.jpg', true, ARRAY[]::text[])
+ON CONFLICT DO NOTHING;
+
+
+-- Tita Kim's Restaurant Menu Categories
+INSERT INTO menu_categories (id, restaurant_id, name, sort_order) VALUES
+('b620b587-c31a-4952-b18c-ff924f73d09b', '44444444-4444-4444-a444-44444444444f', 'Eat-All-You-Can (₱299)', 1),
+('37c4bca7-4d1c-401a-8558-99bc4ab01f5e', '44444444-4444-4444-a444-44444444444f', 'Seafood & Fish', 2),
+('30ad4c99-7807-4865-b1a5-58ea38ddc520', '44444444-4444-4444-a444-44444444444f', 'Pork & Beef Dishes', 3),
+('ba3dd032-2116-4f27-8b07-8e53bf54f620', '44444444-4444-4444-a444-44444444444f', 'Chicken, Pasta & Noodles', 4)
+ON CONFLICT DO NOTHING;
+
+-- Tita Kim's Restaurant Menu Items (Eat-All-You-Can ₱299)
+INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags) VALUES
+('44444444-4444-4444-a444-44444444444f', '37c4bca7-4d1c-401a-8558-99bc4ab01f5e', '1. Grilled Seafood Mix', 'Shrimp, mussels & squid grilled in garlic butter (Included in ₱299 Eat-All-You-Can)', 299.00, '/images/tita-kims/dish-1-grilled-seafood-mix.png', true, ARRAY['seafood']::text[]),
+('44444444-4444-4444-a444-44444444444f', 'ba3dd032-2116-4f27-8b07-8e53bf54f620', '2. Baked Cheesy Spaghetti', 'Filipino-style spaghetti topped with melted cheese, served with grilled chicken (Included in ₱299 Eat-All-You-Can)', 299.00, '/images/tita-kims/dish-2-baked-cheesy-spaghetti.png', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-44444444444f', '30ad4c99-7807-4865-b1a5-58ea38ddc520', '3. Lumpiang Shanghai', 'Crispy fried pork spring rolls (Included in ₱299 Eat-All-You-Can)', 299.00, '/images/tita-kims/dish-3-lumpiang-shanghai.png', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-44444444444f', '37c4bca7-4d1c-401a-8558-99bc4ab01f5e', '4. Garlic Butter Shrimp', 'Shrimp sautéed in garlic butter with chili & spring onions (Included in ₱299 Eat-All-You-Can)', 299.00, '/images/tita-kims/dish-4-garlic-butter-shrimp.png', true, ARRAY['seafood']::text[]),
+('44444444-4444-4444-a444-44444444444f', '37c4bca7-4d1c-401a-8558-99bc4ab01f5e', '5. Crispy Fish Fillet Strips', 'Panko-breaded fish fillet strips, fried golden (Included in ₱299 Eat-All-You-Can)', 299.00, '/images/tita-kims/dish-5-crispy-fish-fillet-strips.png', true, ARRAY['seafood']::text[]),
+('44444444-4444-4444-a444-44444444444f', '30ad4c99-7807-4865-b1a5-58ea38ddc520', '6. Beef Caldereta', 'Beef stew in tomato sauce with carrots & potatoes (Included in ₱299 Eat-All-You-Can)', 299.00, '/images/tita-kims/dish-6-beef-caldereta.png', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-44444444444f', 'ba3dd032-2116-4f27-8b07-8e53bf54f620', '7. Pancit Guisado with Shrimp', 'Sautéed noodles with shrimp, vegetables & calamansi (Included in ₱299 Eat-All-You-Can)', 299.00, '/images/tita-kims/dish-7-pancit-guisado-with-shrimp.png', true, ARRAY['seafood']::text[]),
+('44444444-4444-4444-a444-44444444444f', 'ba3dd032-2116-4f27-8b07-8e53bf54f620', '8. Crispy Fried Chicken', 'Golden fried chicken pieces with fresh veggie garnish (Included in ₱299 Eat-All-You-Can)', 299.00, '/images/tita-kims/dish-8-crispy-fried-chicken.png', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-44444444444f', '30ad4c99-7807-4865-b1a5-58ea38ddc520', '9. Pork Humba', 'Braised sweet-savory pork belly with boiled egg (Included in ₱299 Eat-All-You-Can)', 299.00, '/images/tita-kims/dish-9-pork-humba.png', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-44444444444f', '30ad4c99-7807-4865-b1a5-58ea38ddc520', '10. Beef Tapa / Bistek', 'Marinated beef strips with red onions (Included in ₱299 Eat-All-You-Can)', 299.00, '/images/tita-kims/dish-10-beef-tapa-bistek.png', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-44444444444f', '37c4bca7-4d1c-401a-8558-99bc4ab01f5e', '11. Buttered Garlic Mussels (Tahong)', 'Fresh mussels in garlic butter sauce (Included in ₱299 Eat-All-You-Can)', 299.00, '/images/tita-kims/dish-11-buttered-garlic-mussels.png', true, ARRAY['seafood']::text[]),
+('44444444-4444-4444-a444-44444444444f', '30ad4c99-7807-4865-b1a5-58ea38ddc520', '12. Pork Adobo with Eggplant & Okra', 'Classic pork adobo served with grilled eggplant & okra (Included in ₱299 Eat-All-You-Can)', 299.00, '/images/tita-kims/dish-12-pork-adobo-with-eggplant.png', true, ARRAY[]::text[]),
+('44444444-4444-4444-a444-44444444444f', '37c4bca7-4d1c-401a-8558-99bc4ab01f5e', '13. Ginisang Dilis', 'Sautéed dried anchovies with tomato & chili (Included in ₱299 Eat-All-You-Can)', 299.00, '/images/tita-kims/dish-13-ginisang-dilis.png', true, ARRAY['seafood']::text[]),
+('44444444-4444-4444-a444-44444444444f', 'ba3dd032-2116-4f27-8b07-8e53bf54f620', '14. Chicken Karaage / Popcorn Chicken', 'Crispy fried chicken bites drizzled with sauce (Included in ₱299 Eat-All-You-Can)', 299.00, '/images/tita-kims/dish-14-chicken-karaage.png', true, ARRAY[]::text[])
+ON CONFLICT DO NOTHING;
+
+-- ============================================================================
+-- CAFE MAFIA - CORDOVA (MENU CATEGORIES & ITEMS FROM FOODPANDA)
+-- ============================================================================
+DO $$
+DECLARE
+    v_rest_id UUID;
+    v_cat_1 UUID;
+    v_cat_2 UUID;
+    v_cat_3 UUID;
+    v_cat_4 UUID;
+    v_cat_5 UUID;
+    v_cat_6 UUID;
+    v_cat_7 UUID;
+BEGIN
+    SELECT id INTO v_rest_id FROM restaurants WHERE slug = 'cafe-mafia' OR slug LIKE '%cafe%mafia%' LIMIT 1;
+    IF v_rest_id IS NOT NULL THEN
+        INSERT INTO menu_categories (restaurant_id, name, sort_order)
+        VALUES (v_rest_id, 'Mafia Premium Burger', 1)
+        ON CONFLICT DO NOTHING
+        RETURNING id INTO v_cat_1;
+        IF v_cat_1 IS NULL THEN
+            SELECT id INTO v_cat_1 FROM menu_categories WHERE restaurant_id = v_rest_id AND name = 'Mafia Premium Burger' LIMIT 1;
+        END IF;
+
+        INSERT INTO menu_categories (restaurant_id, name, sort_order)
+        VALUES (v_rest_id, 'Soda', 2)
+        ON CONFLICT DO NOTHING
+        RETURNING id INTO v_cat_2;
+        IF v_cat_2 IS NULL THEN
+            SELECT id INTO v_cat_2 FROM menu_categories WHERE restaurant_id = v_rest_id AND name = 'Soda' LIMIT 1;
+        END IF;
+
+        INSERT INTO menu_categories (restaurant_id, name, sort_order)
+        VALUES (v_rest_id, 'Starters', 3)
+        ON CONFLICT DO NOTHING
+        RETURNING id INTO v_cat_3;
+        IF v_cat_3 IS NULL THEN
+            SELECT id INTO v_cat_3 FROM menu_categories WHERE restaurant_id = v_rest_id AND name = 'Starters' LIMIT 1;
+        END IF;
+
+        INSERT INTO menu_categories (restaurant_id, name, sort_order)
+        VALUES (v_rest_id, 'Hot Coffee', 4)
+        ON CONFLICT DO NOTHING
+        RETURNING id INTO v_cat_4;
+        IF v_cat_4 IS NULL THEN
+            SELECT id INTO v_cat_4 FROM menu_categories WHERE restaurant_id = v_rest_id AND name = 'Hot Coffee' LIMIT 1;
+        END IF;
+
+        INSERT INTO menu_categories (restaurant_id, name, sort_order)
+        VALUES (v_rest_id, 'Iced Coffee', 5)
+        ON CONFLICT DO NOTHING
+        RETURNING id INTO v_cat_5;
+        IF v_cat_5 IS NULL THEN
+            SELECT id INTO v_cat_5 FROM menu_categories WHERE restaurant_id = v_rest_id AND name = 'Iced Coffee' LIMIT 1;
+        END IF;
+
+        INSERT INTO menu_categories (restaurant_id, name, sort_order)
+        VALUES (v_rest_id, 'Non-Coffee Based Drinks', 6)
+        ON CONFLICT DO NOTHING
+        RETURNING id INTO v_cat_6;
+        IF v_cat_6 IS NULL THEN
+            SELECT id INTO v_cat_6 FROM menu_categories WHERE restaurant_id = v_rest_id AND name = 'Non-Coffee Based Drinks' LIMIT 1;
+        END IF;
+
+        INSERT INTO menu_categories (restaurant_id, name, sort_order)
+        VALUES (v_rest_id, 'Fruit Tea', 7)
+        ON CONFLICT DO NOTHING
+        RETURNING id INTO v_cat_7;
+        IF v_cat_7 IS NULL THEN
+            SELECT id INTO v_cat_7 FROM menu_categories WHERE restaurant_id = v_rest_id AND name = 'Fruit Tea' LIMIT 1;
+        END IF;
+
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_1, 'The Soldier', 'Brioche buns, pressed 100% beef patty, double cheddar cheese, grilled onions & mafia signature sauce', 209, 'https://images.deliveryhero.io/image/fd-ph/Products/58203792.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_1, 'The Capo', 'Brioche buns, pressed 100% beef patty, double cheddar cheese, grilled onions, tomato, pickles, lettuce & mafia signature sauce', 259, 'https://images.deliveryhero.io/image/fd-ph/Products/58203793.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_1, 'The Consigliere', 'Brioche buns, pressed 100% beef patty, grilled pineapple, double cheddar cheese, grilled onions, tomato, lettuce & mafia signature sauce', 299, 'https://images.deliveryhero.io/image/fd-ph/products/58203794.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_1, 'The Boss', 'A hearty and savory burger with a tender texture. For reference only.', 339, 'https://images.deliveryhero.io/image/fd-ph/products/58203795.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_1, 'Al Capone', 'Brioche buns, 100% beef patty, quadruple cheddar cheese, grilled onions, pickle relish, honey-cured bacon, and mafia special BARBECUE sauce', 339, 'https://images.deliveryhero.io/image/fd-ph/products/58577677.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_1, 'The Underboss', 'Brioche buns, pressed 100% beef patties, grilled bacon, double cheddar cheese, grilled onions, tomato, pickles, lettuce, jalapeno, sriracha & mafia signature sauce', 359, 'https://images.deliveryhero.io/image/fd-ph/Products/58203796.jpg', true, ARRAY['spicy'])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_1, 'Luciano', 'Brioche buns, double 100% beef patty, quadruple cheddar cheese, grilled onions, pickle relish, jalapeno, honey-cured bacon, and mafia special BARBECUE sauce', 399, 'https://images.deliveryhero.io/image/fd-ph/products/58577678.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_1, 'The Godfather', 'Brioche buns, pressed double 100% beef patties, quadruple cheddar cheese, grilled bacon, grilled onions, tomato, pickles, jalapeno, & mafia signature sauce', 439, 'https://images.deliveryhero.io/image/fd-ph/products/58203797.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_1, 'Cosa Nostra', 'Brioche buns, pressed double 100% beef patties, quadruple cheddar cheese, grilled bacon, grilled onions, tomato, pickles, jalapeno, grilled pineapple, egg, lettuce & mafia signature sauce', 479, 'https://images.deliveryhero.io/image/fd-ph/Products/58577622.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_2, 'Canada Dry', 'Ginger Ale', 110, 'https://images.deliveryhero.io/image/global-menu-service/FP_PH/vendor/i18z/product/ecc9fbb7-dbe9-412c-8ff7-0a2eb962598f.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_2, 'A&W', 'Root Beer', 110, 'https://images.deliveryhero.io/image/global-menu-service/FP_PH/vendor/i18z/product/15841123-14e4-4db1-9160-0d6f3c4c5f6b.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_2, 'Coke Cherry', 'Coke, Cherry Flavor', 110, 'https://images.deliveryhero.io/image/global-menu-service/FP_PH/vendor/i18z/product/b215c6b3-0faf-44fe-bfaf-9716f75457be.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_2, 'Dr. Pepper (Small)', 'Dr Pepper', 85, 'https://images.deliveryhero.io/image/global-menu-service/FP_PH/vendor/i18z/product/00aef373-e7fe-4300-a98d-d8e49f6048b3.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_2, 'Coke', 'Coke - Original or Regular', 85, 'https://images.deliveryhero.io/image/global-menu-service/FP_PH/vendor/i18z/product/4eea61cc-9cdc-46b9-9384-1b7447f0e5e5.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_3, 'Premium Plain Fries', 'Thick cut extra crispy fries with a coated batter that provides a heavy crunch.', 149, 'https://images.deliveryhero.io/image/fd-ph/Products/75312355.jpg', true, ARRAY['vegetarian'])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_3, 'Gambino Savory Premium Fries', 'Savory with paprika, parsley and other herbs on thick cut extra crispy fries with a coated batter that provides a heavy crunch.', 159, 'https://images.deliveryhero.io/image/fd-ph/products/75312363.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_3, 'Hashbrown Strips', 'Crispy hashbrown strips with our mafia signature sauce on the side', 219, 'https://images.deliveryhero.io/image/fd-ph/products/58577840.jpg', true, ARRAY['vegetarian'])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_3, 'Tempura', 'For reference: Lightly battered and crispy seafood.', 100, 'https://images.deliveryhero.io/image/fd-ph/Products/58728264.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_3, 'Squid Roll', 'For reference: Crunchy squid with a savory coating and mild seafood flavor.', 89, 'https://images.deliveryhero.io/image/fd-ph/products/58728267.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_3, 'Cheese Sticks', 'For reference: Golden and crispy cheese sticks with a gooey cheese filling.', 139, 'https://images.deliveryhero.io/image/fd-ph/Products/58728268.jpg', true, ARRAY['vegetarian'])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_3, 'Combo (Squid Roll + Tempura)', 'A hearty and savory starter featuring tender squid roll and tempura with a satisfying texture. For reference only.', 159, 'https://images.deliveryhero.io/image/fd-ph/Products/58728277.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_3, 'Premium Combo Cheese Sticks & Fries', 'Premium fries & pemiento cheese sticks combo with ketchup & mayo sauce on the side.', 260, 'https://images.deliveryhero.io/image/fd-ph/Products/75314647.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_3, 'Premium Kangpae Spam Fries ', 'Korean spam and premium savory fries combo with our homemade sriracha aioli sauce', 299, 'https://images.deliveryhero.io/image/fd-ph/Products/75314640.jpg', true, ARRAY['spicy'])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_4, 'Hot Americano', 'For reference: Bold and smooth hot Americano with deep coffee notes.', 129, 'https://images.deliveryhero.io/image/fd-ph/Products/58728518.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_4, 'Hot Cafe Latte', 'For reference: A warm and creamy espresso-based latte.', 159, 'https://images.deliveryhero.io/image/fd-ph/Products/58728522.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_4, 'Hot Cappuccino', 'For reference: Frothy cappuccino with a perfect blend of espresso and milk.', 169, 'https://images.deliveryhero.io/image/fd-ph/Products/58728525.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_4, 'Hot Spanish Latte', 'For Reference: A bold and creamy hot Spanish latte.', 179, 'https://images.deliveryhero.io/image/fd-ph/Products/58728545.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_4, 'Hot Salted Caramel', 'For reference: A warm and comforting hot salted caramel drink.', 179, 'https://images.deliveryhero.io/image/fd-ph/Products/58728550.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_4, 'Hot Tiramisu', 'For reference: A hot Tiramisu.', 179, 'https://images.deliveryhero.io/image/fd-ph/Products/58728552.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_4, 'Hot Roasted Vanilla', 'For reference: A warm, sweet beverage infused with rich vanilla flavor and aromatic coffee.', 179, 'https://images.deliveryhero.io/image/fd-ph/Products/58728553.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_4, 'Hot Cafe Mocha', 'For reference: A rich, chocolatey espresso drink with steamed milk.', 179, 'https://images.deliveryhero.io/image/fd-ph/Products/58728556.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_4, 'Hot White Choco Mocha', 'For reference only: Creamy and indulgent white chocolate mocha served hot for a delightful experience.', 179, 'https://images.deliveryhero.io/image/fd-ph/Products/58728559.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_5, 'Iced Americano', 'For reference: Bold and refreshing iced Americano with deep coffee notes.', 129, 'https://images.deliveryhero.io/image/fd-ph/Products/58728724.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_5, 'Iced Cafe Latte', 'For reference only: Enjoy a refreshing blend of smooth espresso and chilled milk for a delightful pick-me-up.', 169, 'https://images.deliveryhero.io/image/fd-ph/Products/58728718.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_5, 'Iced Spanish Latte', 'For reference: Bold espresso with sweet, creamy milk and a hint of cinnamon.', 189, 'https://images.deliveryhero.io/image/fd-ph/Products/58728777.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_5, 'Iced Salted Caramel', 'For Reference: A cold and sweet caramel drink with a hint of salt.', 189, 'https://images.deliveryhero.io/image/fd-ph/Products/58728789.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_5, 'Iced Tiramisu', 'For reference only: Chilled and indulgent iced drink featuring the flavors of tiramisu for a delightful treat.', 189, 'https://images.deliveryhero.io/image/fd-ph/Products/58728787.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_5, 'Iced Roasted Vanilla', 'For reference: Sweet, creamy, and wonderfully aromatic.', 189, 'https://images.deliveryhero.io/image/fd-ph/Products/58728791.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_5, 'Iced Cafe Mocha', 'For reference: A refreshing iced cafe mocha with a rich coffee and chocolate blend.', 189, 'https://images.deliveryhero.io/image/fd-ph/Products/58728794.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_5, 'Iced White Choco Mocha', 'For reference only: Iced mocha beverage with the luxurious blend of white chocolate and coffee.', 189, 'https://images.deliveryhero.io/image/fd-ph/Products/58729014.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_5, 'Cold Brew White Gangster', 'For reference: Chilled coffee beverage with creamy milk, offering a smooth and refreshing taste experience.', 169, 'https://images.deliveryhero.io/image/fd-ph/Products/58729295.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_5, 'Coffee Jelly', 'For reference only: A delightful frappe with the added delight of coffee jelly.', 189, 'https://images.deliveryhero.io/image/fd-ph/Products/58729297.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_5, 'Dirty Matcha Latte', 'For reference only: Iced dirty matcha latte, a chilled latte with matcha and espresso.', 225, 'https://images.deliveryhero.io/image/fd-ph/Products/58729415.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_6, 'Matcha Latte', 'For reference: Smooth matcha latte with earthy, creamy, and slightly sweet notes.', 185, 'https://images.deliveryhero.io/image/fd-ph/Products/58729420.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_6, 'Creamy Milk Chocolate', 'For reference: Rich, velvety chocolate dessert with a smooth, indulgent texture and sweet flavor.', 160, 'https://images.deliveryhero.io/image/fd-ph/Products/58729423.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_6, 'Strawberry Milk', 'For reference only: The blissful taste of this strawberry milk combines the sweetness of strawberries with creamy goodness.', 170, 'https://images.deliveryhero.io/image/fd-ph/Products/58729532.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_7, 'Mango Lychee Fruit Tea', 'It''s a blend of mango and lychee flavors infused with a green tea. It''s sweet, fruity, and aromatic combining the tropical sweetness of mango with the delicate, floral flavor of lychee. It comes with soft & chewy fruit jelly that enhances the drink''s overall mouthfeel.', 129, 'https://images.deliveryhero.io/image/fd-ph/LH/i18z-hero.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+    END IF;
+END $$;

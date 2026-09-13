@@ -56,9 +56,9 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
     category: 'Resto Bar',
     coverImage: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR5Kp2YeaylbA53UcCROxnangSIQ2YUsJqB4hx0nIhYoPxKqG-rz4-Z0uo&s=10',
     barangay: 'Bangbang',
-    description: 'Beatles-inspired restobar.',
-    address: '7W3W+MXG, Bang-Bang - Day-As, Cordova',
-    phone: '(032) 238 5718',
+    description: 'Beatles-inspired restobar famous for its "Sarap na, sulit pa!" big discount bestsellers: sizzling pork sisig, buffalo chicken, crispy fried chicken, pork sinigang, pancit canton, and lechon kawali.',
+    address: '7W3W+MXG, Bang-Bang - Day-As, Cordova, Cebu',
+    phone: '0922 944 3882 / (032) 238 5718',
     hours: '10:00 AM - 2:00 AM (Sun-Thu), 10:00 AM - 3:30 AM (Fri-Sat)',
   },
 
@@ -172,11 +172,11 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
 
   // 14. Tita Kim's
   'tita-kims': {
-    name: 'Tita Kims',
+    name: "Tita Kim's",
     category: 'Restaurant',
     coverImage: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTQukvKATrQQW_HUYIbjrG6X6b9KNlzpQz5qlo3DJuung&s=10',
     barangay: 'Gabi',
-    description: 'an affordable, buffet-style Filipino restaurant located along the National Highway in Barangay Gabi, Cordova, Cebu.',
+    description: 'A popular Eat-All-You-Can Filipino buffet in Barangay Gabi, Cordova, featuring fresh seafood, meats, and Filipino comfort dishes for ₱299 only.',
     address: 'Purok 5, Lot 747 National Highway, Cordova, Cebu',
     phone: '0998 868 8573',
     hours: 'Closed Mon; 5:00 PM – 10:00 PM (Tue–Fri); 11:30 AM – 10:00 PM (Sat–Sun)',
@@ -210,10 +210,10 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
   'cafe-mafia': {
     name: 'Cafe Mafia',
     category: 'Cafe',
-    coverImage: 'http://localhost:3000/cafe-mafia-cover.png',
-    barangay: 'Poblacion',
-    description: '[Name confirmed, location approximate] A casual cafe in Cordova mentioned for its burgers and coffee. Exact address not independently verified — location shown is approximate.',
-    address: 'Dapitan, Cordova, Cebu',
+    coverImage: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQn_riqkNLK4YjVNUrYSCXKc5N22V82mhWXzQ4UFs0Tx8u_yOL9-5XN5kn4&s=10',
+    barangay: 'Dapitan',
+    description: 'A cozy neighborhood cafe in Cordova famous for its signature handcrafted Mafia Premium Burgers, artisan espresso & iced coffee, appetizers, and fruit teas.',
+    address: 'Purok 1, Dapitan, Cordova, Cebu',
     phone: '0917 321 0453',
     hours: '1:00 PM – 10:00 PM (Daily)',
   },

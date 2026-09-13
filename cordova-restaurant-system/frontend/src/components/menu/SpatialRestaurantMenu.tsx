@@ -2,11 +2,9 @@
 
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   Sparkles,
-  Star,
-  Info,
   X,
   Search,
   Utensils,
@@ -343,7 +341,6 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
   // Selected Category filter
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeHotspot, setActiveHotspot] = useState<number | null>(null);
 
   // Merge API items with curated default items if API items are sparse
   const allMenuItems = useMemo(() => {
@@ -351,7 +348,7 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
       return items.map((it) => ({
         id: it.id,
         name: it.name,
-        category: categories.find((c) => c.id === it.category_id)?.name || 'Main Dishes',
+        category: categories.find((c) => c.id === it.category_id)?.name || (it as any).category_name || 'Main Dishes',
         price: Number(it.price),
         description: it.description || 'Crafted fresh with traditional Cordova flavors.',
         image: it.image_url || defaultData.heroDish.image,
@@ -402,136 +399,40 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
     });
   }, [allMenuItems, activeCategory, searchQuery]);
 
-  const hero = defaultData.heroDish;
+  const isTitaKims = (restaurant.slug || '').includes('tita-kim') || (restaurant.name || '').toLowerCase().includes('tita');
 
   return (
-    <div className="space-y-16">
-      {/* ========================================================================= */}
-      {/* 🌟 1. SHOWSTOPPER SPATIAL HERO SECTION (Inspired by Dribbble Flavor Pop) */}
-      {/* ========================================================================= */}
-      <section className="relative w-full rounded-3xl overflow-hidden bg-gradient-to-br from-emerald-950/80 via-[#132219]/90 to-[#0e1713]/95 border border-emerald-500/20 shadow-[0_24px_64px_rgba(0,0,0,0.4)] p-6 sm:p-10 lg:p-12">
-        {/* Ambient Backlight Glows */}
-        <div className="absolute -top-24 -left-24 w-96 h-96 bg-emerald-500/20 rounded-full blur-[100px] pointer-events-none" />
-        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-amber-500/15 rounded-full blur-[100px] pointer-events-none" />
-
-        {/* Giant Background Typography: "FLAVOR POP" / Category Stamp */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden select-none opacity-10">
-          <span className="font-serif font-black text-7xl sm:text-9xl lg:text-[14rem] tracking-tighter text-white whitespace-nowrap uppercase">
-            FLAVOR POP
-          </span>
-        </div>
-
-        {/* Top Header Bar inside Hero */}
-        <div className="relative z-10 flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
-              <Sparkles size={13} className="text-emerald-400 animate-pulse" />
-              Signature Dish
-            </span>
-            <span className="text-xs text-stone-300 font-medium tracking-wide">
-              {restaurant.name} &bull; Cordova, Cebu
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-amber-300 font-semibold flex items-center gap-1">
-              <Star size={14} className="fill-amber-400 text-amber-400" />
-              {Number(restaurant.avg_rating || 4.9).toFixed(1)} Rating
-            </span>
-          </div>
-        </div>
-
-        {/* Center: Big 3D Floating Dish with Interactive Hotspots */}
-        <div className="relative z-10 flex flex-col items-center justify-center mt-8">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.7, delay: 0.1 }}
-            className="relative flex flex-col items-center justify-center py-4"
-          >
-            {/* Main Floating Dish Presentation */}
-            <motion.div
-              animate={{ y: [0, -10, 0] }}
-              transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
-              className="relative w-64 h-64 sm:w-80 sm:h-80 lg:w-96 lg:h-96 rounded-full overflow-hidden border-4 border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.6)] group"
-            >
-              <Image
-                src={hero.image}
-                alt={hero.name}
-                fill
-                priority
-                className="object-cover group-hover:scale-105 transition-transform duration-700"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
-
-              {/* Interactive Hotspot Pulses on the Food */}
-              {hero.hotspots.map((spot, idx) => {
-                const isOpen = activeHotspot === idx;
-                return (
-                  <div
-                    key={idx}
-                    style={{ top: `${spot.y}%`, left: `${spot.x}%` }}
-                    className="absolute -translate-x-1/2 -translate-y-1/2 z-20"
-                  >
-                    {/* Hotspot Pulse Button */}
-                    <button
-                      onClick={() => setActiveHotspot(isOpen ? null : idx)}
-                      onMouseEnter={() => setActiveHotspot(idx)}
-                      className="relative flex items-center justify-center h-7 w-7 rounded-full bg-white/90 text-stone-900 shadow-[0_0_15px_rgba(255,255,255,0.8)] border border-white/80 hover:scale-125 transition-transform cursor-pointer"
-                      title={spot.title}
-                      aria-label={spot.title}
-                    >
-                      <span className="absolute -inset-1 rounded-full bg-white/40 animate-ping" />
-                      <span className="relative text-[10px] font-black">+{idx + 1}</span>
-                    </button>
-
-                    {/* Popover Tooltip */}
-                    <AnimatePresence>
-                      {isOpen && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 10, scale: 0.9 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: 5, scale: 0.9 }}
-                          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-48 sm:w-56 p-3 rounded-xl bg-black/90 backdrop-blur-xl border border-white/30 text-white text-xs shadow-2xl z-30 pointer-events-none"
-                        >
-                          <div className="flex items-center gap-1 text-cordova-gold font-bold mb-1">
-                            <Sparkles size={11} />
-                            <span>{spot.title}</span>
-                          </div>
-                          <p className="text-[11px] text-stone-200 leading-relaxed">{spot.desc}</p>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                );
-              })}
-            </motion.div>
-
-            {/* Signature Dish Details */}
-            <div className="text-center mt-6 max-w-lg">
-              <h4 className="font-serif text-2xl sm:text-3xl font-bold text-white drop-shadow-md">
-                {hero.name}
-              </h4>
-              <p className="text-xs sm:text-sm text-stone-300 mt-2 leading-relaxed font-sans">
-                {hero.description}
-              </p>
-              <div className="mt-3 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 font-bold text-base">
-                <span>₱{hero.price}</span>
+    <div className="space-y-8">
+      {/* 🍴 CATEGORIZED MENU BROWSER */}
+      <section className="space-y-8">
+        {/* Eat-All-You-Can Top Announcement Banner for Tita Kim's */}
+        {isTitaKims && (
+          <div className="relative overflow-hidden p-6 sm:p-7 rounded-3xl bg-gradient-to-r from-amber-500/20 via-emerald-600/15 to-amber-500/20 border-2 border-amber-400/40 backdrop-blur-xl shadow-xl">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="shrink-0 px-4 py-2.5 rounded-2xl bg-amber-500 text-stone-950 font-black text-2xl sm:text-3xl shadow-lg border border-amber-300">
+                  ₱299
+                </div>
+                <div>
+                  <h4 className="font-serif text-lg sm:text-xl font-extrabold text-stone-900 dark:text-white flex items-center gap-2">
+                    Eat all you can for ₱299
+                    <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 font-bold uppercase tracking-wider">
+                      Unlimited Buffet
+                    </span>
+                  </h4>
+                  <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-300 mt-1 leading-relaxed">
+                    Eat all you can for ₱299 only! Dishes vary daily depending on available ingredients. All dishes below are included in the buffet.
+                  </p>
+                </div>
+              </div>
+              <div className="shrink-0 hidden md:flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-black/40 text-amber-300 text-xs font-bold border border-white/10">
+                <Sparkles size={13} className="text-amber-400" />
+                <span>All 14 Dishes Included</span>
               </div>
             </div>
+          </div>
+        )}
 
-            {/* Hotspot helper text */}
-            <p className="text-[11px] text-emerald-300/80 mt-4 flex items-center gap-1.5 font-medium tracking-wide">
-              <Info size={12} /> Tap numbers on the dish to discover ingredient secrets
-            </p>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ========================================================================= */}
-      {/* 🍴 2. CATEGORIZED SPATIAL GLASS MENU BROWSER */}
-      {/* ========================================================================= */}
-      <section className="space-y-8">
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -542,7 +443,9 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
               </h3>
             </div>
             <p className="text-xs sm:text-sm text-stone-500 dark:text-stone-400 mt-1">
-              Freshly crafted delicacies and island favorites ready for your order.
+              {isTitaKims
+                ? 'All dishes below are included in the ₱299 Eat-All-You-Can buffet.'
+                : 'Freshly crafted delicacies and island favorites ready for your order.'}
             </p>
           </div>
 
@@ -553,7 +456,7 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search dishes, drinks..."
+              placeholder="Search dishes..."
               className="w-full pl-9 pr-8 py-2.5 text-xs bg-white/80 dark:bg-black/30 backdrop-blur-md border border-stone-200/80 dark:border-white/10 rounded-xl text-stone-900 dark:text-white placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-cordova-green/50"
             />
             {searchQuery && (
@@ -630,10 +533,17 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
                       </div>
                     )}
 
-                    {/* Price Badge */}
-                    <div className="absolute bottom-3 right-3 px-3 py-1 rounded-xl bg-amber-500/95 backdrop-blur-md text-white font-bold text-sm shadow-md border border-amber-300/40">
-                      ₱{item.price}
-                    </div>
+                    {/* Price Badge or Buffet Indicator (no ₱299 on individual dishes for Tita Kim's) */}
+                    {isTitaKims ? (
+                      <div className="absolute bottom-3 right-3 px-2.5 py-1 rounded-xl bg-emerald-700/90 backdrop-blur-md text-emerald-100 font-medium text-xs shadow-md border border-emerald-400/30 flex items-center gap-1">
+                        <Sparkles size={11} className="text-emerald-300" />
+                        <span>Included in Buffet</span>
+                      </div>
+                    ) : (
+                      <div className="absolute bottom-3 right-3 px-3 py-1 rounded-xl bg-amber-500/95 backdrop-blur-md text-white font-bold text-sm shadow-md border border-amber-300/40">
+                        ₱{item.price}
+                      </div>
+                    )}
                   </div>
 
                   {/* Card Body */}

@@ -43,6 +43,15 @@ import { MCDONALDS_CATEGORIES, MCDONALDS_MENU_ITEMS } from '@/data/mcdonaldsMenu
 import { PAPSY_CATEGORIES, PAPSY_MENU_ITEMS } from '@/data/papsyMenu';
 import { PAROLA_CATEGORIES, PAROLA_MENU_ITEMS } from '@/data/parolaMenu';
 import { HORIZON_CATEGORIES, HORIZON_MENU_ITEMS } from '@/data/horizonMenu';
+import { EAT_N_REPEAT_CATEGORIES, EAT_N_REPEAT_MENU_ITEMS } from '@/data/eatNRepeatMenu';
+import { STUFFED_N_FRIED_CATEGORIES, STUFFED_N_FRIED_MENU_ITEMS } from '@/data/stuffedNFriedMenu';
+import { TAYTAYAN_CATEGORIES, TAYTAYAN_MENU_ITEMS } from '@/data/taytayanMenu';
+import { TITA_KIMS_CATEGORIES, TITA_KIMS_MENU_ITEMS } from '@/data/titaKimsMenu';
+import { CAFE_MAFIA_CATEGORIES, CAFE_MAFIA_MENU_ITEMS } from '@/data/cafeMafiaMenu';
+import { DON_MACCHIATOS_CATEGORIES, DON_MACCHIATOS_MENU_ITEMS } from '@/data/donMacchiatosMenu';
+import { ALBERTOS_CATEGORIES, ALBERTOS_MENU_ITEMS } from '@/data/albertosMenu';
+import { TEN_THOUSAND_ROSES_CATEGORIES, TEN_THOUSAND_ROSES_MENU_ITEMS } from '@/data/tenThousandRosesMenu';
+import { ABY_ROAD_CATEGORIES, ABY_ROAD_MENU_ITEMS } from '@/data/abyRoadMenu';
 import { SpatialRestaurantMenu } from '@/components/menu/SpatialRestaurantMenu';
 
 const SPATIAL_EMOJIS = [
@@ -131,6 +140,69 @@ export default function RestaurantDetailPage() {
           found.slug === 'horizon-bean-cafe' ||
           customFound.name.toLowerCase().includes('horizon');
 
+        const isEatNRepeat =
+          slug === 'eat-n-repeat' ||
+          found.slug === 'eat-n-repeat' ||
+          customFound.name.toLowerCase().includes('eat n repeat') ||
+          customFound.name.toLowerCase().includes("eat n' repeat") ||
+          customFound.name.toLowerCase().includes('eat & repeat');
+
+        const isStuffedNFried =
+          slug === 'stuffed-n-fried-cordova' ||
+          found.slug === 'stuffed-n-fried-cordova' ||
+          customFound.name.toLowerCase().includes('stuffed');
+
+        const isTaytayan =
+          slug === 'taytayan-pinoy-restaurant' ||
+          found.slug === 'taytayan-pinoy-restaurant' ||
+          customFound.name.toLowerCase().includes('taytayan');
+
+        const isTitaKims =
+          slug === 'tita-kims' ||
+          found.slug === 'tita-kims' ||
+          customFound.name.toLowerCase().includes('tita kim') ||
+          customFound.name.toLowerCase().includes("tita's kim") ||
+          customFound.name.toLowerCase().includes("titas kim");
+
+        const isCafeMafia =
+          slug === 'cafe-mafia' ||
+          slug === 'cafe-mafia-cordova' ||
+          found.slug === 'cafe-mafia' ||
+          found.slug === 'cafe-mafia-cordova' ||
+          customFound.name.toLowerCase().includes('cafe mafia') ||
+          customFound.name.toLowerCase().includes('mafia');
+
+        const isDonMacchiatos =
+          slug === 'don-macchiatos-cordova' ||
+          slug === 'don-macchiatos' ||
+          found.slug === 'don-macchiatos-cordova' ||
+          found.slug === 'don-macchiatos' ||
+          customFound.name.toLowerCase().includes('don macchiato') ||
+          customFound.name.toLowerCase().includes('macchiatos');
+
+        const isAlbertos =
+          slug === 'albertos-pizza-cordova' ||
+          slug === 'albertos-pizza' ||
+          slug === 'albertos' ||
+          found.slug === 'albertos-pizza-cordova' ||
+          found.slug === 'albertos-pizza' ||
+          customFound.name.toLowerCase().includes('alberto');
+
+        const isTenThousandRoses =
+          slug === '10000-roses-cafe-and-more' ||
+          slug === '10000-roses' ||
+          slug === '10000-roses-cafe' ||
+          found.slug === '10000-roses-cafe-and-more' ||
+          customFound.name.toLowerCase().includes('10,000 roses') ||
+          customFound.name.toLowerCase().includes('10000 roses');
+
+        const isAbyRoad =
+          slug === 'aby-road-resto-bar' ||
+          slug === 'aby-road' ||
+          found.slug === 'aby-road-resto-bar' ||
+          customFound.name.toLowerCase().includes('aby road') ||
+          customFound.name.toLowerCase().includes('abyroad');
+
         if (menu.data?.items?.length) {
           setCategories(menu.data.categories || []);
           setItems(menu.data.items);
@@ -146,6 +218,33 @@ export default function RestaurantDetailPage() {
         } else if (isHorizon) {
           setCategories(HORIZON_CATEGORIES.map(c => ({ ...c, restaurant_id: found.id })));
           setItems(HORIZON_MENU_ITEMS.map(i => ({ ...i, restaurant_id: found.id })));
+        } else if (isEatNRepeat) {
+          setCategories(EAT_N_REPEAT_CATEGORIES.map(c => ({ ...c, restaurant_id: found.id })));
+          setItems(EAT_N_REPEAT_MENU_ITEMS.map(i => ({ ...i, restaurant_id: found.id })));
+        } else if (isStuffedNFried) {
+          setCategories(STUFFED_N_FRIED_CATEGORIES.map(c => ({ ...c, restaurant_id: found.id })));
+          setItems(STUFFED_N_FRIED_MENU_ITEMS.map(i => ({ ...i, restaurant_id: found.id })));
+        } else if (isTaytayan) {
+          setCategories(TAYTAYAN_CATEGORIES.map(c => ({ ...c, restaurant_id: found.id })));
+          setItems(TAYTAYAN_MENU_ITEMS.map(i => ({ ...i, restaurant_id: found.id })));
+        } else if (isTitaKims) {
+          setCategories(TITA_KIMS_CATEGORIES.map(c => ({ ...c, restaurant_id: found.id })));
+          setItems(TITA_KIMS_MENU_ITEMS.map(i => ({ ...i, restaurant_id: found.id })));
+        } else if (isCafeMafia) {
+          setCategories(CAFE_MAFIA_CATEGORIES.map(c => ({ ...c, restaurant_id: found.id })));
+          setItems(CAFE_MAFIA_MENU_ITEMS.map(i => ({ ...i, restaurant_id: found.id })));
+        } else if (isDonMacchiatos) {
+          setCategories(DON_MACCHIATOS_CATEGORIES.map(c => ({ ...c, restaurant_id: found.id })));
+          setItems(DON_MACCHIATOS_MENU_ITEMS.map(i => ({ ...i, restaurant_id: found.id })));
+        } else if (isAlbertos) {
+          setCategories(ALBERTOS_CATEGORIES.map(c => ({ ...c, restaurant_id: found.id })));
+          setItems(ALBERTOS_MENU_ITEMS.map(i => ({ ...i, restaurant_id: found.id })));
+        } else if (isTenThousandRoses) {
+          setCategories(TEN_THOUSAND_ROSES_CATEGORIES.map(c => ({ ...c, restaurant_id: found.id })));
+          setItems(TEN_THOUSAND_ROSES_MENU_ITEMS.map(i => ({ ...i, restaurant_id: found.id })));
+        } else if (isAbyRoad) {
+          setCategories(ABY_ROAD_CATEGORIES.map(c => ({ ...c, restaurant_id: found.id })));
+          setItems(ABY_ROAD_MENU_ITEMS.map(i => ({ ...i, restaurant_id: found.id })));
         } else {
           setCategories(menu.data?.categories?.length ? menu.data.categories : [
             { id: 'cat-1', restaurant_id: found.id, name: 'House Specialties', sort_order: 1 },
