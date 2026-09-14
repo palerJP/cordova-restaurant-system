@@ -7,7 +7,7 @@ const imageModel = require('../models/restaurantImage.model');
 const uploadService = require('../services/upload.service');
 const asyncHandler = require('../utils/asyncHandler');
 const ApiError = require('../utils/apiError');
-const cache = require('../utils/cache');
+const { query } = require('../config/db');
 const { parsePagination, buildPageMeta } = require('../utils/pagination');
 const { syncToRestaurantTs, removeFromRestaurantTs, getDefaultCoverImage, inferCategory } = require('../services/restaurantSync.service');
 
@@ -290,6 +290,33 @@ const deleteImage = asyncHandler(async (req, res) => {
   res.json({ success: true, message: 'Photo removed' });
 });
 
+/** GET /api/restaurants/:id/subscription — owner or admin gets subscription & payment history */
+const getSubscriptionStatus = asyncHandler(async (req, res) => {
+  const existing = await restaurantModel.findById(req.params.id);
+  if (!existing) throw ApiError.notFound('Restaurant not found');
+  if (existing.owner_id !== req.user.id && req.user.role !== 'admin') {
+    throw ApiError.forbidden('You do not own this restaurant');
+  }
+
+  const { rows: txRows } = await query(
+    `SELECT * FROM subscription_transactions 
+     WHERE restaurant_id = $1 
+     ORDER BY created_at DESC 
+     LIMIT 5`,
+    [req.params.id]
+  );
+
+  res.json({
+    success: true,
+    data: {
+      current_tier: existing.subscription_tier || 'none',
+      subscription_expires_at: existing.subscription_expires_at,
+      transactions: txRows,
+      pending_transaction: txRows.find((t) => t.status === 'pending_verification') || null,
+    },
+  });
+});
+
 /** PATCH /api/restaurants/:id/subscription — owner or admin updates subscription tier */
 const updateSubscription = asyncHandler(async (req, res) => {
   const existing = await restaurantModel.findById(req.params.id);
@@ -298,7 +325,7 @@ const updateSubscription = asyncHandler(async (req, res) => {
     throw ApiError.forbidden('You do not own this restaurant');
   }
 
-  const { subscription_tier, subscription_expires_at, durationDays = 30 } = req.body;
+  const { subscription_tier, subscription_expires_at, durationDays = 30, payment_method = 'gcash', payment_reference, referenceNo } = req.body;
   const validTiers = ['none', 'basic', 'premium', 'featured'];
   const tier = (subscription_tier || 'none').toLowerCase();
 
@@ -306,8 +333,25 @@ const updateSubscription = asyncHandler(async (req, res) => {
     throw ApiError.badRequest(`Invalid subscription tier. Must be one of: ${validTiers.join(', ')}`);
   }
 
-  let expiresAt = null;
-  if (tier !== 'none') {
+  const isAdmin = req.user.role === 'admin';
+  const ref = (payment_reference || referenceNo || '').trim();
+
+  // If downgrading to free tier
+  if (tier === 'none') {
+    const updated = await restaurantModel.updateSubscription(req.params.id, {
+      tier: 'none',
+      expiresAt: null,
+    });
+    return res.json({
+      success: true,
+      data: updated,
+      message: 'Downgraded to free plan successfully',
+    });
+  }
+
+  // If Admin is making the change, immediately activate
+  if (isAdmin) {
+    let expiresAt = null;
     if (subscription_expires_at) {
       expiresAt = new Date(subscription_expires_at).toISOString();
     } else {
@@ -315,17 +359,59 @@ const updateSubscription = asyncHandler(async (req, res) => {
       d.setDate(d.getDate() + Number(durationDays || 30));
       expiresAt = d.toISOString();
     }
+
+    const updated = await restaurantModel.updateSubscription(req.params.id, {
+      tier,
+      expiresAt,
+    });
+
+    if (ref) {
+      const tierPrices = {
+        basic: '₱499 / month',
+        premium: '₱999 / month',
+        featured: '₱1,999 / month',
+      };
+      await query(
+        `INSERT INTO subscription_transactions (restaurant_id, tier, price, payment_method, payment_reference, status, verified_at, verified_by, expires_at, duration_days)
+         VALUES ($1, $2, $3, $4, $5, 'verified', NOW(), $6, $7, $8)`,
+        [req.params.id, tier, tierPrices[tier] || '₱0', payment_method, ref, req.user.id, expiresAt, durationDays]
+      );
+    }
+
+    return res.json({
+      success: true,
+      data: updated,
+      message: 'Subscription updated and activated successfully',
+    });
   }
 
-  const updated = await restaurantModel.updateSubscription(req.params.id, {
-    tier,
-    expiresAt,
-  });
+  // If Owner is requesting a paid tier, require transaction reference and create pending transaction
+  if (!ref) {
+    throw ApiError.badRequest('Please enter your GCash / Maya transaction or reference number');
+  }
+
+  const tierPrices = {
+    basic: '₱499 / month',
+    premium: '₱999 / month',
+    featured: '₱1,999 / month',
+  };
+
+  const { rows: txRows } = await query(
+    `INSERT INTO subscription_transactions (restaurant_id, tier, price, payment_method, payment_reference, status, duration_days)
+     VALUES ($1, $2, $3, $4, $5, 'pending_verification', $6)
+     RETURNING *`,
+    [req.params.id, tier, tierPrices[tier] || '₱0', payment_method, ref, durationDays]
+  );
 
   res.json({
     success: true,
-    data: updated,
-    message: 'Subscription updated successfully',
+    data: {
+      pending: true,
+      transaction: txRows[0],
+      current_tier: existing.subscription_tier || 'none',
+      requested_tier: tier,
+    },
+    message: 'Subscription payment submitted! Awaiting administrator verification.',
   });
 });
 
@@ -345,6 +431,6 @@ const adminDelete = asyncHandler(async (req, res) => {
 module.exports = {
   search, getById, getBySlug, listMine, create, update, uploadCoverImage,
   listCuisines, adminList, verify, suspend, adminDelete, getSimilar, listImages, uploadImage, deleteImage,
-  updateSubscription,
+  updateSubscription, getSubscriptionStatus,
 };
 

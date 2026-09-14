@@ -47,6 +47,12 @@ router.patch(
   validate(updateRestaurantValidator),
   restaurantController.update
 );
+router.get(
+  '/:id/subscription',
+  requireAuth,
+  requireRole('owner', 'admin'),
+  restaurantController.getSubscriptionStatus
+);
 router.patch(
   '/:id/subscription',
   requireAuth,

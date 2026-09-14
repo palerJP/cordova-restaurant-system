@@ -136,6 +136,7 @@ export interface Promotion {
   restaurant_id: string;
   restaurant_name?: string;
   restaurant_slug?: string;
+  restaurant_cover?: string;
   title: string;
   description?: string;
   image_url?: string;
@@ -143,6 +144,29 @@ export interface Promotion {
   start_date: string;
   end_date: string;
   status: 'draft' | 'active' | 'expired' | 'archived';
+  payment_method?: 'gcash' | 'maya' | string;
+  payment_reference?: string;
+  payment_status?: 'pending_verification' | 'verified' | 'rejected' | string;
+  created_at?: string;
+}
+
+export interface SubscriptionTransaction {
+  id: string;
+  restaurant_id: string;
+  restaurant_name?: string;
+  restaurant_slug?: string;
+  restaurant_cover?: string;
+  tier: string;
+  price: string;
+  payment_method: 'gcash' | 'maya' | string;
+  payment_reference: string;
+  status: 'pending_verification' | 'verified' | 'rejected' | string;
+  created_at: string;
+  verified_at?: string;
+  expires_at?: string;
+  duration_days?: number;
+  current_restaurant_tier?: string;
+  current_restaurant_expires_at?: string;
 }
 
 export interface OperatingHour {

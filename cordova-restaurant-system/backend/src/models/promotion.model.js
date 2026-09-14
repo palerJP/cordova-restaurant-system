@@ -59,10 +59,21 @@ async function findById(id) {
 async function create(restaurantId, data) {
   const { rows } = await query(
     `INSERT INTO promotions
-      (restaurant_id, title, description, image_url, discount_label, start_date, end_date, status)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
-    [restaurantId, data.title, data.description || null, data.imageUrl || null,
-      data.discountLabel || null, data.startDate, data.endDate, data.status || 'active']
+      (restaurant_id, title, description, image_url, discount_label, start_date, end_date, status, payment_method, payment_reference, payment_status)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
+    [
+      restaurantId,
+      data.title,
+      data.description || null,
+      data.imageUrl || null,
+      data.discountLabel || null,
+      data.startDate,
+      data.endDate,
+      data.status || 'active',
+      data.paymentMethod || data.payment_method || 'gcash',
+      data.paymentReference || data.payment_reference || data.referenceNo || null,
+      data.paymentStatus || data.payment_status || 'verified',
+    ]
   );
   return rows[0];
 }
@@ -74,6 +85,7 @@ async function update(id, restaurantId, data) {
   const fieldMap = {
     title: 'title', description: 'description', imageUrl: 'image_url',
     discountLabel: 'discount_label', startDate: 'start_date', endDate: 'end_date', status: 'status',
+    paymentMethod: 'payment_method', paymentReference: 'payment_reference', paymentStatus: 'payment_status',
   };
   for (const [key, column] of Object.entries(fieldMap)) {
     if (data[key] !== undefined) {
@@ -108,6 +120,8 @@ async function listAllAdmin({ status, search, limit = 50, offset = 0 } = {}) {
       conditions.push(`p.status = 'active' AND p.end_date >= CURRENT_DATE`);
     } else if (status === 'expired') {
       conditions.push(`(p.status = 'expired' OR p.end_date < CURRENT_DATE)`);
+    } else if (status === 'pending_verification') {
+      conditions.push(`p.payment_status = 'pending_verification'`);
     } else {
       conditions.push(`p.status = $${idx++}`);
       params.push(status);
@@ -115,7 +129,7 @@ async function listAllAdmin({ status, search, limit = 50, offset = 0 } = {}) {
   }
 
   if (search && search.trim()) {
-    conditions.push(`(p.title ILIKE $${idx} OR r.name ILIKE $${idx} OR p.description ILIKE $${idx})`);
+    conditions.push(`(p.title ILIKE $${idx} OR r.name ILIKE $${idx} OR p.description ILIKE $${idx} OR p.payment_reference ILIKE $${idx})`);
     params.push(`%${search.trim()}%`);
     idx++;
   }
@@ -144,6 +158,7 @@ async function adminUpdate(id, data) {
   const fieldMap = {
     title: 'title', description: 'description', imageUrl: 'image_url',
     discountLabel: 'discount_label', startDate: 'start_date', endDate: 'end_date', status: 'status',
+    paymentMethod: 'payment_method', paymentReference: 'payment_reference', paymentStatus: 'payment_status',
   };
   for (const [key, column] of Object.entries(fieldMap)) {
     if (data[key] !== undefined) {
@@ -159,7 +174,140 @@ async function adminUpdate(id, data) {
   return rows[0] || null;
 }
 
+// ---------------- Subscription Transactions Model ----------------
+async function listSubscriptionTransactions({ status, search, limit = 50, offset = 0 } = {}) {
+  const params = [];
+  let idx = 1;
+  const conditions = [];
+
+  if (status && status !== 'all') {
+    if (status === 'pending_verification' || status === 'pending') {
+      conditions.push(`st.status = 'pending_verification'`);
+    } else if (status === 'verified') {
+      conditions.push(`st.status = 'verified'`);
+    } else if (status === 'rejected') {
+      conditions.push(`st.status = 'rejected'`);
+    } else {
+      conditions.push(`st.status = $${idx++}`);
+      params.push(status);
+    }
+  }
+
+  if (search && search.trim()) {
+    conditions.push(`(r.name ILIKE $${idx} OR st.tier ILIKE $${idx} OR st.payment_reference ILIKE $${idx})`);
+    params.push(`%${search.trim()}%`);
+    idx++;
+  }
+
+  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+  const { rows } = await query(
+    `SELECT st.*, r.name AS restaurant_name, r.slug AS restaurant_slug, r.cover_image_url AS restaurant_cover,
+            r.subscription_tier AS current_restaurant_tier, r.subscription_expires_at AS current_restaurant_expires_at
+     FROM subscription_transactions st
+     JOIN restaurants r ON r.id = st.restaurant_id
+     ${where}
+     ORDER BY st.created_at DESC
+     LIMIT $${idx++} OFFSET $${idx++}`,
+    [...params, limit, offset]
+  );
+
+  const { rows: countRows } = await query(
+    `SELECT COUNT(*) FROM subscription_transactions st JOIN restaurants r ON r.id = st.restaurant_id ${where}`,
+    params
+  );
+
+  return { rows, totalCount: parseInt(countRows[0]?.count || '0', 10) };
+}
+
+async function getLatestSubscriptionTransactionForRestaurant(restaurantId) {
+  const { rows } = await query(
+    `SELECT * FROM subscription_transactions 
+     WHERE restaurant_id = $1 
+     ORDER BY created_at DESC 
+     LIMIT 1`,
+    [restaurantId]
+  );
+  return rows[0] || null;
+}
+
+async function updateSubscriptionTransactionStatus(id, { status, verifiedBy, durationDays = 30 }) {
+  if (status === 'verified') {
+    const { rows: txRows } = await query(`SELECT * FROM subscription_transactions WHERE id = $1`, [id]);
+    const tx = txRows[0];
+    if (!tx) return null;
+
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + Number(durationDays || 30));
+
+    const { rows } = await query(
+      `UPDATE subscription_transactions 
+       SET status = 'verified', verified_at = NOW(), verified_by = $2, expires_at = $3, duration_days = $4
+       WHERE id = $1 RETURNING *`,
+      [id, verifiedBy || null, expiresAt.toISOString(), durationDays]
+    );
+
+    await query(
+      `UPDATE restaurants 
+       SET subscription_tier = $1, subscription_expires_at = $2
+       WHERE id = $3`,
+      [tx.tier, expiresAt.toISOString(), tx.restaurant_id]
+    );
+
+    return rows[0] || null;
+  } else if (status === 'rejected') {
+    const { rows } = await query(
+      `UPDATE subscription_transactions 
+       SET status = 'rejected', verified_at = NOW(), verified_by = $2
+       WHERE id = $1 RETURNING *`,
+      [id, verifiedBy || null]
+    );
+    return rows[0] || null;
+  } else if (status === 'expired' || status === 'terminated') {
+    const { rows: txRows } = await query(`SELECT * FROM subscription_transactions WHERE id = $1`, [id]);
+    const tx = txRows[0];
+    if (tx) {
+      await query(
+        `UPDATE restaurants 
+         SET subscription_tier = 'none', subscription_expires_at = NULL 
+         WHERE id = $1`,
+        [tx.restaurant_id]
+      );
+    }
+    const { rows } = await query(
+      `UPDATE subscription_transactions 
+       SET status = 'expired', expires_at = NOW() 
+       WHERE id = $1 RETURNING *`,
+      [id]
+    );
+    return rows[0] || null;
+  } else {
+    const { rows } = await query(
+      `UPDATE subscription_transactions 
+       SET status = $2
+       WHERE id = $1 RETURNING *`,
+      [id, status]
+    );
+    return rows[0] || null;
+  }
+}
+
+async function deleteSubscriptionTransaction(id) {
+  const { rows: txRows } = await query(`SELECT * FROM subscription_transactions WHERE id = $1`, [id]);
+  const tx = txRows[0];
+  if (tx && tx.status === 'verified') {
+    await query(
+      `UPDATE restaurants 
+       SET subscription_tier = 'none', subscription_expires_at = NULL 
+       WHERE id = $1`,
+      [tx.restaurant_id]
+    );
+  }
+  await query(`DELETE FROM subscription_transactions WHERE id = $1`, [id]);
+}
+
 module.exports = {
   listActive, listForRestaurant, findById, create, update, remove,
   adminRemove, listAllAdmin, adminUpdate, autoExpireOldPromotions,
+  listSubscriptionTransactions, updateSubscriptionTransactionStatus,
+  getLatestSubscriptionTransactionForRestaurant, deleteSubscriptionTransaction,
 };

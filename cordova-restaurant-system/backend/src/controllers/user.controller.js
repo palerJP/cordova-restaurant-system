@@ -51,4 +51,21 @@ const setUserActive = asyncHandler(async (req, res) => {
   res.json({ success: true, message: `User ${isActive ? 'activated' : 'deactivated'}`, data: { user } });
 });
 
-module.exports = { getProfile, updateProfile, getPreferences, updatePreferences, listUsers, setUserActive };
+/** Admin: delete a deactivated user account */
+const deleteUser = asyncHandler(async (req, res) => {
+  if (req.user.id === req.params.id) {
+    throw ApiError.badRequest('You cannot delete your own admin account');
+  }
+  const existing = await userModel.findById(req.params.id);
+  if (!existing) throw ApiError.notFound('User not found');
+  if (existing.is_active) {
+    throw ApiError.badRequest('User must be deactivated before they can be deleted');
+  }
+  if (existing.role === 'admin') {
+    throw ApiError.badRequest('Admin accounts cannot be deleted');
+  }
+  const deleted = await userModel.deleteUser(req.params.id);
+  res.json({ success: true, message: 'User account permanently deleted', data: { user: deleted } });
+});
+
+module.exports = { getProfile, updateProfile, getPreferences, updatePreferences, listUsers, setUserActive, deleteUser };

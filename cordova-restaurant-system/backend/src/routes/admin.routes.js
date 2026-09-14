@@ -21,6 +21,7 @@ router.delete('/restaurants/:id', restaurantController.adminDelete);
 // User account management
 router.get('/users', userController.listUsers);
 router.patch('/users/:id/active', userController.setUserActive);
+router.delete('/users/:id', userController.deleteUser);
 
 // Content & review moderation
 router.get('/reviews', reviewController.listAdminReviews);
@@ -31,6 +32,11 @@ router.patch('/reviews/:id/moderate', validate(moderateReviewValidator), reviewC
 router.get('/promotions', promotionController.adminList);
 router.patch('/promotions/:id/status', promotionController.adminUpdateStatus);
 router.delete('/promotions/:id', promotionController.adminDelete);
+
+// Subscription & ranking boost transactions
+router.get('/subscription-transactions', promotionController.adminListSubscriptionTransactions);
+router.patch('/subscription-transactions/:id/status', promotionController.adminUpdateSubscriptionTransactionStatus);
+router.delete('/subscription-transactions/:id', promotionController.adminDeleteSubscriptionTransaction);
 
 // System-wide analytics reports, cuisine demand & peak search trends
 router.get('/analytics/overview', analyticsController.adminOverview);

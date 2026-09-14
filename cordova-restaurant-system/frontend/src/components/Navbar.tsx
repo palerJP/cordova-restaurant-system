@@ -27,7 +27,6 @@ export function Navbar() {
 
   const navLinks = [
     { href: '/', label: 'Home' },
-    ...(!isAdmin && !isAdminPage ? [{ href: '/promotions', label: 'Promotions' }] : []),
   ];
 
   const roleLinks: { href: string; label: string }[] =

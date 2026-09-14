@@ -21,7 +21,6 @@ const ORIGINAL_MAP = {
   'csalt-cafe-cordova': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQe-86il0KEf6Gh0WJs_q-X3I8tGbhjWomjoBkTJBGbBw&s=10',
   'cafe-mafia': 'http://localhost:3000/cafe-mafia-cover.png',
   'solea-mactan-resort': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQJs8-gUFPgl9cU83YnTf5__Fp_8BhFL8IlfKPl9fcQzl1rzsB2MdLjWhyc&s=10',
-  'husbys-grill': 'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/18/2a/96/d7/visit-us-at-manuel-l.jpg?w=600&h=-1&s=1',
   'sungka-native-restaurant': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQYiZGOakQCISH5JLE9XpMaq7c834bHYQ2Pv8nmzfxhdn6ZopUeMouJ5nY&s=10',
   'lantaw-floating-native-restaurant': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuOl7HxrmSXr2JW-b5lLt0iRWS7hh_ObrmQKrIpIT3WQe99Zm3s-C1kjw&s=10',
   'albertos-pizza-cordova': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTc1MHHZ0YdgZ6T7yKZsr3ms71ihX6gDgQPOM7_3fWQ6RucKdjph9uKAdY&s=10',

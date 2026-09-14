@@ -12,7 +12,7 @@ A modern restaurant discovery, recommendation, and municipal business management
 - **Cleaned Navigation**: Removed redundant standalone AI Search navigation links from the top navbar.
 
 ### 2. 🍽️ Restaurant Directory & Business Verification Auto-Sync
-- **27 Verified Establishments**: Maintained and organized all 27 verified Cordova restaurants in [`frontend/src/data/restaurants.ts`](file:///c:/Users/Hp/Desktop/CordovaEATs/cordova-restaurant-system/cordova-restaurant-system/frontend/src/data/restaurants.ts) with standardized numbering, slugs, and complete metadata.
+- **26 Verified Establishments**: Maintained and organized all 26 verified Cordova restaurants in [`frontend/src/data/restaurants.ts`](file:///c:/Users/Hp/Desktop/CordovaEATs/cordova-restaurant-system/cordova-restaurant-system/frontend/src/data/restaurants.ts) with standardized numbering, slugs, and complete metadata.
 - **Automated Frontend Sync (`restaurantSync.service.js`)**: When an admin verifies a new business, it is automatically synchronized into `restaurants.ts` and PostgreSQL without duplicate keys or loss of existing entries.
 - **Logo & Photo Registration**: Full backend and frontend support for business logo, cover photo URLs, and multi-photo galleries during business registration.
 

@@ -34,9 +34,18 @@ const create = asyncHandler(async (req, res) => {
     imageUrl = uploadService.publicUrlFor(processed);
   }
 
+  const { title, description, discountLabel, startDate, endDate, paymentMethod, paymentReference, referenceNo } = req.body;
+
   const promotion = await promotionModel.create(req.params.restaurantId, {
-    ...req.body,
+    title,
+    description,
+    discountLabel,
+    startDate,
+    endDate,
     imageUrl,
+    paymentMethod: paymentMethod || 'gcash',
+    paymentReference: paymentReference || referenceNo || null,
+    paymentStatus: 'verified',
     status: 'active',
   });
   res.status(201).json({ success: true, message: 'Promotion created', data: { promotion } });
@@ -75,11 +84,18 @@ const adminList = asyncHandler(async (req, res) => {
 });
 
 const adminUpdateStatus = asyncHandler(async (req, res) => {
-  const { status } = req.body;
-  if (!status) throw ApiError.badRequest('Status is required');
-  const promo = await promotionModel.adminUpdate(req.params.id, { status });
+  const { status, paymentStatus } = req.body;
+  const updatePayload = {};
+  if (status) updatePayload.status = status;
+  if (paymentStatus) updatePayload.paymentStatus = paymentStatus;
+
+  if (Object.keys(updatePayload).length === 0) {
+    throw ApiError.badRequest('Status or paymentStatus is required');
+  }
+
+  const promo = await promotionModel.adminUpdate(req.params.id, updatePayload);
   if (!promo) throw ApiError.notFound('Promotion not found');
-  res.json({ success: true, message: `Promotion marked as ${status}`, data: { promotion: promo } });
+  res.json({ success: true, message: 'Promotion updated', data: { promotion: promo } });
 });
 
 const adminDelete = asyncHandler(async (req, res) => {
@@ -87,7 +103,36 @@ const adminDelete = asyncHandler(async (req, res) => {
   res.json({ success: true, message: 'Promotion permanently deleted' });
 });
 
+const adminListSubscriptionTransactions = asyncHandler(async (req, res) => {
+  const { page, limit, offset } = parsePagination(req.query);
+  const { rows, totalCount } = await promotionModel.listSubscriptionTransactions({
+    status: req.query.status,
+    search: req.query.search,
+    limit,
+    offset,
+  });
+  res.json({ success: true, data: rows, meta: buildPageMeta({ page, limit, totalCount }) });
+});
+
+const adminUpdateSubscriptionTransactionStatus = asyncHandler(async (req, res) => {
+  const { status, durationDays = 30 } = req.body;
+  if (!status) throw ApiError.badRequest('Status is required');
+  const tx = await promotionModel.updateSubscriptionTransactionStatus(req.params.id, {
+    status,
+    durationDays,
+    verifiedBy: req.user.id,
+  });
+  if (!tx) throw ApiError.notFound('Transaction not found');
+  res.json({ success: true, message: `Transaction marked as ${status}`, data: { transaction: tx } });
+});
+
+const adminDeleteSubscriptionTransaction = asyncHandler(async (req, res) => {
+  await promotionModel.deleteSubscriptionTransaction(req.params.id);
+  res.json({ success: true, message: 'Subscription record deleted successfully' });
+});
+
 module.exports = {
   listActive, listForRestaurant, create, update, remove,
   adminList, adminUpdateStatus, adminDelete,
+  adminListSubscriptionTransactions, adminUpdateSubscriptionTransactionStatus, adminDeleteSubscriptionTransaction,
 };

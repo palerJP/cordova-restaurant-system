@@ -12,6 +12,7 @@ import { Input, Textarea } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { AMENITIES } from '@/lib/amenities';
+import { Copy, Check, QrCode, ArrowLeft, ArrowRight, Smartphone, Sparkles, AlertCircle, Clock, Calendar } from 'lucide-react';
 import type { Restaurant, MenuItem, MenuCategory, Promotion, OperatingHour, RestaurantImage } from '@/lib/types';
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -611,6 +612,11 @@ function PromotionsTab({ restaurantId }: { restaurantId: string }) {
   const { toast } = useToast();
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
+  const [step, setStep] = useState<'details' | 'payment'>('details');
+  const [paymentMethod, setPaymentMethod] = useState<'gcash' | 'maya'>('gcash');
+  const [referenceNo, setReferenceNo] = useState('');
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
   const [renewTarget, setRenewTarget] = useState<Promotion | null>(null);
   const [renewEndDate, setRenewEndDate] = useState('');
 
@@ -623,6 +629,13 @@ function PromotionsTab({ restaurantId }: { restaurantId: string }) {
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(label);
+    toast(`${label} copied to clipboard!`, 'info');
+    setTimeout(() => setCopiedField(null), 2000);
+  };
 
   const load = useCallback(async () => {
     try {
@@ -637,7 +650,7 @@ function PromotionsTab({ restaurantId }: { restaurantId: string }) {
     load();
   }, [load]);
 
-  const create = async () => {
+  const handleProceedToPayment = () => {
     if (!form.title.trim() || !form.startDate || !form.endDate) {
       toast('Please provide a title, start date, and end date', 'error');
       return;
@@ -646,7 +659,14 @@ function PromotionsTab({ restaurantId }: { restaurantId: string }) {
       toast('End date must be on or after start date', 'error');
       return;
     }
+    setStep('payment');
+  };
 
+  const create = async () => {
+    if (!referenceNo.trim()) {
+      toast('Please enter your GCash / Maya transaction or reference number', 'error');
+      return;
+    }
     setSaving(true);
     try {
       if (imageFile) {
@@ -657,15 +677,24 @@ function PromotionsTab({ restaurantId }: { restaurantId: string }) {
         formData.append('startDate', form.startDate);
         formData.append('endDate', form.endDate);
         formData.append('publish', 'true');
+        formData.append('paymentMethod', paymentMethod);
+        formData.append('referenceNo', referenceNo.trim());
         formData.append('image', imageFile);
 
         await api.post(`/api/restaurants/${restaurantId}/promotions`, formData, { isFormData: true });
       } else {
-        await api.post(`/api/restaurants/${restaurantId}/promotions`, { ...form, publish: true });
+        await api.post(`/api/restaurants/${restaurantId}/promotions`, {
+          ...form,
+          paymentMethod,
+          referenceNo: referenceNo.trim(),
+          publish: true,
+        });
       }
 
-      toast('Promotion created and published!', 'success');
+      toast('Promotion created and submitted for verification successfully!', 'success');
       setModalOpen(false);
+      setStep('details');
+      setReferenceNo('');
       setForm({
         title: '',
         description: '',
@@ -722,7 +751,13 @@ function PromotionsTab({ restaurantId }: { restaurantId: string }) {
             Promotions are automatically published to diners and <strong>automatically removed from public view</strong> when their end date expires.
           </p>
         </div>
-        <Button onClick={() => setModalOpen(true)} className="bg-cordova-green hover:bg-cordova-greenHover text-white">
+        <Button
+          onClick={() => {
+            setStep('details');
+            setModalOpen(true);
+          }}
+          className="bg-cordova-green hover:bg-cordova-greenHover text-white"
+        >
           + Create New Promotion
         </Button>
       </div>
@@ -790,58 +825,255 @@ function PromotionsTab({ restaurantId }: { restaurantId: string }) {
       </div>
 
       {/* Create Promotion Modal */}
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Create Restaurant Promotion">
-        <div className="space-y-4">
-          <Input
-            label="Promotion Title"
-            placeholder="e.g. Weekend Seafood Special"
-            value={form.title}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
-            required
-          />
-          <Textarea
-            label="Description / Special Perks"
-            placeholder="e.g. Free appetizer for orders above ₱500..."
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-          />
-          <Input
-            label="Discount Label (Badge text)"
-            placeholder="e.g. 20% OFF or BUY 1 GET 1"
-            value={form.discountLabel}
-            onChange={(e) => setForm({ ...form, discountLabel: e.target.value })}
-          />
-          <div className="grid grid-cols-2 gap-3">
+      <Modal
+        open={modalOpen}
+        onClose={() => {
+          setModalOpen(false);
+          setStep('details');
+        }}
+        title={step === 'details' ? 'Create Restaurant Promotion' : 'Promotion Payment & QR Verification'}
+      >
+        {step === 'details' ? (
+          <div className="space-y-4">
             <Input
-              label="Start Date"
-              type="date"
-              value={form.startDate}
-              onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+              label="Promotion Title"
+              placeholder="e.g. Weekend Seafood Special"
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
               required
             />
+            <Textarea
+              label="Description / Special Perks"
+              placeholder="e.g. Free appetizer for orders above ₱500..."
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+            />
             <Input
-              label="End Date (Expiry Date)"
-              type="date"
-              value={form.endDate}
-              onChange={(e) => setForm({ ...form, endDate: e.target.value })}
-              required
+              label="Discount Label (Badge text)"
+              placeholder="e.g. 20% OFF or BUY 1 GET 1"
+              value={form.discountLabel}
+              onChange={(e) => setForm({ ...form, discountLabel: e.target.value })}
             />
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="Start Date"
+                type="date"
+                value={form.startDate}
+                onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+                required
+              />
+              <Input
+                label="End Date (Expiry Date)"
+                type="date"
+                value={form.endDate}
+                onChange={(e) => setForm({ ...form, endDate: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1">
+                Banner / Promotional Image (Optional)
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                className="w-full text-xs text-stone-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-stone-100 file:text-stone-700 hover:file:bg-stone-200 cursor-pointer"
+              />
+            </div>
+
+            <Button
+              onClick={handleProceedToPayment}
+              className="w-full bg-cordova-green hover:bg-cordova-greenHover text-white font-bold"
+            >
+              Proceed to Payment & QR Code <ArrowRight size={14} className="ml-1.5" />
+            </Button>
           </div>
-          <div>
-            <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1">
-              Banner / Promotional Image (Optional)
-            </label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-              className="w-full text-xs text-stone-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-stone-100 file:text-stone-700 hover:file:bg-stone-200 cursor-pointer"
-            />
+        ) : (
+          <div className="space-y-4">
+            {/* Payment Method Selector */}
+            <div>
+              <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 mb-2">
+                Choose Payment Method:
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                {/* GCash Option */}
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('gcash')}
+                  className={`p-3 rounded-xl border flex items-center justify-between transition-all ${
+                    paymentMethod === 'gcash'
+                      ? 'border-[#007DFE] bg-blue-50/60 dark:bg-blue-950/40 ring-2 ring-[#007DFE]/40 shadow-sm'
+                      : 'border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 hover:border-stone-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 text-left">
+                    <div className="w-7 h-7 rounded-lg bg-[#007DFE] flex items-center justify-center text-white font-bold text-xs shadow-sm">
+                      G
+                    </div>
+                    <div>
+                      <p className="font-bold text-xs text-stone-900 dark:text-white">GCash</p>
+                      <p className="text-[10px] text-stone-500">Scan QR / InstaPay</p>
+                    </div>
+                  </div>
+                  {paymentMethod === 'gcash' && <Check size={16} className="text-[#007DFE]" />}
+                </button>
+
+                {/* Maya Option */}
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('maya')}
+                  className={`p-3 rounded-xl border flex items-center justify-between transition-all ${
+                    paymentMethod === 'maya'
+                      ? 'border-[#00D665] bg-emerald-50/60 dark:bg-emerald-950/40 ring-2 ring-[#00D665]/40 shadow-sm'
+                      : 'border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 hover:border-stone-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 text-left">
+                    <div className="w-7 h-7 rounded-lg bg-[#00D665] flex items-center justify-center text-stone-900 font-bold text-xs shadow-sm">
+                      m
+                    </div>
+                    <div>
+                      <p className="font-bold text-xs text-stone-900 dark:text-white">Maya</p>
+                      <p className="text-[10px] text-stone-500">Scan QR / Handle</p>
+                    </div>
+                  </div>
+                  {paymentMethod === 'maya' && <Check size={16} className="text-[#00D665]" />}
+                </button>
+              </div>
+            </div>
+
+            {/* QR Code and Account Card */}
+            <div className="p-4 rounded-2xl bg-stone-50 dark:bg-stone-900/80 border border-stone-200 dark:border-stone-800 flex flex-col sm:flex-row items-center gap-4">
+              {/* QR Image */}
+              <div className="shrink-0 text-center">
+                <div className="relative w-44 h-44 sm:w-48 sm:h-48 rounded-2xl overflow-hidden shadow-md border border-stone-200 dark:border-stone-700 bg-white p-2">
+                  <Image
+                    src={paymentMethod === 'gcash' ? '/images/payments/gcash-qr-card.png' : '/images/payments/maya-qr-card.png'}
+                    alt={paymentMethod === 'gcash' ? 'GCash QR' : 'Maya QR'}
+                    fill
+                    className="object-contain p-1"
+                  />
+                </div>
+                <p className="text-[10px] text-stone-400 mt-1.5 flex items-center justify-center gap-1 font-medium">
+                  <QrCode size={11} /> Scan with {paymentMethod === 'gcash' ? 'GCash' : 'Maya'} app
+                </p>
+              </div>
+
+              {/* Payment Details */}
+              <div className="flex-1 w-full space-y-2.5 text-xs">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
+                    Payment Channel
+                  </span>
+                  <p className="font-bold text-stone-800 dark:text-stone-100 flex items-center gap-1.5">
+                    <span className={`inline-block w-2 h-2 rounded-full ${paymentMethod === 'gcash' ? 'bg-[#007DFE]' : 'bg-[#00D665]'}`} />
+                    {paymentMethod === 'gcash' ? 'GCash (InstaPay Supported)' : 'Maya (InstaPay Supported)'}
+                  </p>
+                </div>
+
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
+                    Account Name
+                  </span>
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700">
+                    <span className="font-mono font-bold text-stone-800 dark:text-stone-100">
+                      {paymentMethod === 'gcash' ? 'JOHN HERNAN L.' : 'JOHN HERNAN LICAMI'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        copyToClipboard(
+                          paymentMethod === 'gcash' ? 'JOHN HERNAN L.' : 'JOHN HERNAN LICAMI',
+                          'Account Name'
+                        )
+                      }
+                      className="text-stone-500 hover:text-cordova-green transition-colors"
+                      title="Copy Account Name"
+                    >
+                      {copiedField === 'Account Name' ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                    </button>
+                  </div>
+                </div>
+
+                {paymentMethod === 'maya' && (
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
+                      Maya Handle
+                    </span>
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700">
+                      <span className="font-mono font-bold text-stone-800 dark:text-stone-100">
+                        @licamijohnhernan
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard('@licamijohnhernan', 'Maya Handle')}
+                        className="text-stone-500 hover:text-cordova-green transition-colors"
+                        title="Copy Maya Handle"
+                      >
+                        {copiedField === 'Maya Handle' ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
+                    Mobile Number
+                  </span>
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700">
+                    <span className="font-mono font-bold text-stone-800 dark:text-stone-100">
+                      +63 992 512 5811
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard('+639925125811', 'Mobile Number')}
+                      className="text-stone-500 hover:text-cordova-green transition-colors"
+                      title="Copy Mobile Number"
+                    >
+                      {copiedField === 'Mobile Number' ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Reference Number Field */}
+            <div>
+              <Input
+                label="Transaction / Reference Number *"
+                placeholder="e.g. 1029384756 (from your GCash / Maya receipt)"
+                value={referenceNo}
+                onChange={(e) => setReferenceNo(e.target.value)}
+                required
+              />
+              <p className="text-[11px] text-stone-400 mt-1">
+                Required for payment verification by the platform administrator.
+              </p>
+            </div>
+
+            {/* Navigation & Submit Buttons */}
+            <div className="flex items-center gap-2 pt-2">
+              <Button
+                variant="secondary"
+                type="button"
+                onClick={() => setStep('details')}
+                className="w-1/3"
+                disabled={saving}
+              >
+                <ArrowLeft size={14} className="mr-1" /> Back
+              </Button>
+              <Button
+                type="button"
+                onClick={create}
+                loading={saving}
+                className="w-2/3 bg-cordova-green hover:bg-cordova-greenHover text-white font-bold"
+              >
+                <Check size={14} className="mr-1" /> Confirm & Publish
+              </Button>
+            </div>
           </div>
-          <Button onClick={create} loading={saving} className="w-full bg-cordova-green hover:bg-cordova-greenHover text-white">
-            Publish Promotion
-          </Button>
-        </div>
+        )}
       </Modal>
 
       {/* Extend / Renew Modal */}
@@ -899,7 +1131,33 @@ function StatCard({ label, value }: { label: string; value: number }) {
 function SubscriptionTab({ restaurant, onUpdated }: { restaurant: Restaurant; onUpdated: () => void }) {
   const { toast } = useToast();
   const [updating, setUpdating] = useState(false);
+  const [payTier, setPayTier] = useState<any | null>(null);
+  const [payMethod, setPayMethod] = useState<'gcash' | 'maya'>('gcash');
+  const [referenceNo, setReferenceNo] = useState('');
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [subData, setSubData] = useState<any>(null);
+
+  const fetchSubscriptionData = useCallback(async () => {
+    try {
+      const res = await api.get(`/api/restaurants/${restaurant.id}/subscription`);
+      setSubData(res.data);
+    } catch {
+      // Non-critical
+    }
+  }, [restaurant.id]);
+
+  useEffect(() => {
+    fetchSubscriptionData();
+  }, [fetchSubscriptionData]);
+
   const currentTier = (restaurant.subscription_tier || 'none').toLowerCase();
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(label);
+    toast(`${label} copied to clipboard!`, 'info');
+    setTimeout(() => setCopiedField(null), 2000);
+  };
 
   const TIERS = [
     {
@@ -952,14 +1210,36 @@ function SubscriptionTab({ restaurant, onUpdated }: { restaurant: Restaurant; on
     },
   ] as const;
 
+  const handleSelectTier = (tier: any) => {
+    if (tier.id === 'none') {
+      handleUpdateTier('none');
+    } else {
+      setPayTier(tier);
+      setReferenceNo('');
+    }
+  };
+
   const handleUpdateTier = async (tier: string) => {
+    if (tier !== 'none' && !referenceNo.trim()) {
+      toast('Please enter your GCash / Maya transaction or reference number', 'error');
+      return;
+    }
     setUpdating(true);
     try {
-      await api.patch(`/api/restaurants/${restaurant.id}/subscription`, {
+      const res = await api.patch(`/api/restaurants/${restaurant.id}/subscription`, {
         subscription_tier: tier,
         durationDays: 30,
+        payment_method: payMethod,
+        payment_reference: referenceNo.trim(),
       });
-      toast(`Subscription updated to ${tier.toUpperCase()}`, 'success');
+      if (res.data?.pending) {
+        toast('Payment submitted! Awaiting administrator verification.', 'success');
+      } else {
+        toast(`Subscription updated to ${tier.toUpperCase()}`, 'success');
+      }
+      setPayTier(null);
+      setReferenceNo('');
+      fetchSubscriptionData();
       onUpdated();
     } catch (err) {
       toast(err instanceof ApiClientError ? err.message : 'Failed to update subscription', 'error');
@@ -968,8 +1248,34 @@ function SubscriptionTab({ restaurant, onUpdated }: { restaurant: Restaurant; on
     }
   };
 
+  const daysRemaining = restaurant.subscription_expires_at
+    ? Math.max(0, Math.ceil((new Date(restaurant.subscription_expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    : null;
+
   return (
     <div className="space-y-8">
+      {/* Pending Verification Banner */}
+      {subData?.pending_transaction && (
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 sm:p-5 flex items-start gap-3.5 text-xs text-amber-900 dark:text-amber-100 shadow-sm">
+          <div className="p-2 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0">
+            <Clock size={20} className="animate-pulse" />
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-bold text-sm text-stone-900 dark:text-white">
+                Payment Verification Pending
+              </span>
+              <span className="bg-amber-500 text-stone-900 font-bold px-2 py-0.5 rounded text-[10px] uppercase tracking-wider">
+                {subData.pending_transaction.tier} Tier ({subData.pending_transaction.price})
+              </span>
+            </div>
+            <p className="text-stone-600 dark:text-stone-300">
+              We received your payment reference <span className="font-mono font-bold text-stone-900 dark:text-white">#{subData.pending_transaction.payment_reference}</span> via <span className="font-bold uppercase">{subData.pending_transaction.payment_method}</span>. The platform administrator is verifying your transaction. Once confirmed, your 30-day ranking boost will be activated automatically!
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Current Status Banner */}
       <div className="bg-white dark:bg-[#1a211c] border border-stone-200 dark:border-stone-800 rounded-xl p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -985,9 +1291,15 @@ function SubscriptionTab({ restaurant, onUpdated }: { restaurant: Restaurant; on
             </Badge>
           </div>
           {restaurant.subscription_expires_at ? (
-            <p className="text-xs text-stone-500 mt-1">
-              Expires on: {new Date(restaurant.subscription_expires_at).toLocaleDateString()}
-            </p>
+            <div className="mt-2 space-y-0.5">
+              <p className="text-xs font-semibold text-cordova-green dark:text-emerald-400 flex items-center gap-1.5">
+                <Calendar size={13} />
+                <span>Active until: {new Date(restaurant.subscription_expires_at).toLocaleDateString()}</span>
+              </p>
+              <p className="text-[11px] text-stone-400">
+                {daysRemaining} {daysRemaining === 1 ? 'day' : 'days'} remaining in current billing period
+              </p>
+            </div>
           ) : (
             <p className="text-xs text-stone-500 mt-1">Free tier active indefinitely.</p>
           )}
@@ -1047,7 +1359,7 @@ function SubscriptionTab({ restaurant, onUpdated }: { restaurant: Restaurant; on
 
                 <div className="pt-6 mt-4 border-t border-stone-100 dark:border-stone-800">
                   <Button
-                    onClick={() => handleUpdateTier(tier.id)}
+                    onClick={() => handleSelectTier(tier)}
                     loading={updating}
                     variant={isCurrent ? 'secondary' : tier.id === 'featured' ? 'primary' : 'secondary'}
                     disabled={isCurrent || updating}
@@ -1065,6 +1377,205 @@ function SubscriptionTab({ restaurant, onUpdated }: { restaurant: Restaurant; on
           })}
         </div>
       </div>
+
+      {/* Subscription Tier Payment Modal */}
+      <Modal
+        open={!!payTier}
+        onClose={() => setPayTier(null)}
+        title={`Activate ${payTier?.name}`}
+      >
+        <div className="space-y-4">
+          <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold text-amber-900 dark:text-amber-200">{payTier?.name}</p>
+              <p className="text-[11px] text-amber-700 dark:text-amber-300">{payTier?.boost}</p>
+            </div>
+            <span className="font-bold text-sm text-amber-900 dark:text-amber-100">{payTier?.price}</span>
+          </div>
+
+          {/* Payment Method Selector */}
+          <div>
+            <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 mb-2">
+              Choose Payment Method:
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              {/* GCash Option */}
+              <button
+                type="button"
+                onClick={() => setPayMethod('gcash')}
+                className={`p-3 rounded-xl border flex items-center justify-between transition-all ${
+                  payMethod === 'gcash'
+                    ? 'border-[#007DFE] bg-blue-50/60 dark:bg-blue-950/40 ring-2 ring-[#007DFE]/40 shadow-sm'
+                    : 'border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 hover:border-stone-300'
+                }`}
+              >
+                <div className="flex items-center gap-2.5 text-left">
+                  <div className="w-7 h-7 rounded-lg bg-[#007DFE] flex items-center justify-center text-white font-bold text-xs shadow-sm">
+                    G
+                  </div>
+                  <div>
+                    <p className="font-bold text-xs text-stone-900 dark:text-white">GCash</p>
+                    <p className="text-[10px] text-stone-500">Scan QR / InstaPay</p>
+                  </div>
+                </div>
+                {payMethod === 'gcash' && <Check size={16} className="text-[#007DFE]" />}
+              </button>
+
+              {/* Maya Option */}
+              <button
+                type="button"
+                onClick={() => setPayMethod('maya')}
+                className={`p-3 rounded-xl border flex items-center justify-between transition-all ${
+                  payMethod === 'maya'
+                    ? 'border-[#00D665] bg-emerald-50/60 dark:bg-emerald-950/40 ring-2 ring-[#00D665]/40 shadow-sm'
+                    : 'border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 hover:border-stone-300'
+                }`}
+              >
+                <div className="flex items-center gap-2.5 text-left">
+                  <div className="w-7 h-7 rounded-lg bg-[#00D665] flex items-center justify-center text-stone-900 font-bold text-xs shadow-sm">
+                    m
+                  </div>
+                  <div>
+                    <p className="font-bold text-xs text-stone-900 dark:text-white">Maya</p>
+                    <p className="text-[10px] text-stone-500">Scan QR / Handle</p>
+                  </div>
+                </div>
+                {payMethod === 'maya' && <Check size={16} className="text-[#00D665]" />}
+              </button>
+            </div>
+          </div>
+
+          {/* QR Code and Account Card */}
+          <div className="p-4 rounded-2xl bg-stone-50 dark:bg-stone-900/80 border border-stone-200 dark:border-stone-800 flex flex-col sm:flex-row items-center gap-4">
+            {/* QR Image */}
+            <div className="shrink-0 text-center">
+              <div className="relative w-44 h-44 sm:w-48 sm:h-48 rounded-2xl overflow-hidden shadow-md border border-stone-200 dark:border-stone-700 bg-white p-2">
+                <Image
+                  src={payMethod === 'gcash' ? '/images/payments/gcash-qr-card.png' : '/images/payments/maya-qr-card.png'}
+                  alt={payMethod === 'gcash' ? 'GCash QR' : 'Maya QR'}
+                  fill
+                  className="object-contain p-1"
+                />
+              </div>
+              <p className="text-[10px] text-stone-400 mt-1.5 flex items-center justify-center gap-1 font-medium">
+                <QrCode size={11} /> Scan with {payMethod === 'gcash' ? 'GCash' : 'Maya'} app
+              </p>
+            </div>
+
+            {/* Payment Details */}
+            <div className="flex-1 w-full space-y-2.5 text-xs">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
+                  Payment Channel
+                </span>
+                <p className="font-bold text-stone-800 dark:text-stone-100 flex items-center gap-1.5">
+                  <span className={`inline-block w-2 h-2 rounded-full ${payMethod === 'gcash' ? 'bg-[#007DFE]' : 'bg-[#00D665]'}`} />
+                  {payMethod === 'gcash' ? 'GCash (InstaPay Supported)' : 'Maya (InstaPay Supported)'}
+                </p>
+              </div>
+
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
+                  Account Name
+                </span>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700">
+                  <span className="font-mono font-bold text-stone-800 dark:text-stone-100">
+                    {payMethod === 'gcash' ? 'JOHN HERNAN L.' : 'JOHN HERNAN LICAMI'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      copyToClipboard(
+                        payMethod === 'gcash' ? 'JOHN HERNAN L.' : 'JOHN HERNAN LICAMI',
+                        'Account Name'
+                      )
+                    }
+                    className="text-stone-500 hover:text-cordova-green transition-colors"
+                    title="Copy Account Name"
+                  >
+                    {copiedField === 'Account Name' ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                  </button>
+                </div>
+              </div>
+
+              {payMethod === 'maya' && (
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
+                    Maya Handle
+                  </span>
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700">
+                    <span className="font-mono font-bold text-stone-800 dark:text-stone-100">
+                      @licamijohnhernan
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard('@licamijohnhernan', 'Maya Handle')}
+                      className="text-stone-500 hover:text-cordova-green transition-colors"
+                      title="Copy Maya Handle"
+                    >
+                      {copiedField === 'Maya Handle' ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
+                  Mobile Number
+                </span>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700">
+                  <span className="font-mono font-bold text-stone-800 dark:text-stone-100">
+                    +63 992 512 5811
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard('+639925125811', 'Mobile Number')}
+                    className="text-stone-500 hover:text-cordova-green transition-colors"
+                    title="Copy Mobile Number"
+                  >
+                    {copiedField === 'Mobile Number' ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Reference Number Field */}
+          <div>
+            <Input
+              label="Transaction / Reference Number *"
+              placeholder="e.g. 1029384756 (from your GCash / Maya receipt)"
+              value={referenceNo}
+              onChange={(e) => setReferenceNo(e.target.value)}
+              required
+            />
+            <p className="text-[11px] text-stone-400 mt-1">
+              Required for payment verification by the platform administrator.
+            </p>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex items-center gap-2 pt-2">
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={() => setPayTier(null)}
+              className="w-1/3"
+              disabled={updating}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={() => handleUpdateTier(payTier?.id)}
+              loading={updating}
+              className="w-2/3 bg-cordova-green hover:bg-cordova-greenHover text-white font-bold"
+            >
+              <Check size={14} className="mr-1" /> Confirm & Activate
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

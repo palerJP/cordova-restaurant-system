@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import Link from 'next/link';
 import Image from 'next/image';
@@ -41,10 +41,10 @@ export default function NotFound() {
             <span>Return to Home</span>
           </Link>
           <Link
-            href="/promotions"
+            href="/about"
             className="w-full sm:w-auto bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-200 font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-xl border border-stone-200 dark:border-stone-700 transition-all active:scale-95 flex items-center justify-center gap-2"
           >
-            <span>Explore Promotions</span>
+            <span>About Us</span>
           </Link>
         </div>
       </div>

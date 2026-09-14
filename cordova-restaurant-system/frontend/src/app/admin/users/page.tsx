@@ -12,12 +12,15 @@ import {
   Calendar,
   Mail,
   Phone,
+  Trash2,
+  AlertTriangle,
 } from 'lucide-react';
 import { api, ApiClientError } from '@/lib/api';
 import { useToast } from '@/lib/toast-context';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useDebounce } from '@/hooks/useDebounce';
 import type { User } from '@/lib/types';
@@ -33,6 +36,8 @@ function AdminUsersContent() {
   const debouncedSearch = useDebounce(search, 300);
   const [roleFilter, setRoleFilter] = useState(initialRole);
   const [loading, setLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Sync state if URL param changes
   useEffect(() => {
@@ -79,6 +84,21 @@ function AdminUsersContent() {
       load();
     } catch (err) {
       toast(err instanceof ApiClientError ? err.message : 'Failed to update user status', 'error');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    try {
+      await api.delete(`/api/admin/users/${deleteTarget.id}`);
+      toast('User account permanently deleted', 'success');
+      setDeleteTarget(null);
+      load();
+    } catch (err) {
+      toast(err instanceof ApiClientError ? err.message : 'Failed to delete user account', 'error');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -231,26 +251,40 @@ function AdminUsersContent() {
 
                   <td className="p-4 text-right">
                     {u.role !== 'admin' && (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => toggleActive(u)}
-                        className={`text-xs font-semibold ${
-                          u.is_active
-                            ? 'text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30'
-                            : 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'
-                        }`}
-                      >
-                        {u.is_active ? (
-                          <>
-                            <UserX size={13} className="mr-1" /> Deactivate
-                          </>
-                        ) : (
-                          <>
-                            <UserCheck size={13} className="mr-1" /> Activate
-                          </>
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => toggleActive(u)}
+                          className={`text-xs font-semibold ${
+                            u.is_active
+                              ? 'text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30'
+                              : 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'
+                          }`}
+                        >
+                          {u.is_active ? (
+                            <>
+                              <UserX size={13} className="mr-1" /> Deactivate
+                            </>
+                          ) : (
+                            <>
+                              <UserCheck size={13} className="mr-1" /> Activate
+                            </>
+                          )}
+                        </Button>
+
+                        {!u.is_active && (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => setDeleteTarget(u)}
+                            className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40"
+                            title="Permanently delete deactivated user"
+                          >
+                            <Trash2 size={13} className="mr-1" /> Delete
+                          </Button>
                         )}
-                      </Button>
+                      </div>
                     )}
                   </td>
                 </tr>
@@ -259,6 +293,43 @@ function AdminUsersContent() {
           </table>
         </div>
       )}
+
+      {/* Delete User Confirmation Modal */}
+      <Modal
+        open={!!deleteTarget}
+        onClose={() => !isDeleting && setDeleteTarget(null)}
+        title="Delete User Account"
+      >
+        <div className="space-y-4">
+          <div className="flex items-start gap-3 p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 text-rose-800 dark:text-rose-200">
+            <AlertTriangle className="text-rose-600 shrink-0 mt-0.5" size={18} />
+            <div className="text-xs space-y-1">
+              <p className="font-bold">Permanent Account Deletion</p>
+              <p>
+                Are you sure you want to permanently delete the account of{' '}
+                <strong className="font-semibold text-rose-900 dark:text-rose-100">{deleteTarget?.full_name}</strong>{' '}
+                ({deleteTarget?.email})?
+              </p>
+              <p className="text-rose-600 dark:text-rose-400">
+                This user is currently deactivated. Deleting will permanently remove their account, taste preferences, and associated data from the database. This action cannot be undone.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="secondary" onClick={() => setDeleteTarget(null)} disabled={isDeleting}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs"
+            >
+              <Trash2 size={13} className="mr-1" /> {isDeleting ? 'Deleting...' : 'Confirm Permanent Deletion'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

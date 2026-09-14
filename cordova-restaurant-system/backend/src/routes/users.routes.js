@@ -12,5 +12,6 @@ router.put('/me/preferences', requireAuth, controller.updatePreferences);
 // Admin: user account management
 router.get('/', requireAuth, requireRole('admin'), controller.listUsers);
 router.patch('/:id/active', requireAuth, requireRole('admin'), controller.setUserActive);
+router.delete('/:id', requireAuth, requireRole('admin'), controller.deleteUser);
 
 module.exports = router;

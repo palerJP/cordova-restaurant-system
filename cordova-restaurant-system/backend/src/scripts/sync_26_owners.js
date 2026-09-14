@@ -94,13 +94,6 @@ const OWNERS = [
     restaurant_slug: 'horizon-bean-cafe',
   },
   {
-    id: '20000000-0000-0000-0000-000000000014',
-    email: 'owner.husbys@cordovateats.ph',
-    full_name: 'Harold Usbal',
-    phone: '+639171000014',
-    restaurant_slug: 'husbys-grill',
-  },
-  {
     id: '20000000-0000-0000-0000-000000000015',
     email: 'owner.lantaw@cordovateats.ph',
     full_name: 'Leonardo Lantaw',

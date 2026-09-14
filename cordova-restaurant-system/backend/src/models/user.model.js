@@ -175,6 +175,17 @@ async function upsertPreferences(userId, prefs) {
   return rows[0];
 }
 
+async function deleteUser(id) {
+  // Clear any nullable foreign references that don't cascade
+  await query(`UPDATE restaurants SET verified_by = NULL WHERE verified_by = $1`, [id]);
+  await query(`UPDATE reviews SET moderated_by = NULL WHERE moderated_by = $1`, [id]);
+  await query(`UPDATE recommendation_weights SET updated_by = NULL WHERE updated_by = $1`, [id]);
+  await query(`UPDATE audit_logs SET actor_id = NULL WHERE actor_id = $1`, [id]);
+
+  const { rows } = await query(`DELETE FROM users WHERE id = $1 RETURNING ${PUBLIC_FIELDS}`, [id]);
+  return rows[0] || null;
+}
+
 module.exports = {
   PUBLIC_FIELDS,
   findById,
@@ -191,6 +202,7 @@ module.exports = {
   updatePassword,
   touchLastLogin,
   setActive,
+  deleteUser,
   list,
   getPreferences,
   upsertPreferences,
