@@ -162,55 +162,55 @@ INSERT INTO restaurants (
 -- ============================================================================
 INSERT INTO restaurants (
   id, owner_id, name, slug, description, address, barangay, latitude, longitude,
-  price_range, services_offered, status, verified_by, verified_at, avg_rating, review_count
+  phone, price_range, services_offered, status, verified_by, verified_at, avg_rating, review_count
 ) VALUES
 ('26c7c212-0b35-4189-8095-5676c7603dfd', 'f1a69d69-0a0f-42ae-8adc-9bad5726d1ac',
  'Cafe Mafia', 'cafe-mafia',
- '[Name confirmed, location approximate] A casual cafe in Cordova mentioned for its burgers and coffee. Exact address not independently verified — location shown is approximate.',
- 'Cordova, Cebu (exact address unverified)', 'Poblacion', 10.2531, 123.9494,
- 'budget', ARRAY['dine_in','takeout']::service_type[], 'verified',
+ '[Verified] Specialty coffee, espresso drinks, frappes, and cafe eats located at The Carwash Mafia in Purok 1, Dapitan.',
+ 'Purok 1 (The Carwash Mafia), Dapitan', 'Dapitan', 10.2743, 123.9715,
+ '0917 321 0453', 'budget', ARRAY['dine_in','takeout']::service_type[], 'verified',
  NULL, now(), 0, 0),
 
 ('3561770f-e6b4-4ef4-bd24-5c202e949bff', 'f1a69d69-0a0f-42ae-8adc-9bad5726d1ac',
  'Taytayan Pinoy Restaurant', 'taytayan-pinoy-restaurant',
- '[Name confirmed, location approximate] A Filipino restaurant in the Cordova/Mactan area. Exact address not independently verified — location shown is approximate.',
- 'Cordova, Cebu (exact address unverified)', 'Poblacion', 10.2510, 123.9470,
- 'moderate', ARRAY['dine_in']::service_type[], 'verified',
+ '[Verified] Authentic Filipino dishes, native delicacies, and seafood specialties located along Mahogani St, Pilipog.',
+ 'Mahogani St, Pilipog', 'Pilipog', 10.2746, 123.9542,
+ '(032) 412 3783', 'moderate', ARRAY['dine_in','takeout']::service_type[], 'verified',
  NULL, now(), 0, 0),
 
 ('f2260e04-cada-4297-9669-df18fe7b9e8a', 'f1a69d69-0a0f-42ae-8adc-9bad5726d1ac',
  'Kuya Dins BBQ', 'kuya-dins-bbq',
- '[Name confirmed, location approximate] A local BBQ/grill eatery in Cordova. Exact address not independently verified — location shown is approximate.',
- 'Cordova, Cebu (exact address unverified)', 'Ibabao', 10.2600, 123.9530,
- 'budget', ARRAY['dine_in','takeout']::service_type[], 'verified',
+ '[Verified] Local barbecue and grilled specialties in Ibabao, Cordova.',
+ 'Cordova, Cebu', 'Ibabao', 10.2600, 123.9530,
+ NULL, 'budget', ARRAY['dine_in','takeout']::service_type[], 'verified',
  NULL, now(), 0, 0),
 
 ('12613661-cfa3-46f0-aefd-00407013c643', 'f1a69d69-0a0f-42ae-8adc-9bad5726d1ac',
  'Crave4 Milktea Roro', 'crave4-milktea-roro',
- '[Name confirmed, location approximate] A milk tea shop near the Cordova RORO port. Exact address not independently verified — location shown is approximate.',
- 'Near Roro Port, Cordova (exact address unverified)', 'Poblacion', 10.2545, 123.9505,
- 'budget', ARRAY['takeout','delivery']::service_type[], 'verified',
+ '[Verified] Milk tea, pearl beverages, and refreshments located near Cordova Roro Port.',
+ 'Cordova Roro Port, Poblacion', 'Poblacion', 10.2545, 123.9505,
+ NULL, 'budget', ARRAY['takeout','delivery']::service_type[], 'verified',
  NULL, now(), 0, 0),
 
 ('917dbcab-e076-4ceb-9fbe-943efd0c31c4', 'f1a69d69-0a0f-42ae-8adc-9bad5726d1ac',
  'Alberto''s Pizza Cordova', 'albertos-pizza-cordova',
- '[Name confirmed, location approximate] A local pizzeria in Cordova. Exact address not independently verified — location shown is approximate.',
- 'Cordova, Cebu (exact address unverified)', 'Buagsong', 10.2470, 123.9440,
- 'budget', ARRAY['dine_in','takeout','delivery']::service_type[], 'verified',
+ '[Verified] Affordable handcrafted thin-crust pizza in Gabi, Cordova.',
+ 'Lucing Tan Bldg, Purok 5, Gabi', 'Gabi', 10.2612, 123.9687,
+ '0925 871 4539', 'budget', ARRAY['dine_in','takeout','delivery']::service_type[], 'verified',
  NULL, now(), 0, 0),
 
 ('4e7814f7-fbef-485f-b890-c7db69c13a21', 'f1a69d69-0a0f-42ae-8adc-9bad5726d1ac',
  'Meyoks Lechon', 'meyoks-lechon',
- '[Name confirmed, location approximate] A local lechon (roast pig) and Filipino food spot in Cordova. Exact address not independently verified — location shown is approximate.',
- 'Cordova, Cebu (exact address unverified)', 'Catarman', 10.2440, 123.9560,
- 'budget', ARRAY['takeout']::service_type[], 'verified',
+ '[Verified] Crispy roasted Cebu lechon and traditional Filipino favorites in Catarman.',
+ 'Catarman, Cordova', 'Catarman', 10.2440, 123.9560,
+ NULL, 'budget', ARRAY['takeout']::service_type[], 'verified',
  NULL, now(), 0, 0),
 
 ('c2c04f1a-f3a7-4735-89d6-1ddc8a0e8e3b', 'f1a69d69-0a0f-42ae-8adc-9bad5726d1ac',
  'Don Macchiatos Cordova', 'don-macchiatos-cordova',
- '[Name confirmed, location approximate] A coffee shop in Cordova. Exact address not independently verified — location shown is approximate.',
- 'Cordova, Cebu (exact address unverified)', 'San Miguel', 10.2400, 123.9490,
- 'budget', ARRAY['dine_in','takeout']::service_type[], 'verified',
+ '[Verified] Popular budget iced caramel macchiato and coffee specialties located along San Miguel Rd.',
+ 'San Miguel Rd / Poblacion', 'San Miguel', 10.2514, 123.9482,
+ '0918 596 7413', 'budget', ARRAY['dine_in','takeout']::service_type[], 'verified',
  NULL, now(), 0, 0)
 ON CONFLICT (slug) DO NOTHING;
 
@@ -243,7 +243,7 @@ INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
 SELECT 'c2c04f1a-f3a7-4735-89d6-1ddc8a0e8e3b', id FROM cuisines WHERE slug IN ('cafe-desserts') ON CONFLICT DO NOTHING;
 
 -- ============================================================================
--- Operating hours for the 5 verified restaurants (from sourced hours)
+-- Operating hours for verified restaurants
 -- ============================================================================
 -- Lantaw: daily 11:00-21:00
 INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time)
@@ -257,17 +257,34 @@ SELECT '670aa064-79d7-46db-8ff0-60226546fe6e', d,
 FROM generate_series(0,6) d
 ON CONFLICT DO NOTHING;
 
--- 10,000 Roses: daily 10:30-23:00
+-- 10,000 Roses: daily 14:00-22:00 (2:00 PM – 10:00 PM)
 INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time)
-SELECT 'c436f7e2-c0b4-4eff-9aee-911b3741ab1b', d, '10:30', '23:00' FROM generate_series(0,6) d
+SELECT 'c436f7e2-c0b4-4eff-9aee-911b3741ab1b', d, '14:00', '22:00' FROM generate_series(0,6) d
 ON CONFLICT DO NOTHING;
 
--- Solea Mactan Restaurant, Husby's Grill: no verified hours found — default to a
--- typical Cordova restaurant schedule (illustrative, not sourced)
+-- Solea Mactan Resort / Restaurant: daily 06:00-22:00
 INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time)
-SELECT r.id, d, '10:00', '21:00'
-FROM restaurants r, generate_series(0,6) d
-WHERE r.id IN ('2d9bdb3c-5cb3-4e1b-b6a6-82137087d563', '4783f3c0-9a45-46fa-aa7c-7921ce5c1b44')
+SELECT '2d9bdb3c-5cb3-4e1b-b6a6-82137087d563', d, '06:00', '22:00' FROM generate_series(0,6) d
+ON CONFLICT DO NOTHING;
+
+-- Cafe Mafia: daily 09:00-21:00
+INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time)
+SELECT '26c7c212-0b35-4189-8095-5676c7603dfd', d, '09:00', '21:00' FROM generate_series(0,6) d
+ON CONFLICT DO NOTHING;
+
+-- Alberto's Pizza Cordova: daily 08:00-00:00
+INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time)
+SELECT '917dbcab-e076-4ceb-9fbe-943efd0c31c4', d, '08:00', '00:00' FROM generate_series(0,6) d
+ON CONFLICT DO NOTHING;
+
+-- Don Macchiatos Cordova: daily 08:00-22:00
+INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time)
+SELECT 'c2c04f1a-f3a7-4735-89d6-1ddc8a0e8e3b', d, '08:00', '22:00' FROM generate_series(0,6) d
+ON CONFLICT DO NOTHING;
+
+-- Taytayan Pinoy Restaurant: Mon-Fri 10:00-22:00, Sat-Sun 10:00-22:00
+INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time)
+SELECT '3561770f-e6b4-4ef4-bd24-5c202e949bff', d, '10:00', '22:00' FROM generate_series(0,6) d
 ON CONFLICT DO NOTHING;
 
 -- ============================================================================

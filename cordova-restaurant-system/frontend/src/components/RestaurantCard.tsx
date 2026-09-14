@@ -54,10 +54,17 @@ export const RestaurantCard = memo(function RestaurantCard({
       ? restaurant.cover_image_url
       : fallbackImage;
 
+  const isSeafood = Boolean(
+    (restaurant.name + ' ' + (restaurant.description || '') + ' ' + (restaurant.cuisines || []).join(' ')).toLowerCase().includes('seafood') ||
+    (restaurant.name + ' ' + (restaurant.description || '')).toLowerCase().includes('bakasi') ||
+    (restaurant.name + ' ' + (restaurant.description || '')).toLowerCase().includes('parola') ||
+    (restaurant.name + ' ' + (restaurant.description || '')).toLowerCase().includes('lantaw')
+  );
+
   return (
-    <div className={`spatial-card overflow-hidden flex flex-col h-full group transition-all duration-300 ${
+    <div className={`spatial-card overflow-hidden flex flex-col h-full group transition-all duration-300 rounded-3xl ${
       isSponsored
-        ? 'border-amber-400/60 dark:border-amber-500/40 ring-1 ring-amber-400/20 shadow-spatial-md'
+        ? 'border-amber-400/70 dark:border-amber-500/50 ring-2 ring-amber-400/30 shadow-spatial-md'
         : 'border-stone-200/80 dark:border-white/10'
     }`}>
       {/* Cover Image Container */}
@@ -72,26 +79,47 @@ export const RestaurantCard = memo(function RestaurantCard({
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
 
-        {/* Ambient Gradient Overlay for depth */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/15 pointer-events-none" />
+        {/* Ambient Gradient Overlay for depth & contrast */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 pointer-events-none" />
 
-        {/* Sponsored Badge (Top Left) */}
-        {isSponsored && (
-          <div className="absolute top-3 left-3 z-10">
-            <span className="bg-amber-500/90 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-spatial-sm backdrop-blur-md flex items-center gap-1 border border-white/20">
-              <span className="text-xs">★</span> Sponsored
-            </span>
+        {/* Top Badges Row */}
+        <div className="absolute top-3 left-3 right-3 z-10 flex items-center justify-between pointer-events-none">
+          {/* Left Badges (Sponsored or Cuisine Specialty) */}
+          <div className="flex items-center gap-1.5">
+            {isSponsored ? (
+              <span className="bg-amber-500 text-white text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full shadow-spatial-sm backdrop-blur-md flex items-center gap-1 border border-white/30">
+                <span className="text-xs">★</span> Sponsored
+              </span>
+            ) : isSeafood ? (
+              <span className="bg-cyan-600/90 text-white text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-spatial-sm backdrop-blur-md flex items-center gap-1 border border-white/20">
+                🦞 Seafood
+              </span>
+            ) : null}
           </div>
-        )}
 
-        {/* Match / Relevance Score (Top Right) */}
-        {displayScore !== undefined && (
-          <div className="absolute top-3 right-3 z-10">
-            <span className="bg-[#1B5232]/85 dark:bg-emerald-700/85 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-spatial-sm backdrop-blur-md border border-white/20">
+          {/* Right Badges (Match Score) */}
+          {displayScore !== undefined && (
+            <span className="bg-emerald-700/90 text-white text-xs font-bold px-3 py-1 rounded-full shadow-spatial-sm backdrop-blur-md border border-white/30">
               {Math.round(displayScore)}% match
             </span>
-          </div>
-        )}
+          )}
+        </div>
+
+        {/* Bottom Image Badges (Barangay Pill & Live Status) */}
+        <div className="absolute bottom-3 left-3 right-3 z-10 flex items-center justify-between text-white text-xs">
+          <span className="bg-black/60 backdrop-blur-md text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-white/20">
+            {restaurant.barangay || 'Cordova'}
+          </span>
+          {restaurant.is_open === false ? (
+            <span className="spatial-status-closed text-[10px] py-0.5 px-2 bg-red-600/90 text-white border-white/20">
+              Closed
+            </span>
+          ) : (
+            <span className="spatial-status-open text-[10px] py-0.5 px-2 bg-emerald-600/90 text-white border-white/20">
+              Open Now
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Card Content */}
@@ -99,46 +127,45 @@ export const RestaurantCard = memo(function RestaurantCard({
         <div className="space-y-3">
           {/* Title & Price Category */}
           <div>
-            <h3 className="font-serif text-xl font-bold text-stone-900 dark:text-white leading-tight group-hover:text-cordova-green dark:group-hover:text-emerald-400 transition-colors">
+            <h3 className="font-serif text-xl font-extrabold text-stone-900 dark:text-white leading-tight group-hover:text-cordova-green dark:group-hover:text-emerald-400 transition-colors">
               {restaurant.name}
             </h3>
-            {restaurant.price_range && (
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-[11px] font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wider">
-                  {restaurant.price_range} • {restaurant.category || restaurant.cuisines?.[0] || 'Restaurant'}
-                </span>
-              </div>
-            )}
+            <div className="flex flex-wrap items-center gap-2 mt-1.5">
+              <span className="text-[11px] font-extrabold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800 uppercase tracking-wider">
+                {restaurant.price_range ? restaurant.price_range.toUpperCase() : 'BUDGET'}
+              </span>
+              <span className="text-[11px] font-bold text-stone-600 dark:text-stone-300">
+                • {isSeafood ? 'Seafood Specialist' : restaurant.category || restaurant.cuisines?.[0] || 'Restaurant'}
+              </span>
+            </div>
           </div>
 
           {/* Location & Distance */}
-          <div className="flex items-center justify-between text-xs text-stone-600 dark:text-stone-300">
+          <div className="flex items-center justify-between text-xs text-stone-700 dark:text-stone-200">
             <div className="flex items-center gap-1.5 min-w-0">
               <MapPin size={14} className="text-cordova-gold shrink-0" />
-              <span className="truncate">{locationText}</span>
+              <span className="truncate font-medium">{locationText}</span>
             </div>
             {restaurant.distance_km != null && (
-              <span className="shrink-0 text-stone-500 dark:text-stone-400 font-medium ml-2 px-2 py-0.5 rounded-full bg-stone-100 dark:bg-white/5">
+              <span className="shrink-0 text-stone-600 dark:text-stone-300 font-bold ml-2 px-2 py-0.5 rounded-full bg-stone-100 dark:bg-white/10">
                 {restaurant.distance_km} km
               </span>
             )}
           </div>
 
-          {/* Rating & Availability */}
-          <div className="flex items-center justify-between text-xs pt-1 border-t border-stone-100 dark:border-white/5">
-            <div className="flex items-center gap-1 font-semibold text-stone-800 dark:text-stone-200">
+          {/* Rating & Review Count */}
+          <div className="flex items-center justify-between text-xs pt-1.5 border-t border-stone-100 dark:border-white/5">
+            <div className="flex items-center gap-1.5 font-bold text-stone-900 dark:text-stone-100">
               <Star size={14} className="fill-cordova-gold text-cordova-gold" />
               <span>{ratingVal}</span>
-              <span className="text-stone-400 font-normal">({restaurant.review_count || 0})</span>
+              <span className="text-stone-500 dark:text-stone-400 font-normal">
+                ({restaurant.review_count || 0} reviews)
+              </span>
             </div>
 
-            {restaurant.is_open === false ? (
-              <span className="text-red-500 dark:text-red-400 font-medium text-[11px] px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-950/40">
-                Closed
-              </span>
-            ) : (
-              <span className="text-emerald-600 dark:text-emerald-400 font-medium text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40">
-                Open now
+            {restaurant.phone && (
+              <span className="text-[11px] font-mono text-stone-500 dark:text-stone-400 truncate max-w-[120px]">
+                {restaurant.phone}
               </span>
             )}
           </div>
@@ -146,14 +173,14 @@ export const RestaurantCard = memo(function RestaurantCard({
           {/* Matched Menu Items Preview */}
           {restaurant.matched_menu_items && restaurant.matched_menu_items.length > 0 && (
             <div className="pt-2 border-t border-stone-100 dark:border-white/5">
-              <p className="text-[11px] font-semibold text-stone-500 dark:text-stone-400 mb-1.5">
-                Matching dishes:
+              <p className="text-[11px] font-bold text-stone-700 dark:text-stone-300 mb-1.5">
+                Matching specialties:
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {restaurant.matched_menu_items.map((item, idx) => (
                   <span
                     key={idx}
-                    className="inline-block bg-amber-500/10 text-amber-900 dark:text-amber-200 text-[10px] font-medium px-2.5 py-1 rounded-full border border-amber-500/20 backdrop-blur-sm"
+                    className="inline-block bg-amber-500/15 text-amber-900 dark:text-amber-200 text-[10px] font-bold px-2.5 py-1 rounded-full border border-amber-500/30 backdrop-blur-sm"
                   >
                     {item.name} (₱{item.price})
                   </span>
@@ -166,7 +193,7 @@ export const RestaurantCard = memo(function RestaurantCard({
         {/* Action Button */}
         <Link
           href={`/restaurants/${restaurant.slug}`}
-          className="w-full bg-cordova-green hover:bg-cordova-greenHover dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white font-semibold text-xs uppercase tracking-wider py-3 rounded-xl text-center transition-all duration-200 shadow-spatial-sm hover:shadow-spatial-glow active:scale-[0.98] block mt-2 border border-white/10"
+          className="w-full bg-cordova-green hover:bg-cordova-greenHover dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white font-extrabold text-xs uppercase tracking-wider py-3 rounded-2xl text-center transition-all duration-200 shadow-spatial-sm hover:shadow-spatial-glow active:scale-[0.98] block mt-1 border border-white/15"
         >
           View Details
         </Link>

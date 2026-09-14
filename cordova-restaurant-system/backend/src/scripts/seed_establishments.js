@@ -25,11 +25,11 @@ async function addCordovaEstablishments() {
       'f1a69d69-0a0f-42ae-8adc-9bad5726d1ac',
       'Entoy''s Bakasihan',
       'entoys-bakasihan',
-      'Famous for authentic Cebuano bakasi and traditional Filipino seafood dishes. Family-owned since 1995.',
-      'Buagsong, Cordova, Cebu',
+      'World-famous authentic Cebuano bakasi (salted reef eel soup and fried bakasi) featured on Netflix Street Food Asia. Established in Buagsong since 1995.',
+      'Buagsong Barangay Rd (Wharf), Buagsong',
       'Buagsong',
-      10.2450, 123.9460,
-      '+63 912 345 6789',
+      10.2448, 123.9458,
+      '0966 931 7531',
       'budget',
       ARRAY['dine_in','takeout']::service_type[],
       'verified',
@@ -37,6 +37,11 @@ async function addCordovaEstablishments() {
     ) ON CONFLICT (slug) DO UPDATE SET
       name = EXCLUDED.name,
       description = EXCLUDED.description,
+      address = EXCLUDED.address,
+      barangay = EXCLUDED.barangay,
+      latitude = EXCLUDED.latitude,
+      longitude = EXCLUDED.longitude,
+      phone = EXCLUDED.phone,
       status = 'verified',
       avg_rating = 4.8
     RETURNING id;
@@ -61,9 +66,9 @@ async function addCordovaEstablishments() {
   if (catId) {
     await pool.query(`
       INSERT INTO menu_items (restaurant_id, category_id, name, description, price) VALUES
-      ($1, $2, 'Linaong na Bakasi', 'Authentic Cebuano eel soup in tangy tomato tamarind broth', 180.00),
-      ($1, $2, 'Nilapwaan Kinsahon', 'Fresh local shellfish boiled in aromatic herbs', 160.00),
-      ($1, $2, 'Fried Bakasi', 'Crispy deep-fried seasoned reef eels', 170.00),
+      ($1, $2, 'Linarang Bakasi', 'Signature sour and spicy eel soup with tomatoes, fermented black beans, and local chili', 150.00),
+      ($1, $2, 'Crispy Fried Bakasi', 'Crunchy deep-fried reef eels served with spicy vinegar dip', 130.00),
+      ($1, $2, 'Nilapwaan Kinsahon', 'Fresh local shellfish boiled in aromatic herbs and ginger', 160.00),
       ($1, $2, 'Garlic Butter Shrimp', 'Fresh Cordova sea shrimp in garlic butter sauce', 250.00),
       ($1, $2, 'Sinugbang Bangus', 'Grilled stuffed milkfish with tomato onion salsa', 220.00),
       ($1, $2, 'Lambay (Steamed Crab)', 'Fresh local mud crabs steamed with native vinegar dip', 300.00)
@@ -81,16 +86,24 @@ async function addCordovaEstablishments() {
       'f1a69d69-0a0f-42ae-8adc-9bad5726d1ac',
       'Tita Kim''s',
       'tita-kims',
-      'Popular local food joint in Gabi, Cordova serving home-cooked Filipino favorites and grilled specialties.',
-      'Gabi, Cordova, Cebu',
+      'Popular Eat All You Can buffet, unlimited grill, and unlimited chicken wings in Purok 5, Gabi.',
+      'Lot 747 National Hwy, Purok 5, Gabi',
       'Gabi',
-      10.2490, 123.9520,
-      '+63 917 888 9900',
+      10.2605, 123.9682,
+      '0998 868 8573',
       'budget',
       ARRAY['dine_in','takeout']::service_type[],
       'verified',
       now(), 4.4, 18
-    ) ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, status = 'verified'
+    ) ON CONFLICT (slug) DO UPDATE SET
+      name = EXCLUDED.name,
+      description = EXCLUDED.description,
+      address = EXCLUDED.address,
+      barangay = EXCLUDED.barangay,
+      latitude = EXCLUDED.latitude,
+      longitude = EXCLUDED.longitude,
+      phone = EXCLUDED.phone,
+      status = 'verified'
     RETURNING id;
   `);
   if (titaRes.rows[0]) {
@@ -109,18 +122,27 @@ async function addCordovaEstablishments() {
     ) VALUES (
       '77777777-7777-7777-a777-777777777773',
       'f1a69d69-0a0f-42ae-8adc-9bad5726d1ac',
-      'Sungka',
-      'sungka-restaurant',
-      'A scenic waterfront native restaurant in Day-as, Cordova offering traditional Filipino sea feasts.',
-      'Day-as, Cordova, Cebu',
+      'Sungka Native Restaurant',
+      'sungka-native-restaurant',
+      'Overwater bamboo dining huts, fresh seafood, live fish tanks, and native Cebuano delicacies along Day-as Wharf.',
+      'Day-as Barangay Rd, Day-as',
       'Day-as',
-      10.2670, 123.9680,
-      '+63 918 777 5544',
+      10.2673, 123.9678,
+      NULL,
       'moderate',
       ARRAY['dine_in','takeout']::service_type[],
       'verified',
       now(), 4.5, 15
-    ) ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, status = 'verified'
+    ) ON CONFLICT (slug) DO UPDATE SET
+      name = EXCLUDED.name,
+      slug = EXCLUDED.slug,
+      description = EXCLUDED.description,
+      address = EXCLUDED.address,
+      barangay = EXCLUDED.barangay,
+      latitude = EXCLUDED.latitude,
+      longitude = EXCLUDED.longitude,
+      phone = EXCLUDED.phone,
+      status = 'verified'
     RETURNING id;
   `);
   if (sungkaRes.rows[0]) {

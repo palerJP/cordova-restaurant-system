@@ -53,195 +53,222 @@ ON CONFLICT (slug) DO NOTHING;
 -- Restaurants ----------------------------------------------------------------
 INSERT INTO restaurants (
   id, owner_id, name, slug, description, address, barangay,
-  latitude, longitude, phone, price_range, services_offered,
+  latitude, longitude, phone, email, price_range, services_offered,
   status, verified_by, verified_at, avg_rating, review_count
 ) VALUES
-('44444444-4444-4444-a444-444444444441', '22222222-2222-2222-a222-222222222221',
+-- 1. Horizon Bean Cafe
+('44444444-4444-4444-a444-444444444441', '20000000-0000-0000-0000-000000000013',
  'Horizon Bean Cafe', 'horizon-bean-cafe',
- 'A cozy, small-scale neighborhood coffee shop known for its premium coffee, comfort food, and late-night chill vibe.',
- 'Unit 3, JMP Building, Purok 1 San Miguel Road, Cordova', 'San Miguel', 10.2550, 123.9480, '0975 174 5866',
+ 'A cozy neighborhood cafe in Cordova known for its premium coffee brews, refreshers, pastries, and late-night chill vibe.',
+ 'Unit 3, JMP Building, Purok 1 San Miguel Road, San Miguel, Cordova, Cebu', 'San Miguel', 10.2550, 123.9480, '0975 174 5866', NULL,
  'budget', ARRAY['dine_in','takeout','delivery']::service_type[], 'verified',
  '11111111-1111-1111-a111-111111111111', now(), 4.8, 42),
 
-('44444444-4444-4444-a444-444444444442', '22222222-2222-2222-a222-222222222222',
- 'CSalt Cafe', 'csalt-cafe',
- 'Cozy cafe with ocean views, specializing in coffee, pastries and light vegetarian meals.',
- 'Poblacion Cordova, near the wharf', 'Poblacion', 10.2537, 123.9481, '+639201112234',
+-- 2. Grillhouse Cordova BBQ (Papsy's BBQ)
+('44444444-4444-4444-a444-444444444443', '20000000-0000-0000-0000-000000000018',
+ 'Grillhouse Cordova BBQ (Papsy''s BBQ)', 'grillhouse-cordova-bbq',
+ 'A popular Filipino casual dining restaurant known for its charcoal-grilled specialties, chicken inasal, unli-rice, and family bundles.',
+ 'Gaisano Grand Mall Cordova, San Miguel Road, Bangbang, Cordova, Cebu', 'Bangbang', 10.2561, 123.9459, '0927 296 4811', NULL,
  'budget', ARRAY['dine_in','takeout','delivery']::service_type[], 'verified',
- '11111111-1111-1111-a111-111111111111', now(), 4.7, 18),
+ '11111111-1111-1111-a111-111111111111', now(), 4.7, 35),
 
-('44444444-4444-4444-a444-444444444443', '22222222-2222-2222-a222-222222222223',
- 'Grillhouse Cordova BBQ', 'grillhouse-cordova-bbq',
- 'Classic Filipino BBQ and grilled favorites, budget-friendly family dining.',
- 'San Miguel Road, Ibabao', 'Ibabao', 10.2561, 123.9459, '0927 296 4811',
- 'budget', ARRAY['dine_in','takeout']::service_type[], 'verified',
- '11111111-1111-1111-a111-111111111111', now(), 4.6, 15),
-
-('44444444-4444-4444-a444-444444444444', '22222222-2222-2222-a222-222222222221',
- 'Street Food Park', 'street-food-park',
- 'Affordable local street food and fresh seafood paired with a cool ocean breeze and sunset.',
- 'Roro Port, Cordova', 'Roro Port', 10.2450, 123.9520, '+639201112236',
+-- 3. Street Food Park @ Cordova Roro Port
+('44444444-4444-4444-a444-444444444444', '20000000-0000-0000-0000-000000000022',
+ 'Street Food Park @ Cordova Roro Port', 'street-food-park',
+ 'A vibrant open-air seaside food plaza at the Cordova RORO Port baywalk serving fresh seafood, local barbecue, kwek-kwek, and street treats.',
+ 'Poblacion Roro Port Road, Poblacion, Cordova, Cebu', 'Poblacion', 10.2540, 123.9515, '0917 000 0000', NULL,
  'budget', ARRAY['dine_in','takeout']::service_type[], 'verified',
  '11111111-1111-1111-a111-111111111111', now(), 4.5, 30),
 
-('44444444-4444-4444-a444-444444444445', '22222222-2222-2222-a222-222222222222',
+-- 4. ABY ROAD Resto Bar
+('44444444-4444-4444-a444-444444444445', '20000000-0000-0000-0000-000000000002',
  'ABY ROAD Resto Bar', 'aby-road-resto-bar',
- 'Beatles-inspired restobar with local and international favorites.',
- 'Bangbang, Cordova', 'Bangbang', 10.2510, 123.9460, '(032) 238 5718',
+ 'Beatles-inspired restobar featuring nightly live bands, free karaoke, Filipino comfort food, buffet specials, and cold drinks.',
+ 'Bang-Bang - Day-As Road, Bangbang, Cordova, Cebu', 'Bangbang', 10.2510, 123.9460, '(032) 238 5718', NULL,
  'moderate', ARRAY['dine_in','takeout']::service_type[], 'verified',
- '11111111-1111-1111-a111-111111111111', now(), 4.6, 12),
+ '11111111-1111-1111-a111-111111111111', now(), 4.6, 28),
 
-('44444444-4444-4444-a444-444444444446', '22222222-2222-2222-a222-222222222222',
- 'Eat n Repeat', 'eat-n-repeat',
- 'Aesthetic and Instagram-worthy cafe and tambayan.',
- 'Bangbang, Cordova', 'Bangbang', 10.2520, 123.9470, '0915 151 6595',
- 'budget', ARRAY['dine_in','takeout']::service_type[], 'verified',
- '11111111-1111-1111-a111-111111111111', now(), 4.7, 20),
-
-('44444444-4444-4444-a444-444444444447', '22222222-2222-2222-a222-222222222223',
- 'Taytayan Pinoy Restaurant', 'taytayan-pinoy-restaurant',
- 'Kilalang open-air at lutong-bahay na kainan serving native Cebuano dishes.',
- 'Ibabao, Cordova', 'Ibabao', 10.2540, 123.9440, '(032) 412 3783',
- 'budget', ARRAY['dine_in','takeout']::service_type[], 'verified',
- '11111111-1111-1111-a111-111111111111', now(), 4.6, 14),
-
-('44444444-4444-4444-a444-444444444448', '22222222-2222-2222-a222-222222222221',
- 'STUFFED N FRIED Cordova Branch', 'stuffed-n-fried-cordova-branch',
- 'Popular local chicken house known for signature double-fried whole chicken and lechon kawali.',
- 'Gabi, Cordova', 'Gabi', 10.2485, 123.9510, '0975 985 6145',
- 'budget', ARRAY['dine_in','takeout','delivery']::service_type[], 'verified',
- '11111111-1111-1111-a111-111111111111', now(), 4.8, 35),
-
-('44444444-4444-4444-a444-444444444449', '22222222-2222-2222-a222-222222222221',
- 'McDonalds Cordova', 'mcdonalds-cordova',
- 'World-famous fast-food hamburger restaurant serving burgers, fries, and breakfast favorites.',
- 'San Miguel, Cordova', 'San Miguel', 10.2550, 123.9490, '0968 851 0931',
- 'budget', ARRAY['dine_in','takeout','delivery']::service_type[], 'verified',
- '11111111-1111-1111-a111-111111111111', now(), 4.5, 50),
-
-('44444444-4444-4444-a444-44444444444a', '22222222-2222-2222-a222-222222222223',
- 'Barracks Grill and Resto Bar', 'barracks-grill-and-resto-bar',
- 'Casual nightspot and dining place with grilled specialties.',
- 'Gabi, Cordova', 'Gabi', 10.2470, 123.9530, '0977 328 7689',
- 'moderate', ARRAY['dine_in','takeout']::service_type[], 'verified',
- '11111111-1111-1111-a111-111111111111', now(), 4.5, 16),
-
-('44444444-4444-4444-a444-44444444444b', '22222222-2222-2222-a222-222222222221',
- 'BRIC Food Park', 'bric-food-park',
- 'A vibrant, open-air al fresco dining destination with multiple food stalls.',
- 'San Miguel, Cordova', 'San Miguel', 10.2560, 123.9500, 'N/A',
- 'budget', ARRAY['dine_in','takeout']::service_type[], 'verified',
- '11111111-1111-1111-a111-111111111111', now(), 4.6, 22),
-
-('44444444-4444-4444-a444-44444444444c', '22222222-2222-2222-a222-222222222221',
- 'RCA Bilao Food Station', 'rca-bilao-food-station',
- 'Pansit stir-fry, boneless lechon belly, and kakanin bilao food trays.',
- 'Gabi, Cordova', 'Gabi', 10.2490, 123.9525, '(032) 326 8766',
- 'budget', ARRAY['dine_in','takeout','delivery']::service_type[], 'verified',
- '11111111-1111-1111-a111-111111111111', now(), 4.7, 19),
-
-('44444444-4444-4444-a444-44444444444d', '22222222-2222-2222-a222-222222222222',
- 'MAVERICKS by The Baker Street', 'mavericks-by-the-baker-street',
- 'Creative space, collective stories, pastry party, and specialty coffee.',
- 'Gabi, Cordova', 'Gabi', 10.2488, 123.9515, '0920 527 6233',
- 'budget', ARRAY['dine_in','takeout']::service_type[], 'verified',
- '11111111-1111-1111-a111-111111111111', now(), 4.9, 28),
-
-('44444444-4444-4444-a444-44444444444e', '22222222-2222-2222-a222-222222222221',
- 'Entoys Bakasihan', 'entoys-bakasihan',
- 'Famous open-air eatery famous for its signature reef eel dish nilarang na bakasi.',
- 'Buagsong, Cordova', 'Buagsong', 10.2505, 123.9420, '0966 931 7531',
- 'budget', ARRAY['dine_in','takeout']::service_type[], 'verified',
- '11111111-1111-1111-a111-111111111111', now(), 4.7, 40),
-
-('44444444-4444-4444-a444-44444444444f', '22222222-2222-2222-a222-222222222223',
- 'Tita Kims', 'tita-kims',
- 'Affordable buffet-style Filipino restaurant located along the National Highway.',
- 'Gabi, Cordova', 'Gabi', 10.2475, 123.9540, '0998 868 8573',
- 'budget', ARRAY['dine_in','takeout']::service_type[], 'verified',
- '11111111-1111-1111-a111-111111111111', now(), 4.6, 25),
-
-('44444444-4444-4444-a444-444444444450', '22222222-2222-2222-a222-222222222221',
- 'Burandat Seafood Bucket', 'burandat-seafood-bucket',
- 'Fresh catch-of-the-day seafood grilled to order, right by the shoreline.',
- 'Gabi, Cordova', 'Gabi', 10.2465, 123.9500, '0916 473 3656',
- 'moderate', ARRAY['dine_in','takeout']::service_type[], 'verified',
- '11111111-1111-1111-a111-111111111111', now(), 4.7, 32),
-
-('44444444-4444-4444-a444-444444444451', '22222222-2222-2222-a222-222222222222',
- 'Cafe Mafia', 'cafe-mafia',
- 'Gourmet burgers, artisan coffee, and mafia-themed ambiance.',
- 'Dapitan, Cordova', 'Dapitan', 10.2580, 123.9475, '0917 321 0453',
- 'budget', ARRAY['dine_in','takeout']::service_type[], 'verified',
- '11111111-1111-1111-a111-111111111111', now(), 4.8, 26),
-
-('44444444-4444-4444-a444-444444444452', '22222222-2222-2222-a222-222222222221',
- 'Solea Mactan Resort', 'solea-mactan-restaurant',
- 'Resort dining featuring international buffets and local specialties.',
- 'Alegria, Cordova', 'Alegria', 10.2390, 123.9600, '(032) 517 8889',
- 'premium', ARRAY['dine_in']::service_type[], 'verified',
- '11111111-1111-1111-a111-111111111111', now(), 4.9, 65),
-
-('44444444-4444-4444-a444-444444444453', '22222222-2222-2222-a222-222222222223',
- 'Husbys Grill', 'husbys-grill',
- 'Local grill house known for tender ribs, BBQ skewers, and family meals.',
- 'Gabi, Cordova', 'Gabi', 10.2482, 123.9535, '+63 917 138 3144',
- 'budget', ARRAY['dine_in','takeout']::service_type[], 'verified',
- '11111111-1111-1111-a111-111111111111', now(), 4.7, 21),
-
-('44444444-4444-4444-a444-444444444454', '22222222-2222-2222-a222-222222222221',
- 'Sungka Native Restaurant', 'sungka-native-restaurant',
- 'Classic Filipino dishes served with warm hospitality near Cordova port.',
- 'Day-as, Cordova', 'Day-as', 10.2525, 123.9430, 'sungkanative@gmail.com',
- 'budget', ARRAY['dine_in','takeout']::service_type[], 'verified',
- '11111111-1111-1111-a111-111111111111', now(), 4.6, 17),
-
-('44444444-4444-4444-a444-444444444455', '22222222-2222-2222-a222-222222222221',
- 'Lantaw Floating Native Restaurant', 'lantaw-floating-native-restaurant',
- 'Floating native restaurant on the Cordova waterfront with sunset views and seafood.',
- 'Day-as, Cordova', 'Day-as', 10.2515, 123.9410, '0985 052 3061',
- 'moderate', ARRAY['dine_in','takeout']::service_type[], 'verified',
- '11111111-1111-1111-a111-111111111111', now(), 4.8, 80),
-
-('44444444-4444-4444-a444-444444444456', '22222222-2222-2222-a222-222222222221',
- 'Albertos Pizza Cordova', 'albertos-pizza-cordova',
- 'Affordable freshly-baked local favorites and specialty pizzas.',
- 'Gabi, Cordova', 'Gabi', 10.2492, 123.9512, '0925 871 4539',
- 'budget', ARRAY['dine_in','takeout','delivery']::service_type[], 'verified',
- '11111111-1111-1111-a111-111111111111', now(), 4.6, 38),
-
-('44444444-4444-4444-a444-444444444457', '22222222-2222-2222-a222-222222222222',
- 'Cascaja Cafe', 'cascadja-cafe',
- 'Cozy coffee shop in Cordova offering delicious coffee, rice meals, pasta, and drinks.',
- 'Calan, Cordova', 'Calan', 10.2570, 123.9465, '+63 995 755 0983',
+-- 5. Eat n' Repeat Cordova
+('44444444-4444-4444-a444-444444444446', '20000000-0000-0000-0000-000000000011',
+ 'Eat n'' Repeat Cordova', 'eat-n-repeat',
+ 'Aesthetic and Instagram-worthy cafe and tambayan offering specialty coffee, milk tea, silog meals, waffles, and late-night snacks.',
+ 'Cordova Crossroad, Behind Gaisano Grand Mall, Bangbang, Cordova, Cebu', 'Bangbang', 10.2520, 123.9470, '0915 151 6595', NULL,
  'budget', ARRAY['dine_in','takeout']::service_type[], 'verified',
  '11111111-1111-1111-a111-111111111111', now(), 4.7, 24),
 
-('44444444-4444-4444-a444-444444444458', '22222222-2222-2222-a222-222222222222',
+-- 6. Taytayan Pinoy Restaurant
+('44444444-4444-4444-a444-444444444447', '20000000-0000-0000-0000-000000000025',
+ 'Taytayan Pinoy Restaurant', 'taytayan-pinoy-restaurant',
+ 'Scenic open-air waterfront native restaurant near the CCLEX bridge serving traditional Cebuano lutong-bahay, sinugba, and fresh seafood.',
+ 'Mahogani Street, Pilipog, Cordova, Cebu', 'Pilipog', 10.2540, 123.9440, '(032) 412 3783', NULL,
+ 'moderate', ARRAY['dine_in','takeout']::service_type[], 'verified',
+ '11111111-1111-1111-a111-111111111111', now(), 4.6, 32),
+
+-- 7. STUFFED N' FRIED Cordova Branch
+('44444444-4444-4444-a444-444444444448', '20000000-0000-0000-0000-000000000023',
+ 'STUFFED N'' FRIED Cordova Branch', 'stuffed-n-fried-cordova-branch',
+ 'Popular local chicken specialty house in Cebu known for its signature double-fried 15-spice whole chicken, crispy lechon kawali, and ngohiong.',
+ 'Mahayahay Street / 1911 M.L. Quezon National Highway, Gabi, Cordova, Cebu', 'Gabi', 10.2485, 123.9510, '0975 985 6145', NULL,
+ 'budget', ARRAY['dine_in','takeout','delivery']::service_type[], 'verified',
+ '11111111-1111-1111-a111-111111111111', now(), 4.8, 35),
+
+-- 8. McDonald's Cordova
+('44444444-4444-4444-a444-444444444449', '20000000-0000-0000-0000-000000000017',
+ 'McDonald''s Cordova', 'mcdonalds-cordova',
+ '24/7 fast-food restaurant with Drive-Thru and McDelivery, serving Chicken McDo, Big Mac, world-famous fries, and McCafé beverages.',
+ 'Babag II Road / San Miguel Road, San Miguel, Cordova, Cebu', 'San Miguel', 10.2550, 123.9490, '0968 851 0931', NULL,
+ 'budget', ARRAY['dine_in','takeout','delivery']::service_type[], 'verified',
+ '11111111-1111-1111-a111-111111111111', now(), 4.5, 50),
+
+-- 9. Barracks Grill and Resto
+('44444444-4444-4444-a444-44444444444a', '20000000-0000-0000-0000-000000000004',
+ 'Barracks Grill and Resto', 'barracks-grill-and-resto-bar',
+ 'Casual nightspot and grill bar in Ajoya Subdivision featuring charcoal-grilled meats, sizzling appetizers, cold beer, and late-night dining.',
+ 'Ajoya Subdivision Commercial Area, Gabi, Cordova, Cebu', 'Gabi', 10.2470, 123.9530, '0977 328 7689', NULL,
+ 'moderate', ARRAY['dine_in','takeout']::service_type[], 'verified',
+ '11111111-1111-1111-a111-111111111111', now(), 4.5, 16),
+
+-- 10. BRIC Food Park
+('44444444-4444-4444-a444-44444444444b', '20000000-0000-0000-0000-000000000005',
+ 'BRIC Food Park', 'bric-food-park',
+ 'A vibrant open-air community food park featuring a wide variety of food kiosks, Pau''s Grill BBQ, ramen, milk tea, and al fresco seating.',
+ 'San Miguel Road, San Miguel, Cordova, Cebu', 'San Miguel', 10.2560, 123.9500, '0917 149 6503', NULL,
+ 'budget', ARRAY['dine_in','takeout']::service_type[], 'verified',
+ '11111111-1111-1111-a111-111111111111', now(), 4.6, 22),
+
+-- 11. RCA Food Station
+('44444444-4444-4444-a444-44444444444c', '20000000-0000-0000-0000-000000000020',
+ 'RCA Food Station', 'rca-bilao-food-station',
+ 'Known for Cebuano stir-fried pansit bam-i bilao trays, crispy boneless lechon belly, kakanin, and custom Filipino party food packages.',
+ 'Sitio Mahayahay (beside Gabi Health Center), Gabi, Cordova, Cebu', 'Gabi', 10.2490, 123.9525, '(032) 326 8766', NULL,
+ 'budget', ARRAY['dine_in','takeout','delivery']::service_type[], 'verified',
+ '11111111-1111-1111-a111-111111111111', now(), 4.7, 19),
+
+-- 12. Mavericks Cafe
+('44444444-4444-4444-a444-44444444444d', '20000000-0000-0000-0000-000000000016',
+ 'Mavericks Cafe', 'mavericks-by-the-baker-street',
+ 'Creative bakery, specialty coffee lounge, and aesthetic hangout beside Benthel Asia School of Technology, offering artisan pastries and brews.',
+ 'Gabi Road (beside Benthel Asia School of Technology), Gabi, Cordova, Cebu', 'Gabi', 10.2488, 123.9515, '0920 527 6233', NULL,
+ 'budget', ARRAY['dine_in','takeout']::service_type[], 'verified',
+ '11111111-1111-1111-a111-111111111111', now(), 4.9, 28),
+
+-- 13. Entoy's Bakasihan
+('44444444-4444-4444-a444-44444444444e', '20000000-0000-0000-0000-000000000012',
+ 'Entoy''s Bakasihan', 'entoys-bakasihan',
+ 'World-famous seaside eatery featured on Netflix''s Street Food: Asia, renowned for its signature saltwater reef eel stew (nilarang na bakasi).',
+ 'Buagsong Barangay Road (Wharf area), Buagsong, Cordova, Cebu', 'Buagsong', 10.2450, 123.9460, '0966 931 7531', NULL,
+ 'budget', ARRAY['dine_in','takeout']::service_type[], 'verified',
+ '11111111-1111-1111-a111-111111111111', now(), 4.7, 40),
+
+-- 14. Tita Kim's
+('44444444-4444-4444-a444-44444444444f', '20000000-0000-0000-0000-000000000026',
+ 'Tita Kim''s', 'tita-kims',
+ 'Popular budget-friendly all-you-can-eat Filipino buffet restaurant along the National Highway featuring over 15 home-cooked dishes and drinks.',
+ 'Lot 747, National Highway, Purok 5 (beside Cordoville Leisure Park), Gabi, Cordova, Cebu', 'Gabi', 10.2475, 123.9540, '0998 868 8573', NULL,
+ 'budget', ARRAY['dine_in','takeout']::service_type[], 'verified',
+ '11111111-1111-1111-a111-111111111111', now(), 4.6, 25),
+
+-- 15. Burandat Seafood Bucket
+('44444444-4444-4444-a444-444444444450', '20000000-0000-0000-0000-000000000006',
+ 'Burandat Seafood Bucket', 'burandat-seafood-bucket',
+ 'Coastal seafood dining spot in Gabi known for cajun seafood boil buckets, unlimited fresh crabs and shrimps, and grilled seaside catches.',
+ 'Purok 2 (near Gabi Chapel & CPC), Gabi, Cordova, Cebu', 'Gabi', 10.2465, 123.9500, '0916 473 3656', NULL,
+ 'moderate', ARRAY['dine_in','takeout']::service_type[], 'verified',
+ '11111111-1111-1111-a111-111111111111', now(), 4.7, 32),
+
+-- 16. CSalt Café
+('44444444-4444-4444-a444-444444444442', '20000000-0000-0000-0000-000000000009',
+ 'CSalt Café', 'csalt-cafe-cordova',
+ 'Rooftop coffee shop at Quinn Haven Commercial Building offering panoramic ocean views, specialty sea salt lattes, matcha, and pastries.',
+ '3rd Floor, Quinn Haven Commercial Building, Sitio Ubos (across RHU), Poblacion, Cordova, Cebu', 'Poblacion', 10.2537, 123.9481, NULL, 'namicoffee.corp@gmail.com',
+ 'budget', ARRAY['dine_in','takeout']::service_type[], 'verified',
+ '11111111-1111-1111-a111-111111111111', now(), 4.7, 18),
+
+-- 17. Cafe Mafia
+('44444444-4444-4444-a444-444444444451', '20000000-0000-0000-0000-000000000007',
+ 'Cafe Mafia', 'cafe-mafia',
+ 'Mafia-themed cafe and burger joint at The Carwash Mafia complex in Dapitan, serving gourmet smash burgers, loaded fries, and espresso.',
+ 'Purok 1 (The Carwash Mafia), Dapitan, Cordova, Cebu', 'Dapitan', 10.2580, 123.9475, '0917 321 0453', NULL,
+ 'budget', ARRAY['dine_in','takeout','delivery']::service_type[], 'verified',
+ '11111111-1111-1111-a111-111111111111', now(), 4.8, 26),
+
+-- 18. Solea Mactan Resort
+('44444444-4444-4444-a444-444444444452', '20000000-0000-0000-0000-000000000021',
+ 'Solea Mactan Resort', 'solea-mactan-resort',
+ 'Premier beachfront resort dining featuring Earth All-Day Dining buffet, Salt & Sky Rooftop Lounge, international cuisine, and cocktails.',
+ 'Victor Wahing Street, Alegria, Cordova, Cebu', 'Alegria', 10.2390, 123.9600, '(032) 517 8889', 'info@soleahotels.com',
+ 'premium', ARRAY['dine_in']::service_type[], 'verified',
+ '11111111-1111-1111-a111-111111111111', now(), 4.9, 65),
+
+-- 19. Husby’s Grill
+('44444444-4444-4444-a444-444444444453', '20000000-0000-0000-0000-000000000014',
+ 'Husby''s Grill', 'husbys-grill',
+ 'Previously an outdoor grill restaurant along M.L. Quezon Road known for Filipino grilled tuna belly and baby back ribs. (Permanently Closed).',
+ 'Manuel L. Quezon Road (beside Calda Pizza), Gabi, Cordova, Cebu', 'Gabi', 10.2482, 123.9535, '+63 917 138 3144', NULL,
+ 'budget', ARRAY['dine_in','takeout']::service_type[], 'verified',
+ '11111111-1111-1111-a111-111111111111', now(), 4.7, 21),
+
+-- 20. Sungka Native Restaurant
+('44444444-4444-4444-a444-444444444454', '20000000-0000-0000-0000-000000000024',
+ 'Sungka Native Restaurant', 'sungka-native-restaurant',
+ 'Scenic native waterfront dining featuring private bamboo cottages surrounding a large koi pond, serving authentic Filipino dishes and seafood.',
+ 'Day-as Barangay Road (across RR Dress Shop), Day-as, Cordova, Cebu', 'Day-as', 10.2670, 123.9680, NULL, 'sungkanative@gmail.com',
+ 'moderate', ARRAY['dine_in','takeout']::service_type[], 'verified',
+ '11111111-1111-1111-a111-111111111111', now(), 4.6, 17),
+
+-- 21. Lantaw Floating Native Restaurant
+('44444444-4444-4444-a444-444444444455', '20000000-0000-0000-0000-000000000015',
+ 'Lantaw Floating Native Restaurant', 'lantaw-floating-native-restaurant',
+ 'Iconic floating native restaurant on the Day-as waterfront offering sunset views across the Mactan channel, Cordova Express, and seafood feasts.',
+ 'Sa Baybayon, Day-as Wharf, Day-as, Cordova, Cebu', 'Day-as', 10.2685, 123.9700, '0985 052 3061', NULL,
+ 'moderate', ARRAY['dine_in','takeout']::service_type[], 'verified',
+ '11111111-1111-1111-a111-111111111111', now(), 4.8, 80),
+
+-- 22. Alberto’s Pizza Cordova
+('44444444-4444-4444-a444-444444444456', '20000000-0000-0000-0000-000000000003',
+ 'Alberto''s Pizza Cordova', 'albertos-pizza-cordova',
+ 'Beloved homegrown Cebuano pizzeria in Lucing Tan Building serving budget-friendly freshly baked pizzas with direct local delivery.',
+ 'Lucing Tan Building, Purok 5 (across San Roque College), Gabi, Cordova, Cebu', 'Gabi', 10.2492, 123.9512, '0925 871 4539', NULL,
+ 'budget', ARRAY['dine_in','takeout','delivery']::service_type[], 'verified',
+ '11111111-1111-1111-a111-111111111111', now(), 4.6, 38),
+
+-- 23. Cascaja Cafe
+('44444444-4444-4444-a444-444444444457', '20000000-0000-0000-0000-000000000008',
+ 'Cascaja Cafe', 'cascaja-cafe',
+ 'Cozy coffee shop located across Kasadya Park N'' Play offering espresso drinks, frappes, DIY ramen bowls, and savory sizzling rice meals.',
+ 'Calan New Road (across Kasadya Park N'' Play), Poblacion, Cordova, Cebu', 'Poblacion', 10.2570, 123.9465, '+63 995 755 0983', NULL,
+ 'budget', ARRAY['dine_in','takeout']::service_type[], 'verified',
+ '11111111-1111-1111-a111-111111111111', now(), 4.7, 24),
+
+-- 24. Don Macchiatos Cordova
+('44444444-4444-4444-a444-444444444458', '20000000-0000-0000-0000-000000000010',
  'Don Macchiatos Cordova', 'don-macchiatos-cordova',
- 'Budget-friendly espresso drinks, iced caramel macchiatos, and coffee favorites.',
- 'San Miguel, Cordova', 'San Miguel', 10.2555, 123.9495, '0918 596 7413',
+ 'Popular budget-friendly ₱39 coffee brand serving iced caramel macchiatos, matcha lattes, strawberry milk, and quick grab-and-go drinks.',
+ 'San Miguel Road / Poblacion, San Miguel, Cordova, Cebu', 'San Miguel', 10.2555, 123.9495, '0918 596 7413', NULL,
  'budget', ARRAY['dine_in','takeout']::service_type[], 'verified',
  '11111111-1111-1111-a111-111111111111', now(), 4.8, 45),
 
-('44444444-4444-4444-a444-444444444459', '22222222-2222-2222-a222-222222222221',
+-- 25. Parola Seaview Restaurant
+('44444444-4444-4444-a444-444444444459', '20000000-0000-0000-0000-000000000019',
  'Parola Seaview Restaurant', 'parola-seaview-restaurant',
- 'Open-air seaside dining centered around an illuminated lighthouse overlooking the bay.',
- 'Poblacion, Cordova', 'Poblacion', 10.2530, 123.9470, '(032) 514 9005',
+ 'Large open-air seaside restaurant built around an illuminated lighthouse at the Cordova RORO Port jetty, famous for seafood and sunset views.',
+ 'End of Roro Port Road (Lighthouse Jetty), Poblacion, Cordova, Cebu', 'Poblacion', 10.2540, 123.9510, '0947 990 8561', NULL,
  'moderate', ARRAY['dine_in','takeout']::service_type[], 'verified',
  '11111111-1111-1111-a111-111111111111', now(), 4.9, 70),
 
-('44444444-4444-4444-a444-44444444445a', '22222222-2222-2222-a222-222222222222',
- '10000 Roses Cafe & More', '10000-roses-cafe-and-more',
- 'Iconic tourist attraction and cafe surrounded by thousands of LED-lit artificial white roses.',
- 'Day-as, Cordova', 'Day-as', 10.2510, 123.9405, '0956 839 9427',
+-- 26. 10,000 Roses Cafe & More
+('44444444-4444-4444-a444-44444444445a', '20000000-0000-0000-0000-000000000001',
+ '10,000 Roses Cafe & More', '10000-roses-cafe-and-more',
+ 'World-famous seaside cafe attraction surrounded by 10,000 glowing LED white roses, serving rose lattes, wood-fired pizza, and pasta.',
+ 'Day-as Barangay Road (Cordova Tourism Center), Day-as, Cordova, Cebu', 'Day-as', 10.2690, 123.9705, '0956 839 9427', NULL,
  'moderate', ARRAY['dine_in','takeout']::service_type[], 'verified',
  '11111111-1111-1111-a111-111111111111', now(), 4.9, 95),
 
-('44444444-4444-4444-a444-44444444445b', '22222222-2222-2222-a222-222222222221',
- 'Papsys BBQ', 'papsys-bbq',
- 'A popular Filipino casual dining restaurant chain known for its signature charcoal-grilled specialties and rustic, modern ambiance.',
- 'Barangay Bang-bang, Cordova, Cebu', 'Bang-bang', 10.2579, 123.9485, '0927 296 4811',
+-- Papsy's BBQ (duplicate slug alias preserved for backwards compatibility)
+('44444444-4444-4444-a444-44444444445b', '20000000-0000-0000-0000-000000000018',
+ 'Grillhouse Cordova BBQ (Papsy''s BBQ)', 'papsys-bbq',
+ 'A popular Filipino casual dining restaurant known for its signature charcoal-grilled specialties and rustic, modern ambiance.',
+ 'Gaisano Grand Mall Cordova, San Miguel Road, Bangbang, Cordova, Cebu', 'Bangbang', 10.2561, 123.9459, '0927 296 4811', NULL,
  'budget', ARRAY['dine_in','takeout','delivery']::service_type[], 'verified',
  '11111111-1111-1111-a111-111111111111', now(), 4.8, 52)
 ON CONFLICT (slug) DO UPDATE SET
@@ -252,22 +279,65 @@ ON CONFLICT (slug) DO UPDATE SET
   latitude = EXCLUDED.latitude,
   longitude = EXCLUDED.longitude,
   phone = EXCLUDED.phone,
+  email = EXCLUDED.email,
   price_range = EXCLUDED.price_range,
   status = EXCLUDED.status;
 
 -- Restaurant <-> cuisine mapping ---------------------------------------------
 INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
-SELECT '44444444-4444-4444-a444-444444444441', id FROM cuisines WHERE slug IN ('seafood','cebuano-local','grill-bbq')
-ON CONFLICT DO NOTHING;
+SELECT '44444444-4444-4444-a444-444444444441', id FROM cuisines WHERE slug IN ('cafe-desserts') ON CONFLICT DO NOTHING;
 INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
-SELECT '44444444-4444-4444-a444-444444444442', id FROM cuisines WHERE slug IN ('cafe-desserts','vegetarian-vegan')
-ON CONFLICT DO NOTHING;
+SELECT '44444444-4444-4444-a444-444444444442', id FROM cuisines WHERE slug IN ('cafe-desserts','vegetarian-vegan') ON CONFLICT DO NOTHING;
 INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
-SELECT '44444444-4444-4444-a444-444444444443', id FROM cuisines WHERE slug IN ('grill-bbq','filipino')
-ON CONFLICT DO NOTHING;
+SELECT '44444444-4444-4444-a444-444444444443', id FROM cuisines WHERE slug IN ('grill-bbq','filipino','fast-food') ON CONFLICT DO NOTHING;
 INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
-SELECT '44444444-4444-4444-a444-44444444445b', id FROM cuisines WHERE slug IN ('grill-bbq','filipino')
-ON CONFLICT DO NOTHING;
+SELECT '44444444-4444-4444-a444-444444444444', id FROM cuisines WHERE slug IN ('seafood','filipino','grill-bbq') ON CONFLICT DO NOTHING;
+INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
+SELECT '44444444-4444-4444-a444-444444444445', id FROM cuisines WHERE slug IN ('filipino','grill-bbq','asian-fusion') ON CONFLICT DO NOTHING;
+INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
+SELECT '44444444-4444-4444-a444-444444444446', id FROM cuisines WHERE slug IN ('cafe-desserts','filipino') ON CONFLICT DO NOTHING;
+INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
+SELECT '44444444-4444-4444-a444-444444444447', id FROM cuisines WHERE slug IN ('filipino','seafood','cebuano-local') ON CONFLICT DO NOTHING;
+INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
+SELECT '44444444-4444-4444-a444-444444444448', id FROM cuisines WHERE slug IN ('fast-food','filipino') ON CONFLICT DO NOTHING;
+INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
+SELECT '44444444-4444-4444-a444-444444444449', id FROM cuisines WHERE slug IN ('fast-food') ON CONFLICT DO NOTHING;
+INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
+SELECT '44444444-4444-4444-a444-44444444444a', id FROM cuisines WHERE slug IN ('grill-bbq','filipino') ON CONFLICT DO NOTHING;
+INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
+SELECT '44444444-4444-4444-a444-44444444444b', id FROM cuisines WHERE slug IN ('grill-bbq','asian-fusion') ON CONFLICT DO NOTHING;
+INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
+SELECT '44444444-4444-4444-a444-44444444444c', id FROM cuisines WHERE slug IN ('filipino','cebuano-local') ON CONFLICT DO NOTHING;
+INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
+SELECT '44444444-4444-4444-a444-44444444444d', id FROM cuisines WHERE slug IN ('cafe-desserts') ON CONFLICT DO NOTHING;
+INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
+SELECT '44444444-4444-4444-a444-44444444444e', id FROM cuisines WHERE slug IN ('seafood','cebuano-local','filipino') ON CONFLICT DO NOTHING;
+INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
+SELECT '44444444-4444-4444-a444-44444444444f', id FROM cuisines WHERE slug IN ('filipino','grill-bbq') ON CONFLICT DO NOTHING;
+INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
+SELECT '44444444-4444-4444-a444-444444444450', id FROM cuisines WHERE slug IN ('seafood','grill-bbq','filipino') ON CONFLICT DO NOTHING;
+INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
+SELECT '44444444-4444-4444-a444-444444444451', id FROM cuisines WHERE slug IN ('cafe-desserts','fast-food') ON CONFLICT DO NOTHING;
+INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
+SELECT '44444444-4444-4444-a444-444444444452', id FROM cuisines WHERE slug IN ('filipino','seafood','asian-fusion') ON CONFLICT DO NOTHING;
+INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
+SELECT '44444444-4444-4444-a444-444444444453', id FROM cuisines WHERE slug IN ('grill-bbq','filipino') ON CONFLICT DO NOTHING;
+INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
+SELECT '44444444-4444-4444-a444-444444444454', id FROM cuisines WHERE slug IN ('filipino','seafood','cebuano-local') ON CONFLICT DO NOTHING;
+INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
+SELECT '44444444-4444-4444-a444-444444444455', id FROM cuisines WHERE slug IN ('seafood','cebuano-local','filipino') ON CONFLICT DO NOTHING;
+INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
+SELECT '44444444-4444-4444-a444-444444444456', id FROM cuisines WHERE slug IN ('fast-food','asian-fusion') ON CONFLICT DO NOTHING;
+INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
+SELECT '44444444-4444-4444-a444-444444444457', id FROM cuisines WHERE slug IN ('cafe-desserts','filipino') ON CONFLICT DO NOTHING;
+INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
+SELECT '44444444-4444-4444-a444-444444444458', id FROM cuisines WHERE slug IN ('cafe-desserts') ON CONFLICT DO NOTHING;
+INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
+SELECT '44444444-4444-4444-a444-444444444459', id FROM cuisines WHERE slug IN ('seafood','filipino','cebuano-local') ON CONFLICT DO NOTHING;
+INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
+SELECT '44444444-4444-4444-a444-44444444445a', id FROM cuisines WHERE slug IN ('cafe-desserts') ON CONFLICT DO NOTHING;
+INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
+SELECT '44444444-4444-4444-a444-44444444445b', id FROM cuisines WHERE slug IN ('grill-bbq','filipino','fast-food') ON CONFLICT DO NOTHING;
 
 INSERT INTO restaurant_dietary_options (restaurant_id, option) VALUES
 ('44444444-4444-4444-a444-444444444442', 'vegetarian'),
@@ -275,17 +345,157 @@ INSERT INTO restaurant_dietary_options (restaurant_id, option) VALUES
 ON CONFLICT DO NOTHING;
 
 -- Operating hours (Mon-Sun, 0=Sunday) ----------------------------------------
+-- 1. Horizon Bean Cafe: daily 10:00-24:00 (00:00)
 INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time)
-SELECT '44444444-4444-4444-a444-444444444441', d, '10:00', '21:00' FROM generate_series(0,6) d
+SELECT '44444444-4444-4444-a444-444444444441', d, '10:00', '23:59' FROM generate_series(0,6) d
 ON CONFLICT DO NOTHING;
+
+-- 2. Grillhouse Cordova BBQ (Papsy's BBQ): daily 09:00-21:00
 INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time)
-SELECT '44444444-4444-4444-a444-444444444442', d, '07:00', '20:00' FROM generate_series(0,6) d
-ON CONFLICT DO NOTHING;
-INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time, is_closed)
-SELECT '44444444-4444-4444-a444-444444444443', d, '11:00', '22:00', (d = 1) FROM generate_series(0,6) d
+SELECT '44444444-4444-4444-a444-444444444443', d, '09:00', '21:00' FROM generate_series(0,6) d
 ON CONFLICT DO NOTHING;
 INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time)
 SELECT '44444444-4444-4444-a444-44444444445b', d, '09:00', '21:00' FROM generate_series(0,6) d
+ON CONFLICT DO NOTHING;
+
+-- 3. Street Food Park: daily 16:00-23:30
+INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time)
+SELECT '44444444-4444-4444-a444-444444444444', d, '16:00', '23:30' FROM generate_series(0,6) d
+ON CONFLICT DO NOTHING;
+
+-- 4. ABY ROAD Resto Bar: Sun-Thu 10:00-02:00, Fri-Sat 10:00-03:30
+INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time)
+SELECT '44444444-4444-4444-a444-444444444445', d, '10:00',
+  CASE WHEN d IN (5,6) THEN '03:30'::time ELSE '02:00'::time END
+FROM generate_series(0,6) d
+ON CONFLICT DO NOTHING;
+
+-- 5. Eat n' Repeat: daily 09:00-23:59
+INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time)
+SELECT '44444444-4444-4444-a444-444444444446', d, '09:00', '23:59' FROM generate_series(0,6) d
+ON CONFLICT DO NOTHING;
+
+-- 6. Taytayan Pinoy: Mon-Fri 10:00-14:00 & 17:00-22:00, Sat-Sun 10:00-15:00 & 17:00-22:00
+INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time)
+SELECT '44444444-4444-4444-a444-444444444447', d, '10:00', CASE WHEN d IN (0,6) THEN '15:00'::time ELSE '14:00'::time END
+FROM generate_series(0,6) d
+ON CONFLICT DO NOTHING;
+INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time)
+SELECT '44444444-4444-4444-a444-444444444447', d, '17:00', '22:00'
+FROM generate_series(0,6) d
+ON CONFLICT DO NOTHING;
+
+-- 7. STUFFED N' FRIED: daily 10:30-21:00
+INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time)
+SELECT '44444444-4444-4444-a444-444444444448', d, '10:30', '21:00' FROM generate_series(0,6) d
+ON CONFLICT DO NOTHING;
+
+-- 8. McDonald's Cordova: 24/7 (00:00-23:59)
+INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time)
+SELECT '44444444-4444-4444-a444-444444444449', d, '00:00', '23:59' FROM generate_series(0,6) d
+ON CONFLICT DO NOTHING;
+
+-- 9. Barracks Grill: daily 17:00-04:00
+INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time)
+SELECT '44444444-4444-4444-a444-44444444444a', d, '17:00', '04:00' FROM generate_series(0,6) d
+ON CONFLICT DO NOTHING;
+
+-- 10. BRIC Food Park: daily 15:30-23:30
+INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time)
+SELECT '44444444-4444-4444-a444-44444444444b', d, '15:30', '23:30' FROM generate_series(0,6) d
+ON CONFLICT DO NOTHING;
+
+-- 11. RCA Food Station: daily 08:00-16:00
+INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time)
+SELECT '44444444-4444-4444-a444-44444444444c', d, '08:00', '16:00' FROM generate_series(0,6) d
+ON CONFLICT DO NOTHING;
+
+-- 12. Mavericks Cafe: Tue-Thu 14:00-22:00, Fri-Sun 15:00-23:00, Mon Closed
+INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time, is_closed)
+SELECT '44444444-4444-4444-a444-44444444444d', d,
+  CASE WHEN d IN (0,5,6) THEN '15:00'::time ELSE '14:00'::time END,
+  CASE WHEN d IN (0,5,6) THEN '23:00'::time ELSE '22:00'::time END,
+  (d = 1)
+FROM generate_series(0,6) d
+ON CONFLICT DO NOTHING;
+
+-- 13. Entoy's Bakasihan: daily 06:00-18:00
+INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time)
+SELECT '44444444-4444-4444-a444-44444444444e', d, '06:00', '18:00' FROM generate_series(0,6) d
+ON CONFLICT DO NOTHING;
+
+-- 14. Tita Kim's: Tue-Fri 17:00-22:00, Sat-Sun 11:30-22:00, Mon Closed
+INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time, is_closed)
+SELECT '44444444-4444-4444-a444-44444444444f', d,
+  CASE WHEN d IN (0,6) THEN '11:30'::time ELSE '17:00'::time END,
+  '22:00',
+  (d = 1)
+FROM generate_series(0,6) d
+ON CONFLICT DO NOTHING;
+
+-- 15. Burandat Seafood Bucket: daily 10:00-21:00
+INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time)
+SELECT '44444444-4444-4444-a444-444444444450', d, '10:00', '21:00' FROM generate_series(0,6) d
+ON CONFLICT DO NOTHING;
+
+-- 16. CSalt Café: Mon-Fri 13:00-23:00, Sat-Sun 12:00-23:59
+INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time)
+SELECT '44444444-4444-4444-a444-444444444442', d,
+  CASE WHEN d IN (0,6) THEN '12:00'::time ELSE '13:00'::time END,
+  CASE WHEN d IN (0,6) THEN '23:59'::time ELSE '23:00'::time END
+FROM generate_series(0,6) d
+ON CONFLICT DO NOTHING;
+
+-- 17. Cafe Mafia: daily 09:00-21:00
+INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time)
+SELECT '44444444-4444-4444-a444-444444444451', d, '09:00', '21:00' FROM generate_series(0,6) d
+ON CONFLICT DO NOTHING;
+
+-- 18. Solea Mactan Resort: daily 06:00-22:00
+INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time)
+SELECT '44444444-4444-4444-a444-444444444452', d, '06:00', '22:00' FROM generate_series(0,6) d
+ON CONFLICT DO NOTHING;
+
+-- 19. Husby's Grill: permanently closed
+INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time, is_closed)
+SELECT '44444444-4444-4444-a444-444444444453', d, '16:00', '23:00', true FROM generate_series(0,6) d
+ON CONFLICT DO NOTHING;
+
+-- 20. Sungka Native Restaurant: daily 11:00-22:00
+INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time)
+SELECT '44444444-4444-4444-a444-444444444454', d, '11:00', '22:00' FROM generate_series(0,6) d
+ON CONFLICT DO NOTHING;
+
+-- 21. Lantaw Floating: daily 11:00-21:00
+INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time)
+SELECT '44444444-4444-4444-a444-444444444455', d, '11:00', '21:00' FROM generate_series(0,6) d
+ON CONFLICT DO NOTHING;
+
+-- 22. Alberto's Pizza: daily 08:00-23:59
+INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time)
+SELECT '44444444-4444-4444-a444-444444444456', d, '08:00', '23:59' FROM generate_series(0,6) d
+ON CONFLICT DO NOTHING;
+
+-- 23. Cascaja Cafe: daily 10:00-23:59
+INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time)
+SELECT '44444444-4444-4444-a444-444444444457', d, '10:00', '23:59' FROM generate_series(0,6) d
+ON CONFLICT DO NOTHING;
+
+-- 24. Don Macchiatos: daily 08:00-22:00
+INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time)
+SELECT '44444444-4444-4444-a444-444444444458', d, '08:00', '22:00' FROM generate_series(0,6) d
+ON CONFLICT DO NOTHING;
+
+-- 25. Parola Seaview Restaurant: Mon-Fri 11:00-21:00, Sat-Sun 10:00-21:00
+INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time)
+SELECT '44444444-4444-4444-a444-444444444459', d,
+  CASE WHEN d IN (0,6) THEN '10:00'::time ELSE '11:00'::time END, '21:00'
+FROM generate_series(0,6) d
+ON CONFLICT DO NOTHING;
+
+-- 26. 10,000 Roses Cafe: daily 14:00-22:00
+INSERT INTO operating_hours (restaurant_id, day_of_week, open_time, close_time)
+SELECT '44444444-4444-4444-a444-44444444445a', d, '14:00', '22:00' FROM generate_series(0,6) d
 ON CONFLICT DO NOTHING;
 
 -- Default Menu ------------------------------------------------------------------

@@ -268,31 +268,31 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.1 }}
-            className="font-serif text-5xl sm:text-7xl font-bold text-white tracking-tight drop-shadow-md mb-2"
+            className="font-serif text-5xl sm:text-7xl lg:text-8xl font-extrabold text-white tracking-tight drop-shadow-[0_4px_20px_rgba(0,0,0,0.9)] mb-2"
           >
             CordovaEats
           </motion.h1>
 
-          {/* Subtitle Line */}
+          {/* Subtitle Line with Frosted Glass Plate */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
-            className="flex items-center gap-3 my-2"
+            className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-black/50 backdrop-blur-xl border border-white/20 shadow-spatial-sm my-3"
           >
-            <span className="h-[1px] w-8 sm:w-12 bg-cordova-gold/80" />
-            <span className="text-cordova-gold font-semibold tracking-[0.25em] uppercase text-xs sm:text-sm">
+            <span className="h-[1px] w-6 sm:w-10 bg-amber-400" />
+            <span className="text-amber-300 font-extrabold tracking-[0.25em] uppercase text-xs sm:text-sm drop-shadow">
               CORDOVA&apos;S CULINARY JOURNEY
             </span>
-            <span className="h-[1px] w-8 sm:w-12 bg-cordova-gold/80" />
+            <span className="h-[1px] w-6 sm:w-10 bg-amber-400" />
           </motion.div>
 
-          {/* Tagline / Description */}
+          {/* Tagline / Description with High Legibility */}
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.3 }}
-            className="italic text-gray-200 font-serif text-sm sm:text-lg max-w-2xl mt-2 leading-relaxed opacity-95"
+            className="text-white font-serif text-base sm:text-xl max-w-2xl mt-2 leading-relaxed drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] font-medium"
           >
             Where island flavors meet sophisticated dining. Discover authentic seafood, traditional
             Filipino cuisine, and artisan cafés along the CCLEX Bridge route.
@@ -318,15 +318,15 @@ export default function HomePage() {
           onSubmit={handleSearchSubmit}
           className={`relative rounded-2xl transition-all duration-300 p-2 sm:p-2.5 flex items-center gap-2 backdrop-blur-2xl ${
             aiMode
-              ? 'bg-white/80 dark:bg-[#140e24]/75 border border-purple-400/40 dark:border-purple-400/30 shadow-[0_16px_40px_rgba(147,51,234,0.14),inset_0_1px_1.5px_rgba(255,255,255,0.7)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.4),inset_0_1px_1.5px_rgba(255,255,255,0.15)] ring-1 ring-purple-400/20'
-              : 'bg-white/85 dark:bg-[#161e18]/85 border border-white/80 dark:border-white/15 shadow-[0_16px_40px_rgba(0,0,0,0.08),inset_0_1px_1.5px_rgba(255,255,255,0.9)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.4),inset_0_1px_1.5px_rgba(255,255,255,0.12)] ring-1 ring-black/[0.04] dark:ring-white/[0.05]'
+              ? 'bg-white/90 dark:bg-[#140e24]/85 border border-purple-400/40 dark:border-purple-400/30 shadow-[0_16px_40px_rgba(147,51,234,0.14),inset_0_1px_1.5px_rgba(255,255,255,0.7)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.4),inset_0_1px_1.5px_rgba(255,255,255,0.15)] ring-1 ring-purple-400/20'
+              : 'bg-white/90 dark:bg-[#161e18]/90 border border-white/80 dark:border-white/15 shadow-[0_16px_40px_rgba(0,0,0,0.08),inset_0_1px_1.5px_rgba(255,255,255,0.9)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.4),inset_0_1px_1.5px_rgba(255,255,255,0.12)] ring-1 ring-black/[0.04] dark:ring-white/[0.05]'
           }`}
         >
-          <div className="flex items-center pl-3 text-stone-400 shrink-0">
+          <div className="flex items-center pl-3 text-stone-500 shrink-0">
             {aiMode ? (
-              <Sparkles size={19} className="text-purple-500 dark:text-purple-400 animate-pulse" />
+              <Sparkles size={20} className="text-purple-600 dark:text-purple-400 animate-pulse" />
             ) : (
-              <Search size={19} className="text-stone-400 dark:text-stone-400" />
+              <Search size={20} className="text-emerald-700 dark:text-emerald-400" />
             )}
           </div>
 
@@ -336,13 +336,13 @@ export default function HomePage() {
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={
               aiMode
-                ? 'Ask AI: search dishes, atmosphere, seafood (e.g. romantic dinner near CCLEX)...'
-                : 'Search for restaurants, cuisines, or dishes...'
+                ? 'Ask AI: search seafood, bakasi, sunset view, romantic dinner...'
+                : 'Search restaurants, fresh seafood, BBQ, cafes...'
             }
-            className={`flex-1 px-2.5 py-3 bg-transparent text-sm sm:text-base outline-none font-sans transition-colors ${
+            className={`flex-1 px-2.5 py-3 bg-transparent text-sm sm:text-base outline-none font-sans font-medium transition-colors ${
               aiMode
-                ? 'text-stone-900 dark:text-white placeholder:text-purple-700/60 dark:placeholder:text-purple-300/60'
-                : 'text-stone-900 dark:text-white placeholder:text-stone-400 dark:placeholder:text-stone-400'
+                ? 'text-stone-900 dark:text-white placeholder:text-purple-700/70 dark:placeholder:text-purple-300/70'
+                : 'text-stone-900 dark:text-white placeholder:text-stone-500 dark:placeholder:text-stone-400'
             }`}
           />
 
@@ -364,34 +364,34 @@ export default function HomePage() {
           <button
             type="button"
             onClick={() => setAiMode(!aiMode)}
-            className={`flex items-center gap-1.5 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs font-semibold tracking-wide transition-all duration-300 shrink-0 select-none ${
+            className={`flex items-center gap-1.5 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs font-bold tracking-wide transition-all duration-300 shrink-0 select-none ${
               aiMode
                 ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-[0_4px_14px_rgba(147,51,234,0.35),inset_0_1px_1px_rgba(255,255,255,0.4)] border border-purple-300/40 ring-1 ring-purple-400/30 scale-105'
-                : 'bg-stone-100/90 dark:bg-white/10 hover:bg-stone-200/90 dark:hover:bg-white/15 text-stone-700 dark:text-stone-200 border border-stone-200/80 dark:border-white/10'
+                : 'bg-stone-100/90 dark:bg-white/10 hover:bg-stone-200/90 dark:hover:bg-white/15 text-stone-800 dark:text-stone-200 border border-stone-300/80 dark:border-white/10'
             }`}
             title="Toggle AI Search Mode"
           >
-            <Sparkles size={13} className={aiMode ? 'text-purple-200' : 'text-stone-400'} />
+            <Sparkles size={13} className={aiMode ? 'text-purple-200' : 'text-stone-500'} />
             <span>AI Mode</span>
           </button>
 
           {/* Search Action Button */}
           <button
             type="submit"
-            className="bg-gradient-to-r from-cordova-gold to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white p-3 sm:px-4 sm:py-3 rounded-xl transition-all duration-200 shrink-0 shadow-[0_4px_16px_rgba(217,119,6,0.35),inset_0_1px_1px_rgba(255,255,255,0.5)] active:scale-95 border border-white/30 flex items-center justify-center gap-1.5"
+            className="bg-gradient-to-r from-cordova-gold via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-600 text-white p-3 sm:px-5 sm:py-3 rounded-xl transition-all duration-200 shrink-0 shadow-spatial-md active:scale-95 border border-white/30 flex items-center justify-center gap-1.5 font-bold"
             aria-label="Search"
           >
-            <Search size={17} />
+            <Search size={18} />
           </button>
         </form>
 
         {/* Quick Suggestion Chips */}
         {aiMode && (
           <div className="flex flex-wrap items-center justify-center gap-2 mt-4 text-xs">
-            <span className="text-stone-500 dark:text-stone-400 font-medium text-[11px] flex items-center gap-1">
-              <Sparkles size={12} className="text-purple-400" /> Popular AI Searches:
+            <span className="text-stone-700 dark:text-stone-300 font-bold text-[11px] flex items-center gap-1">
+              <Sparkles size={12} className="text-purple-500" /> Popular Searches:
             </span>
-            {['Sunset View', 'Bakasi & Shellfish', 'Resort Dining', 'Budget-Friendly Grill', 'Acoustic / Live Music'].map((chip) => (
+            {['Fresh Seafood', 'Bakasi Eel', 'Sunset & Parola View', 'Budget-Friendly BBQ', 'Artisan Coffee'].map((chip) => (
               <button
                 key={chip}
                 type="button"
@@ -399,7 +399,7 @@ export default function HomePage() {
                   setSearchQuery(chip);
                   setPage(1);
                 }}
-                className="px-3.5 py-1.5 rounded-full bg-white/70 dark:bg-purple-950/40 hover:bg-white dark:hover:bg-purple-900/60 border border-stone-200/60 dark:border-purple-700/40 text-purple-700 dark:text-purple-300 font-medium transition-all text-[11px] shadow-spatial-sm hover:shadow-spatial-md hover:scale-105 active:scale-95 backdrop-blur-xl"
+                className="px-3.5 py-1.5 rounded-full bg-white/80 dark:bg-purple-950/50 hover:bg-white dark:hover:bg-purple-900/80 border border-purple-300/60 dark:border-purple-700/60 text-purple-900 dark:text-purple-200 font-bold transition-all text-[11px] shadow-spatial-sm hover:shadow-spatial-md hover:scale-105 active:scale-95 backdrop-blur-xl"
               >
                 ✨ {chip}
               </button>
@@ -411,20 +411,20 @@ export default function HomePage() {
       {/* EXPLORE BY CATEGORY SECTION */}
       <section className="max-w-6xl mx-auto px-4 mt-20 relative z-10">
         <div className="text-center mb-10">
-          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-stone-900 dark:text-white">
+          <h2 className="font-serif text-3xl sm:text-4xl font-extrabold text-stone-900 dark:text-white">
             Explore by Category
           </h2>
-          <div className="h-0.5 w-16 bg-cordova-gold mx-auto mt-3 rounded-full" />
+          <div className="h-1 w-20 bg-cordova-gold mx-auto mt-3 rounded-full shadow-spatial-sm" />
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 max-w-6xl mx-auto">
           {[
-            { id: 'fastfood', label: 'Fast Food', icon: Zap, cuisine: 'Fast Food' },
             { id: 'restaurant', label: 'Restaurant', icon: Utensils, cuisine: 'Restaurant' },
+            { id: 'fastfood', label: 'Fast Food', icon: Zap, cuisine: 'Fast Food' },
             { id: 'cafe', label: 'Cafe', icon: Coffee, cuisine: 'Cafe' },
             { id: 'streetfood', label: 'Street Food', icon: Flame, cuisine: 'Street Food' },
             { id: 'restobar', label: 'Resto Bar', icon: Wine, cuisine: 'Resto Bar' },
-            { id: 'pizza', label: 'Pizza', icon: Pizza, cuisine: 'Pizza' },
+            { id: 'pizza', label: 'Pizza & Pasta', icon: Pizza, cuisine: 'Pizza' },
           ].map((cat) => {
             const IconComp = cat.icon;
             const isSelected = activeCategory === cat.cuisine;
@@ -432,16 +432,16 @@ export default function HomePage() {
               <button
                 key={cat.id}
                 onClick={() => handleCategoryClick(cat.cuisine)}
-                className={`spatial-card p-5 flex flex-col items-center justify-center gap-3 transition-all duration-300 group ${
+                className={`spatial-card p-5 flex flex-col items-center justify-center gap-3 transition-all duration-300 group rounded-3xl ${
                   isSelected
-                    ? 'border-cordova-gold dark:border-cordova-gold ring-2 ring-cordova-gold/30 bg-amber-500/10 dark:bg-amber-500/15 shadow-spatial-md scale-[1.03]'
-                    : 'hover:border-cordova-gold/60 dark:hover:border-cordova-gold/60'
+                    ? 'border-cordova-gold dark:border-cordova-gold ring-2 ring-cordova-gold/40 bg-amber-500/15 dark:bg-amber-500/20 shadow-spatial-md scale-[1.04]'
+                    : 'bg-white/90 dark:bg-[#16201a]/90 hover:border-cordova-gold/70 dark:hover:border-cordova-gold/70'
                 }`}
               >
                 <div className="text-cordova-gold group-hover:scale-110 transition-transform duration-300 drop-shadow-sm">
-                  <IconComp size={28} strokeWidth={1.75} />
+                  <IconComp size={28} strokeWidth={2} />
                 </div>
-                <span className="font-serif text-xs sm:text-sm font-bold text-center text-stone-800 dark:text-stone-200 group-hover:text-cordova-green dark:group-hover:text-emerald-400 transition-colors">
+                <span className="font-serif text-xs sm:text-sm font-extrabold text-center text-stone-900 dark:text-stone-100 group-hover:text-cordova-green dark:group-hover:text-emerald-400 transition-colors">
                   {cat.label}
                 </span>
               </button>
@@ -555,12 +555,6 @@ export default function HomePage() {
             </h2>
             <div className="h-0.5 w-16 bg-cordova-gold mt-3 rounded-full" />
           </div>
-
-          {meta && meta.totalCount > 0 && (
-            <p className="text-xs sm:text-sm font-medium text-stone-500 dark:text-stone-400">
-              Showing <span className="text-stone-900 dark:text-white font-semibold">{((meta.page - 1) * meta.limit) + 1}–{Math.min(meta.page * meta.limit, meta.totalCount)}</span> of <span className="text-stone-900 dark:text-white font-semibold">{meta.totalCount}</span> establishments (Page {meta.page} of {meta.totalPages})
-            </p>
-          )}
         </div>
 
         {loading ? (

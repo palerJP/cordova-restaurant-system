@@ -97,13 +97,13 @@ export function Navbar() {
               <div className="flex items-center gap-3">
                 <Link
                   href="/login"
-                  className="text-xs font-semibold text-stone-700 dark:text-stone-200 hover:text-cordova-green dark:hover:text-emerald-400 transition-colors px-3 py-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5"
+                  className="text-xs font-bold text-stone-800 dark:text-stone-100 hover:text-cordova-green dark:hover:text-emerald-400 transition-colors px-4 py-2 rounded-full border border-stone-300/80 dark:border-white/15 hover:bg-black/5 dark:hover:bg-white/10 backdrop-blur-md"
                 >
                   Sign In
                 </Link>
                 <Link
                   href="/register"
-                  className="bg-gradient-to-r from-cordova-gold to-amber-600 hover:from-cordova-goldHover hover:to-amber-700 text-white text-xs font-bold px-5 py-2.5 rounded-full shadow-spatial-sm hover:shadow-spatial-gold-glow transition-all duration-200 tracking-wide uppercase active:scale-95 border border-white/20"
+                  className="bg-gradient-to-r from-cordova-gold via-amber-500 to-amber-600 hover:from-cordova-goldHover hover:to-amber-700 text-white text-xs font-extrabold px-5 py-2.5 rounded-full shadow-spatial-sm hover:shadow-spatial-gold-glow transition-all duration-200 tracking-wide uppercase active:scale-95 border border-white/20"
                 >
                   Sign Up
                 </Link>

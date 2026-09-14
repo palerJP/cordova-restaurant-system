@@ -460,18 +460,21 @@ export default function RecommendationsPage() {
             <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto pr-1 py-1">
               {allCuisineOptions.map((cuisine) => {
                 const isSelected = selectedCuisines.some((c) => c.toLowerCase() === cuisine.toLowerCase());
+                const isSeafood = cuisine.toLowerCase().includes('seafood') || cuisine.toLowerCase().includes('bakasi');
                 return (
                   <button
                     key={cuisine}
                     type="button"
                     onClick={() => toggleArrayItem(selectedCuisines, setSelectedCuisines, cuisine)}
-                    className={`text-xs px-3 py-1.5 rounded-full font-medium transition-all duration-150 border ${
+                    className={`text-xs px-3.5 py-1.5 rounded-full font-bold transition-all duration-200 border ${
                       isSelected
-                        ? 'bg-cordova-green border-cordova-green text-white shadow-sm font-semibold scale-105'
-                        : 'bg-stone-100 dark:bg-stone-800 border-transparent text-stone-700 dark:text-stone-300 hover:border-stone-300 dark:hover:border-stone-700'
+                        ? 'bg-cordova-green border-cordova-green text-white shadow-spatial-sm font-extrabold scale-105'
+                        : isSeafood
+                        ? 'bg-cyan-500/15 dark:bg-cyan-500/25 border-cyan-400/40 text-cyan-900 dark:text-cyan-200 hover:bg-cyan-500/30 font-extrabold'
+                        : 'bg-stone-100 dark:bg-stone-800/80 border-stone-200/80 dark:border-stone-700/80 text-stone-800 dark:text-stone-200 hover:border-cordova-green/50'
                     }`}
                   >
-                    {cuisine}
+                    {isSeafood ? `🦞 ${cuisine}` : cuisine}
                   </button>
                 );
               })}
@@ -741,7 +744,7 @@ export default function RecommendationsPage() {
               <div>
                 <h3 className="text-lg font-bold text-stone-900 dark:text-white">No exact restaurant match</h3>
                 <p className="text-sm text-stone-500 mt-1 max-w-md mx-auto">
-                  None of the 27 accredited restaurants currently match all of your strict filter constraints. Try
+                  None of the 26 accredited establishments currently match all of your strict filter constraints. Try
                   loosening a restriction like max distance or dietary filters.
                 </p>
               </div>

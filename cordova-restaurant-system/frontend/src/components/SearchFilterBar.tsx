@@ -23,8 +23,10 @@ interface SearchFilterBarProps {
 
 const CATEGORIES = [
   'All Categories',
-  'Fast Food',
+  'Seafood',
+  'Filipino',
   'Restaurant',
+  'Fast Food',
   'Cafe',
   'Street Food',
   'Resto Bar',
