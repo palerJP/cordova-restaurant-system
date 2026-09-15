@@ -1,4 +1,5 @@
 import type { Restaurant } from '@/lib/types';
+import { getRestaurantReviewStats } from './restaurantReviews';
 
 /**
  * ============================================================================
@@ -397,6 +398,7 @@ export function getAllStaticRestaurants(): Restaurant[] {
     const slug = slugifyKey(key);
     const cuisines = inferCuisines(config.name, config.description, config.barangay);
     const priceRange = inferPriceRange(config.name, config.description);
+    const stats = getRestaurantReviewStats(slug);
 
     result.push({
       id: `static-${slug}`,
@@ -416,8 +418,8 @@ export function getAllStaticRestaurants(): Restaurant[] {
       services_offered: ['dine_in', 'takeout'],
       cover_image_url: config.coverImage || undefined,
       status: 'verified',
-      avg_rating: 4.5 + ((index % 5) * 0.1),
-      review_count: 8 + (index * 3) % 45,
+      avg_rating: stats.rating,
+      review_count: stats.count,
       view_count: 100 + (index * 23) % 300,
       is_active: true,
       cuisines: cuisines,
@@ -499,8 +501,15 @@ export function isRestaurantVisible(restaurant: Restaurant): boolean {
 export function applyRestaurantCustomization(restaurant: Restaurant): Restaurant {
   if (!restaurant) return restaurant;
   const custom = getRestaurantCustomization(restaurant);
+  const stats = getRestaurantReviewStats(restaurant.slug || restaurant.id || restaurant.name);
 
-  if (!custom) return restaurant;
+  if (!custom) {
+    return {
+      ...restaurant,
+      review_count: stats.count,
+      avg_rating: stats.rating,
+    };
+  }
 
   return {
     ...restaurant,
@@ -516,5 +525,7 @@ export function applyRestaurantCustomization(restaurant: Restaurant): Restaurant
     phone: custom.phone || restaurant.phone,
     email: custom.email || restaurant.email,
     hours: custom.hours || (restaurant as any)?.hours,
+    review_count: stats.count,
+    avg_rating: stats.rating,
   };
 }

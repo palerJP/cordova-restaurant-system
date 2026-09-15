@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { RestaurantGridSkeleton } from '@/components/ui/Skeleton';
 import { Utensils, Lock, CheckCircle2 } from 'lucide-react';
 import type { Restaurant, BusinessStatus } from '@/lib/types';
+import { getRestaurantReviewStats } from '@/data/restaurantReviews';
 
 const STATUS_COLOR: Record<BusinessStatus, 'success' | 'warning' | 'danger' | 'neutral'> = {
   verified: 'success',
@@ -118,7 +119,7 @@ export default function DashboardPage() {
                     {isVerified && (
                       <div className="flex items-center gap-4 mt-4 pt-3 border-t border-stone-100 dark:border-stone-800/60 text-xs text-stone-500 dark:text-stone-400 font-medium">
                         <span>👁️ {r.view_count || 0} views</span>
-                        <span>⭐ {Number(r.avg_rating || 5).toFixed(1)} ({r.review_count || 0})</span>
+                        <span>⭐ {getRestaurantReviewStats(r.slug || r.id).rating.toFixed(1)} ({getRestaurantReviewStats(r.slug || r.id).count} {getRestaurantReviewStats(r.slug || r.id).count === 1 ? 'review' : 'reviews'})</span>
                       </div>
                     )}
                   </div>

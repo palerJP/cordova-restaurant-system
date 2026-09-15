@@ -1,11 +1,12 @@
 'use client';
 
-import { memo, useState } from 'react';
+import { memo, useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { MapPin, Star } from 'lucide-react';
 import type { Restaurant } from '@/lib/types';
 import { applyRestaurantCustomization } from '@/data/restaurants';
+import { getRestaurantReviewStats, normalizeKey } from '@/data/restaurantReviews';
 
 export const RestaurantCard = memo(function RestaurantCard({
   restaurant: rawRestaurant,
@@ -16,7 +17,50 @@ export const RestaurantCard = memo(function RestaurantCard({
 }) {
   const restaurant = applyRestaurantCustomization(rawRestaurant);
   const [imgError, setImgError] = useState(false);
-  const ratingVal = Number(restaurant.avg_rating || 4.5).toFixed(1);
+  const [stats, setStats] = useState(() =>
+    getRestaurantReviewStats(restaurant.slug || restaurant.id || restaurant.name || '')
+  );
+
+  useEffect(() => {
+    const current = getRestaurantReviewStats(restaurant.slug || restaurant.id || restaurant.name || '');
+    setStats(current);
+
+    const handleUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const updatedSlug = customEvent.detail?.slugOrId;
+      const rawSlug = customEvent.detail?.rawSlugOrId;
+      if (!updatedSlug && !rawSlug) return;
+
+      const normCard = normalizeKey(restaurant.slug || restaurant.id || restaurant.name || '');
+      const normUpdated = normalizeKey(updatedSlug || '');
+      const normRaw = normalizeKey(rawSlug || '');
+
+      if (
+        normCard === normUpdated ||
+        normCard === normRaw ||
+        (normUpdated && normCard.includes(normUpdated)) ||
+        (normRaw && normCard.includes(normRaw))
+      ) {
+        if (customEvent.detail?.stats) {
+          setStats(customEvent.detail.stats);
+        } else {
+          setStats(getRestaurantReviewStats(restaurant.slug || restaurant.id || restaurant.name || ''));
+        }
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('cordova_review_updated', handleUpdate);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('cordova_review_updated', handleUpdate);
+      }
+    };
+  }, [restaurant.slug, restaurant.id, restaurant.name]);
+
+  const ratingVal = stats.rating ? stats.rating.toFixed(1) : Number(restaurant.avg_rating || 5.0).toFixed(1);
+  const reviewCount = stats.count !== undefined ? stats.count : (restaurant.review_count || 0);
   const locationText = restaurant.barangay
     ? `${restaurant.barangay}, Cordova`
     : restaurant.address || 'Cordova, Cebu';
@@ -159,7 +203,7 @@ export const RestaurantCard = memo(function RestaurantCard({
               <Star size={14} className="fill-cordova-gold text-cordova-gold" />
               <span>{ratingVal}</span>
               <span className="text-stone-500 dark:text-stone-400 font-normal">
-                ({restaurant.review_count || 0} reviews)
+                ({reviewCount} {reviewCount === 1 ? 'review' : 'reviews'})
               </span>
             </div>
 

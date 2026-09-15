@@ -291,9 +291,19 @@ export default function RestaurantDetailPage() {
           ]);
         }
         const verifiedList = getVerifiedReviews(slug || found.slug || found.id);
-        const loadedReviews = (reviewsRes.data && Array.isArray(reviewsRes.data) && reviewsRes.data.length > 0)
-          ? reviewsRes.data
-          : verifiedList;
+        const apiReviews: Review[] = (reviewsRes.data && Array.isArray(reviewsRes.data)) ? reviewsRes.data : [];
+
+        // Combine verifiedList with apiReviews, without duplicates
+        const reviewMap = new Map<string, Review>();
+        for (const r of verifiedList) {
+          reviewMap.set(r.id, r);
+        }
+        for (const r of apiReviews) {
+          reviewMap.set(r.id, r);
+        }
+        const loadedReviews = Array.from(reviewMap.values()).sort(
+          (a, b) => new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime()
+        );
 
         setReviews(loadedReviews);
 
