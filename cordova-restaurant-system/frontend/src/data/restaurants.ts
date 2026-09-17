@@ -39,18 +39,6 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
     hours: '10:00 AM - 12:00 AM (Daily)',
   },
 
-  // 3. Street Food Park
-  'street-food-park': {
-    name: 'Street Food Park',
-    category: 'Street Food',
-    coverImage: 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=800&auto=format&fit=crop&q=80',
-    barangay: 'Poblacion',
-    description: 'affordable local street food and fresh seafood paired with a cool ocean breeze and sunset.',
-    address: 'Poblacion Roro Port Rd, Cordova, Cebu',
-    phone: '0917 000 0000',
-    hours: 'Hours currently unlisted (Status: Unknown)',
-  },
-
   // 4. ABY ROAD Resto Bar
   'aby-road-resto-bar': {
     name: 'ABY ROAD Resto Bar',
@@ -121,18 +109,6 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
     address: 'Ajoya Subdivision, Mactan Island, Cordova, Cebu',
     phone: '0977 328 7689',
     hours: '5:00 PM – 4:00 AM (Daily)',
-  },
-
-  // 10. BRIC Food Park 
-  'bric-food-park': {
-    name: 'BRIC Food Park',
-    category: 'Street Food',
-    coverImage: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&auto=format&fit=crop&q=80',
-    barangay: 'San Miguel',
-    description: 'a vibrant, open-air al fresco dining destination.',
-    address: 'San Miguel Road, Cordova, Cebu',
-    phone: 'N/A',
-    hours: '3:00 PM – 10:00 PM (Daily)',
   },
 
   // 11. RCA Bilao Food Station
@@ -229,6 +205,7 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
     address: 'Victor Wahing Street, Alegria, Cordova, Cebu',
     phone: '(032) 517 8889',
     hours: 'Open 24 hours (Resort front desk); dining options inside operate 6:00 AM – 10:00 PM (Daily)',
+    hidden: true,
   },    
 
   // 19. Sungka Native Restaurant
@@ -332,7 +309,7 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
   'the-latte-cafe-mtvn5h2j': {
     name: 'The Latte Cafe',
     category: 'Cafe',
-    coverImage: '/uploads/restaurant-images/1789051635858-84ac1f64fd21d402.jpg',
+    coverImage: '/images/the-latte-cafe-logo.jpg',
     barangay: 'Gabi',
     description: 'an aesthetic, pet-friendly neighborhood coffee shop',
     address: 'Gabi, Cordova, Cebu',

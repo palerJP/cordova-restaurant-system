@@ -25,11 +25,13 @@ import { RestaurantGridSkeleton } from '@/components/ui/Skeleton';
 import { Pagination } from '@/components/ui/Pagination';
 import type { Restaurant, PageMeta } from '@/lib/types';
 import { isRestaurantVisible, getAllStaticRestaurants, normalizeKey, matchesCategory } from '@/data/restaurants';
+import { aiSearchRestaurants, standardSearchRestaurants } from '@/lib/aiSearch';
 
 export default function HomePage() {
   const router = useRouter();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [aiMode, setAiMode] = useState(true);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [page, setPage] = useState(1);
@@ -45,6 +47,14 @@ export default function HomePage() {
 
   const PAGE_SIZE = 6;
 
+  // Debounce typing in search input to prevent network spam and UI stutter
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 280);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
     if (establishmentsRef.current) {
@@ -56,19 +66,34 @@ export default function HomePage() {
     setLoading(true);
     try {
       let apiList: Restaurant[] = [];
+      const queryTerm = debouncedQuery.trim();
 
       // If AI mode is active and there's a search term, query the smart AI ranking endpoint
-      if (aiMode && searchQuery.trim()) {
+      if (aiMode && queryTerm) {
         try {
           const res = await api.post(
             '/api/search',
             {
-              keyword: searchQuery.trim(),
+              keyword: queryTerm,
               cuisine: activeCategory && activeCategory !== 'restaurants' ? activeCategory : undefined,
             },
             { auth: false }
           );
-          if (res.data && Array.isArray(res.data)) {
+          if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+            apiList = res.data;
+          }
+        } catch {
+          apiList = [];
+        }
+      } else if (!aiMode && queryTerm) {
+        try {
+          const params = new URLSearchParams();
+          params.set('q', queryTerm);
+          if (activeCategory && activeCategory !== 'restaurants') params.set('cuisines', activeCategory);
+          params.set('limit', '100');
+
+          const res = await api.get(`/api/restaurants?${params.toString()}`, { auth: false });
+          if (res.data && Array.isArray(res.data) && res.data.length > 0) {
             apiList = res.data;
           }
         } catch {
@@ -77,7 +102,6 @@ export default function HomePage() {
       } else {
         try {
           const params = new URLSearchParams();
-          if (searchQuery.trim()) params.set('q', searchQuery.trim());
           if (activeCategory && activeCategory !== 'restaurants') params.set('cuisines', activeCategory);
           params.set('limit', '100');
 
@@ -90,49 +114,54 @@ export default function HomePage() {
         }
       }
 
-      const staticList = getAllStaticRestaurants();
-
-      // Combine static list with API list, keyed by normalized slug/name
+      // Static fallback list with customizations applied
+      const staticList = getAllStaticRestaurants().filter(isRestaurantVisible);
       const map = new Map<string, Restaurant>();
-      for (const item of staticList) {
-        map.set(normalizeKey(item.slug), item);
-      }
-      for (const item of apiList) {
-        const key = normalizeKey(item.slug || item.name);
-        map.set(key, item);
+
+      if (apiList.length > 0) {
+        for (const item of apiList) {
+          const key = normalizeKey(item.slug || item.name);
+          map.set(key, item);
+        }
+      } else {
+        for (const item of staticList) {
+          map.set(normalizeKey(item.slug), item);
+        }
       }
 
       let all: Restaurant[] = [];
 
-      if (aiMode && searchQuery.trim() && apiList.length > 0) {
-        // Retain the AI ranking order from apiList
-        const seen = new Set<string>();
-        for (const item of apiList) {
-          const key = normalizeKey(item.slug || item.name);
-          const fullItem = map.get(key) || item;
-          if (isRestaurantVisible(fullItem) && !seen.has(key)) {
-            all.push(fullItem);
-            seen.add(key);
+      if (queryTerm) {
+        if (aiMode) {
+          if (apiList.length > 0) {
+            // Retain the AI ranking order from apiList
+            const seen = new Set<string>();
+            for (const item of apiList) {
+              const key = normalizeKey(item.slug || item.name);
+              const fullItem = map.get(key) || item;
+              if (isRestaurantVisible(fullItem) && !seen.has(key)) {
+                all.push(fullItem);
+                seen.add(key);
+              }
+            }
+          } else {
+            // High-precision client-side AI semantic search with menus & reviews
+            all = aiSearchRestaurants(staticList, queryTerm, activeCategory);
+          }
+        } else {
+          // Standard token-based search without whole-phrase substring breakage
+          if (apiList.length > 0) {
+            all = Array.from(map.values()).filter(isRestaurantVisible);
+          } else {
+            all = standardSearchRestaurants(staticList, queryTerm, activeCategory);
           }
         }
       } else {
         all = Array.from(map.values()).filter(isRestaurantVisible);
-
-        // Filter by search query if standard search
-        if (searchQuery.trim()) {
-          const q = searchQuery.toLowerCase().trim();
-          all = all.filter((r) =>
-            r.name.toLowerCase().includes(q) ||
-            (r.description && r.description.toLowerCase().includes(q)) ||
-            (r.barangay && r.barangay.toLowerCase().includes(q)) ||
-            (r.cuisines && r.cuisines.some((c) => c.toLowerCase().includes(q)))
-          );
+        // Filter by active category
+        if (activeCategory) {
+          all = all.filter((r) => matchesCategory(r, activeCategory));
         }
-      }
-
-      // Filter by active category
-      if (activeCategory) {
-        all = all.filter((r) => matchesCategory(r, activeCategory));
       }
 
       const totalCount = all.length;
@@ -156,7 +185,7 @@ export default function HomePage() {
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, activeCategory, page, aiMode]);
+  }, [debouncedQuery, activeCategory, page, aiMode]);
 
   const fetchRecommendations = useCallback(async () => {
     setRecLoading(true);
@@ -210,8 +239,27 @@ export default function HomePage() {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      fetchRestaurants();
+    setDebouncedQuery(searchQuery);
+    setPage(1);
+    if (establishmentsRef.current) {
+      establishmentsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const handleChipClick = (chip: string) => {
+    if (searchQuery.trim().toLowerCase() === chip.toLowerCase()) {
+      setSearchQuery('');
+      setDebouncedQuery('');
+      setPage(1);
+    } else {
+      setSearchQuery(chip);
+      setDebouncedQuery(chip);
+      setPage(1);
+      setTimeout(() => {
+        if (establishmentsRef.current) {
+          establishmentsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 50);
     }
   };
 
@@ -351,6 +399,7 @@ export default function HomePage() {
               type="button"
               onClick={() => {
                 setSearchQuery('');
+                setDebouncedQuery('');
                 setPage(1);
               }}
               className="p-1.5 rounded-full text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-white/10 transition-colors"
@@ -391,19 +440,24 @@ export default function HomePage() {
             <span className="text-stone-700 dark:text-stone-300 font-bold text-[11px] flex items-center gap-1">
               <Sparkles size={12} className="text-purple-500" /> Popular Searches:
             </span>
-            {['Fresh Seafood', 'Bakasi Eel', 'Sunset & Parola View', 'Budget-Friendly BBQ', 'Artisan Coffee'].map((chip) => (
-              <button
-                key={chip}
-                type="button"
-                onClick={() => {
-                  setSearchQuery(chip);
-                  setPage(1);
-                }}
-                className="px-3.5 py-1.5 rounded-full bg-white/80 dark:bg-purple-950/50 hover:bg-white dark:hover:bg-purple-900/80 border border-purple-300/60 dark:border-purple-700/60 text-purple-900 dark:text-purple-200 font-bold transition-all text-[11px] shadow-spatial-sm hover:shadow-spatial-md hover:scale-105 active:scale-95 backdrop-blur-xl"
-              >
-                ✨ {chip}
-              </button>
-            ))}
+            {['Fresh Seafood', 'Bakasi Eel', 'Sunset & Parola View', 'Budget-Friendly BBQ', 'Artisan Coffee'].map((chip) => {
+              const isActive = searchQuery.trim().toLowerCase() === chip.toLowerCase();
+              return (
+                <button
+                  key={chip}
+                  type="button"
+                  onClick={() => handleChipClick(chip)}
+                  className={`px-3.5 py-1.5 rounded-full font-bold transition-all text-[11px] backdrop-blur-xl active:scale-95 ${
+                    isActive
+                      ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white border border-purple-300 shadow-[0_4px_14px_rgba(147,51,234,0.4)] scale-105 ring-2 ring-purple-400/40'
+                      : 'bg-white/80 dark:bg-purple-950/50 hover:bg-white dark:hover:bg-purple-900/80 border border-purple-300/60 dark:border-purple-700/60 text-purple-900 dark:text-purple-200 shadow-spatial-sm hover:shadow-spatial-md hover:scale-105'
+                  }`}
+                  title={`Search ${chip}`}
+                >
+                  ✨ {chip}
+                </button>
+              );
+            })}
           </div>
         )}
       </section>
@@ -548,10 +602,52 @@ export default function HomePage() {
 
       {/* ALL ESTABLISHMENTS SECTION */}
       <section ref={establishmentsRef} className="max-w-6xl mx-auto px-4 mt-24 scroll-mt-6 relative z-10">
+        {/* AI / Active Search Feedback Banner */}
+        {debouncedQuery.trim() && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 p-4 sm:p-5 rounded-2xl bg-purple-500/10 dark:bg-purple-950/40 border border-purple-300/40 dark:border-purple-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 backdrop-blur-xl shadow-spatial-sm"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-purple-600/15 text-purple-600 dark:text-purple-400 shrink-0">
+                <Sparkles size={20} className="animate-pulse" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-purple-800 dark:text-purple-300 bg-purple-200/60 dark:bg-purple-900/60 px-2 py-0.5 rounded-md">
+                    {aiMode ? 'AI Search Active' : 'Search Active'}
+                  </span>
+                  <p className="text-sm sm:text-base font-bold text-stone-900 dark:text-white">
+                    Showing results for &ldquo;{debouncedQuery}&rdquo;
+                  </p>
+                </div>
+                <p className="text-xs text-stone-600 dark:text-stone-300 mt-0.5">
+                  {meta?.totalCount ?? restaurants.length} {meta?.totalCount === 1 ? 'establishment matches' : 'establishments match'} your query in Cordova
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                setDebouncedQuery('');
+                setPage(1);
+              }}
+              className="text-xs font-bold text-purple-800 dark:text-purple-200 hover:text-purple-950 dark:hover:text-white px-3.5 py-2 rounded-xl bg-purple-200/50 hover:bg-purple-200 dark:bg-purple-800/40 dark:hover:bg-purple-800/80 transition-all flex items-center gap-1.5 shrink-0 border border-purple-300/50 dark:border-purple-600/50 shadow-spatial-sm active:scale-95"
+            >
+              <X size={14} />
+              <span>Clear Search</span>
+            </button>
+          </motion.div>
+        )}
+
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
           <div>
             <h2 className="font-serif text-3xl sm:text-4xl font-bold text-stone-900 dark:text-white capitalize">
-              {activeCategory ? `${activeCategory} Establishments` : 'All Establishments'}
+              {debouncedQuery.trim()
+                ? (aiMode ? 'AI Ranked Recommendations' : `Search Results for "${debouncedQuery}"`)
+                : (activeCategory ? `${activeCategory} Establishments` : 'All Establishments')}
             </h2>
             <div className="h-0.5 w-16 bg-cordova-gold mt-3 rounded-full" />
           </div>
@@ -566,18 +662,21 @@ export default function HomePage() {
               No establishments found
             </p>
             <p className="text-xs text-stone-500">
-              Try adjusting your search query or selecting a different category.
+              {debouncedQuery.trim()
+                ? `No restaurants found matching "${debouncedQuery}". Try a different search term or check popular searches above.`
+                : 'Try adjusting your search query or selecting a different category.'}
             </p>
-            {(activeCategory || searchQuery) && (
+            {(activeCategory || searchQuery || debouncedQuery) && (
               <button
                 onClick={() => {
                   setActiveCategory(null);
                   setSearchQuery('');
+                  setDebouncedQuery('');
                   setPage(1);
                 }}
                 className="mt-4 text-xs font-semibold text-cordova-green dark:text-emerald-400 hover:underline"
               >
-                Clear filters
+                Clear search & filters
               </button>
             )}
           </div>

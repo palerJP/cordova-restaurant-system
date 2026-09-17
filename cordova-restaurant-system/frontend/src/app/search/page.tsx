@@ -7,6 +7,7 @@ import { RestaurantResultsList } from '@/components/RestaurantResultsList';
 import { api } from '@/lib/api';
 import type { Restaurant } from '@/lib/types';
 import { getAllStaticRestaurants, isRestaurantVisible } from '@/data/restaurants';
+import { aiSearchRestaurants } from '@/lib/aiSearch';
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
@@ -43,25 +44,19 @@ export default function SearchPage() {
         { auth: false }
       );
 
-      if (res.data && Array.isArray(res.data)) {
+      if (res.data && Array.isArray(res.data) && res.data.length > 0) {
         setResults(res.data);
       } else {
-        setResults([]);
+        // Fallback to static directory with AI semantic search
+        const staticList = getAllStaticRestaurants().filter(isRestaurantVisible);
+        const filtered = aiSearchRestaurants(staticList, activeFilters.keyword, activeFilters.cuisine);
+        setResults(filtered);
       }
     } catch (err) {
       console.warn('API search failed, falling back to static directory', err);
-      // Fallback to static directory
+      // Fallback to static directory with AI semantic search
       const staticList = getAllStaticRestaurants().filter(isRestaurantVisible);
-      const kw = (activeFilters.keyword || '').toLowerCase().trim();
-      const filtered = staticList.filter((r) => {
-        if (kw && !r.name.toLowerCase().includes(kw) && !r.description?.toLowerCase().includes(kw)) {
-          return false;
-        }
-        if (activeFilters.cuisine && !r.cuisines?.some((c) => c.toLowerCase().includes(activeFilters.cuisine.toLowerCase()))) {
-          return false;
-        }
-        return true;
-      });
+      const filtered = aiSearchRestaurants(staticList, activeFilters.keyword, activeFilters.cuisine);
       setResults(filtered);
     } finally {
       setLoading(false);

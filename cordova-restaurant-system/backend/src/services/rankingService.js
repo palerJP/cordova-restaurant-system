@@ -46,16 +46,33 @@ function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
+const CORDOVA_SYNONYMS = {
+  bakasi: ['bakasi', 'eel', 'nilarang', 'linarang', 'reef eel'],
+  eel: ['bakasi', 'eel', 'nilarang', 'linarang'],
+  nilarang: ['bakasi', 'eel', 'nilarang', 'linarang'],
+  seafood: ['seafood', 'fish', 'shrimp', 'squid', 'scallops', 'pompano', 'bangus', 'crab', 'calamares', 'bucket'],
+  sunset: ['sunset', 'parola', 'view', 'views', 'ocean', 'waterfront', 'seaview', 'overwater'],
+  parola: ['parola', 'lighthouse', 'sunset', 'seaview', 'overwater'],
+  bbq: ['bbq', 'barbecue', 'grill', 'grilled', 'charcoal', 'inasal', 'liempo'],
+  grill: ['grill', 'grilled', 'bbq', 'barbecue', 'charcoal', 'sinugba'],
+  barbecue: ['barbecue', 'bbq', 'grill', 'charcoal'],
+  coffee: ['coffee', 'cafe', 'espresso', 'latte', 'macchiato', 'matcha', 'pastry'],
+  cafe: ['cafe', 'coffee', 'pastry', 'latte', 'tambayan'],
+  romantic: ['romantic', 'date', 'sunset', 'roses', 'cozy'],
+  budget: ['budget', 'affordable', 'cheap', 'sulit'],
+};
+
 /**
  * Tokenizes and normalizes text for keyword similarity
  */
 function tokenize(text) {
   if (!text) return [];
+  const stopWords = new Set(['and', 'the', 'in', 'of', 'for', 'a', 'an', 'at', 'to', 'near', 'with']);
   return String(text)
     .toLowerCase()
     .replace(/[^\w\s]/g, ' ')
     .split(/\s+/)
-    .filter((w) => w.length > 1);
+    .filter((w) => w.length > 1 && !stopWords.has(w));
 }
 
 /**
@@ -68,6 +85,14 @@ function scoreKeywordMatch(restaurant, queryKeyword, menuItems = []) {
 
   const queryTokens = tokenize(queryKeyword);
   if (queryTokens.length === 0) return 1.0;
+
+  // Expand with synonyms
+  const expandedTokens = new Set(queryTokens);
+  for (const token of queryTokens) {
+    if (CORDOVA_SYNONYMS[token]) {
+      for (const s of CORDOVA_SYNONYMS[token]) expandedTokens.add(s);
+    }
+  }
 
   const restaurantNameTokens = tokenize(restaurant.name);
   const restaurantDescTokens = tokenize(restaurant.description);
@@ -85,7 +110,11 @@ function scoreKeywordMatch(restaurant, queryKeyword, menuItems = []) {
 
     let itemMatchCount = 0;
     for (const token of queryTokens) {
-      if (allItemTokens.has(token) || Array.from(allItemTokens).some((t) => t.includes(token) || token.includes(t))) {
+      if (
+        allItemTokens.has(token) ||
+        Array.from(allItemTokens).some((t) => t.includes(token) || token.includes(t)) ||
+        Array.from(expandedTokens).some((et) => allItemTokens.has(et))
+      ) {
         itemMatchCount++;
       }
     }
@@ -111,7 +140,8 @@ function scoreKeywordMatch(restaurant, queryKeyword, menuItems = []) {
   for (const token of queryTokens) {
     if (
       allRestTokens.has(token) ||
-      Array.from(allRestTokens).some((t) => t.includes(token) || token.includes(t))
+      Array.from(allRestTokens).some((t) => t.includes(token) || token.includes(t)) ||
+      Array.from(expandedTokens).some((et) => allRestTokens.has(et))
     ) {
       restMatchCount++;
     }
@@ -122,7 +152,7 @@ function scoreKeywordMatch(restaurant, queryKeyword, menuItems = []) {
   // Name exact/substring match gives strong boost
   const queryLower = queryKeyword.toLowerCase().trim();
   const nameLower = (restaurant.name || '').toLowerCase();
-  const isNameExact = nameLower.includes(queryLower);
+  const isNameExact = nameLower.includes(queryLower) || queryTokens.some((t) => nameLower.includes(t));
 
   let finalKeywordScore = Math.max(restScore, maxItemScore);
   if (isNameExact) {
@@ -315,19 +345,24 @@ function rankRestaurants(restaurants, query = {}, menuItemsMap = {}) {
       distance_km = Number(Number(restaurant.distance_km).toFixed(2));
     }
 
+    const kwTokens = tokenize(keyword);
     const matched_menu_items = items
       .filter((i) => {
         if (!keyword || !keyword.trim()) return false;
         const kw = keyword.toLowerCase().trim();
+        const itemName = (i.name || '').toLowerCase();
+        const itemDesc = (i.description || '').toLowerCase();
         return (
-          (i.name && i.name.toLowerCase().includes(kw)) ||
-          (i.description && i.description.toLowerCase().includes(kw))
+          itemName.includes(kw) ||
+          itemDesc.includes(kw) ||
+          kwTokens.some((t) => itemName.includes(t) || itemDesc.includes(t))
         );
       })
       .slice(0, 3);
 
     return {
       ...restaurant,
+      kw_score: kwScore,
       distance_km,
       relevance_score,
       subscription_boost: boostMultiplier,
@@ -338,8 +373,14 @@ function rankRestaurants(restaurants, query = {}, menuItemsMap = {}) {
     };
   });
 
-  // Step 3: Hard availability filter - exclude closed unless all results are closed
+  // Step 3: Hard availability & keyword relevance filter
   let availableCandidates = scoredList.filter((r) => r.is_open);
+  if (keyword && keyword.trim()) {
+    const kwFiltered = availableCandidates.filter((r) => r.kw_score > 0);
+    if (kwFiltered.length > 0) {
+      availableCandidates = kwFiltered;
+    }
+  }
   if (availableCandidates.length === 0) {
     availableCandidates = scoredList; // fallback if all closed
   }

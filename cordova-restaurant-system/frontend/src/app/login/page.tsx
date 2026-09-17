@@ -93,13 +93,16 @@ export default function LoginPage() {
     } catch (err) {
       if (err instanceof ApiClientError) {
         showToast(err.message, 'error');
+      } else if (err instanceof TypeError && (err.message.includes('fetch') || err.message.includes('network') || err.message.includes('Failed'))) {
+        showToast('Cannot reach the server. Please make sure the backend is running.', 'error');
       } else {
-        showToast('Email or password is incorrect.', 'error');
+        showToast('Login failed. Please check your credentials and try again.', 'error');
       }
     } finally {
       setLoading(false);
     }
   };
+
 
   const handleGoogleSignIn = async () => {
     setOauthLoading('google');

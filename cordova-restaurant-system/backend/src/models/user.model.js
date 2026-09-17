@@ -111,7 +111,30 @@ async function setActive(id, isActive) {
     `UPDATE users SET is_active = $2 WHERE id = $1 RETURNING ${PUBLIC_FIELDS}`,
     [id, isActive]
   );
-  return rows[0] || null;
+  const user = rows[0] || null;
+
+  // If the user is an owner, cascade the active state to their restaurants
+  if (user && user.role === 'owner') {
+    if (isActive) {
+      // Re-activate their restaurants (restore to verified+active)
+      await query(
+        `UPDATE restaurants
+         SET is_active = TRUE, status = 'verified', updated_at = now()
+         WHERE owner_id = $1 AND status = 'suspended'`,
+        [id]
+      );
+    } else {
+      // Deactivate their restaurants so they vanish from public listings
+      await query(
+        `UPDATE restaurants
+         SET is_active = FALSE, status = 'suspended', updated_at = now()
+         WHERE owner_id = $1`,
+        [id]
+      );
+    }
+  }
+
+  return user;
 }
 
 async function list({ role, search, limit, offset }) {
@@ -181,6 +204,15 @@ async function deleteUser(id) {
   await query(`UPDATE reviews SET moderated_by = NULL WHERE moderated_by = $1`, [id]);
   await query(`UPDATE recommendation_weights SET updated_by = NULL WHERE updated_by = $1`, [id]);
   await query(`UPDATE audit_logs SET actor_id = NULL WHERE actor_id = $1`, [id]);
+
+  // Suspend and deactivate all restaurants owned by this user so they
+  // are immediately removed from public listings
+  await query(
+    `UPDATE restaurants
+     SET status = 'suspended', is_active = FALSE, updated_at = now()
+     WHERE owner_id = $1`,
+    [id]
+  );
 
   const { rows } = await query(`DELETE FROM users WHERE id = $1 RETURNING ${PUBLIC_FIELDS}`, [id]);
   return rows[0] || null;

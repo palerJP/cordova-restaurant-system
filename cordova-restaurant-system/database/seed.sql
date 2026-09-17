@@ -8,6 +8,7 @@
 -- $2b$10$64m6JYqwt4wOGjJW1eQSfu5ep9BUaRwr7rnsanKIP30DqmEKw9Zjm
 INSERT INTO users (id, email, password_hash, full_name, role, phone, email_verified_at, created_at) VALUES
 ('11111111-1111-1111-a111-111111111111', 'admin@cordovateats.ph',            '$2b$10$64m6JYqwt4wOGjJW1eQSfu5ep9BUaRwr7rnsanKIP30DqmEKw9Zjm', 'System Administrator',        'admin',    '+639171234560', now(), now()),
+('11111111-1111-1111-a111-111111111112', 'admin@cordova-restaurants.gov.ph', '$2b$10$64m6JYqwt4wOGjJW1eQSfu5ep9BUaRwr7rnsanKIP30DqmEKw9Zjm', 'System Administrator',        'admin',    '+639171234560', now(), now()),
 ('20000000-0000-0000-0000-000000000001', 'owner.10000roses@cordovateats.ph',    '$2b$10$64m6JYqwt4wOGjJW1eQSfu5ep9BUaRwr7rnsanKIP30DqmEKw9Zjm', 'Bae Min-jun',                 'owner',    '+639171000001', now(), now()),
 ('20000000-0000-0000-0000-000000000002', 'owner.abyroad@cordovateats.ph',       '$2b$10$64m6JYqwt4wOGjJW1eQSfu5ep9BUaRwr7rnsanKIP30DqmEKw9Zjm', 'Abigail Sanchez',            'owner',    '+639171000002', now(), now()),
 ('20000000-0000-0000-0000-000000000003', 'owner.albertos@cordovateats.ph',      '$2b$10$64m6JYqwt4wOGjJW1eQSfu5ep9BUaRwr7rnsanKIP30DqmEKw9Zjm', 'Alberto Tan',                 'owner',    '+639171000003', now(), now()),
