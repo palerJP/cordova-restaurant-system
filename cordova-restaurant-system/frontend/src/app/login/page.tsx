@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Eye, EyeOff, Mail, ArrowLeft, X, Check, UserCheck, Plus } from 'lucide-react';
+import { Eye, EyeOff, Sparkles, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import { ApiClientError } from '@/lib/api';
@@ -19,39 +19,13 @@ const GOOGLE_CLIENT_ID =
 
 const REQUIRE_EMAIL_VERIFICATION = process.env.NEXT_PUBLIC_REQUIRE_EMAIL_VERIFICATION === 'true';
 
-const GOOGLE_PRESET_ACCOUNTS = [
-  {
-    name: 'PALER, JOSHUA M.',
-    email: 'joshuapaler150@gmail.com',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
-    status: 'Signed out',
-  },
-  {
-    name: 'Lebron Lester Paler',
-    email: 'bron0463p@gmail.com',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80',
-    status: 'Signed out',
-  },
-  {
-    name: 'PALER, JAPHET M.',
-    email: 'palerjaphet@gmail.com',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80',
-    status: 'Signed out',
-  },
-];
-
 export default function LoginPage() {
   const { user, login, loginWithGoogle, loginWithFacebook } = useAuth();
   const { showToast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirect') || '/';
-  const initialMode = searchParams.get('mode') === 'email' ? 'email' : 'options';
 
-  const [authMode, setAuthMode] = useState<'options' | 'email'>(initialMode);
-  const [showGoogleChooser, setShowGoogleChooser] = useState(false);
-  const [customGoogleEmail, setCustomGoogleEmail] = useState('');
-  const [isAddingAccount, setIsAddingAccount] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -130,45 +104,6 @@ export default function LoginPage() {
   };
 
 
-  const handleSelectGoogleAccount = async (account: { name: string; email: string; avatar?: string }) => {
-    setOauthLoading('google');
-    setShowGoogleChooser(false);
-    try {
-      showToast(`Signing in as ${account.name}…`, 'info');
-      const payload = {
-        name: account.name,
-        email: account.email,
-        picture: account.avatar || 'https://lh3.googleusercontent.com/a/default-user=s96-c',
-        googleId: `google_${account.email}`,
-      };
-      // Base64 encode the payload for backend simulation
-      const base64Payload = typeof window !== 'undefined' ? btoa(unescape(encodeURIComponent(JSON.stringify(payload)))) : '';
-      const devToken = `google_oauth_token_json_${base64Payload}`;
-
-      const loggedUser = await loginWithGoogle(devToken);
-      showToast(`Welcome back, ${loggedUser.full_name || account.name}!`, 'success');
-      handleSuccessfulAuth(loggedUser);
-    } catch (err) {
-      if (err instanceof ApiClientError) showToast(err.message, 'error');
-      else showToast('Google authentication failed.', 'error');
-    } finally {
-      setOauthLoading(null);
-    }
-  };
-
-  const handleCustomGoogleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    if (!customGoogleEmail.trim() || !/\S+@\S+\.\S+/.test(customGoogleEmail)) {
-      showToast('Please enter a valid Google email address.', 'error');
-      return;
-    }
-    const name = customGoogleEmail.split('@')[0];
-    handleSelectGoogleAccount({
-      name: name.charAt(0).toUpperCase() + name.slice(1),
-      email: customGoogleEmail.trim().toLowerCase(),
-    });
-  };
-
   const handleGoogleSignIn = async () => {
     setOauthLoading('google');
 
@@ -206,9 +141,19 @@ export default function LoginPage() {
       }
     }
 
-    // 2. Interactive Google Account Chooser Popup (Photo 3)
-    setOauthLoading(null);
-    setShowGoogleChooser(true);
+    // 2. Local Dev fallback if Google Client ID is not yet configured in .env.local
+    try {
+      showToast('Dev Mode: Signing in with simulated Google account…', 'info');
+      const devToken = `google_oauth_token_${Date.now()}`;
+      const loggedUser = await loginWithGoogle(devToken);
+      showToast('Signed in with Google (Dev Mode)!', 'success');
+      handleSuccessfulAuth(loggedUser);
+    } catch (err) {
+      if (err instanceof ApiClientError) showToast(err.message, 'error');
+      else showToast('Google authentication failed.', 'error');
+    } finally {
+      setOauthLoading(null);
+    }
   };
 
   const handleFacebookSignIn = async () => {
@@ -226,18 +171,10 @@ export default function LoginPage() {
     }
   };
 
-  const handleClose = () => {
-    if (window.history.length > 1) {
-      router.back();
-    } else {
-      router.push('/');
-    }
-  };
-
   if (user && !loading && !oauthLoading) {
     return (
-      <div className="min-h-[85vh] flex items-center justify-center py-12 px-4 bg-stone-100/60 dark:bg-[#121714]">
-        <div className="w-full max-w-md bg-white dark:bg-[#1a211c] rounded-3xl shadow-[0_16px_50px_rgba(0,0,0,0.1)] border border-stone-200/80 dark:border-stone-800 p-8 sm:p-10 text-center">
+      <div className="min-h-[80vh] flex items-center justify-center py-10 px-4">
+        <div className="spatial-card w-full max-w-md bg-white/90 dark:bg-[#1a211c]/90 backdrop-blur-xl rounded-3xl shadow-[0_12px_40px_rgba(0,0,0,0.08)] border border-stone-200/80 dark:border-stone-800/80 p-8 sm:p-10 text-center">
           <div className="w-12 h-12 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin mx-auto mb-4" />
           <h2 className="font-serif text-xl font-bold text-stone-900 dark:text-white">
             Welcome Back, {user.full_name || 'Foodie'}!
@@ -251,358 +188,133 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center py-12 px-4 bg-stone-100/50 dark:bg-[#121714]/80 relative">
-      {/* ================= PHOTO 3: GOOGLE ACCOUNT CHOOSER MODAL ================= */}
-      {showGoogleChooser && (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-[420px] bg-[#202124] text-[#e8eaed] rounded-2xl shadow-2xl border border-stone-700/80 overflow-hidden font-sans">
-            {/* Window Title Bar */}
-            <div className="flex items-center justify-between px-4 py-2.5 bg-[#2d2e31] border-b border-stone-700/60 text-xs text-stone-300">
-              <div className="flex items-center gap-2">
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z" />
-                  <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.25 21.3 7.31 24 12 24z" />
-                  <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.17 0 9.99 0 12s.46 3.83 1.26 5.42l4.02-3.15z" />
-                  <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.25 2.7 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z" />
-                </svg>
-                <span className="font-medium text-stone-200">Sign in with Google</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowGoogleChooser(false);
-                  setIsAddingAccount(false);
-                }}
-                className="p-1 rounded-md text-stone-400 hover:text-white hover:bg-white/10 transition-colors"
-                aria-label="Close Google sign-in"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-6 sm:p-7">
-              {/* CordovaEats Logo & Heading */}
-              <div className="text-center mb-6">
-                <div className="relative h-12 w-12 mx-auto mb-3">
-                  <Image src="/cordova_eats_logo.png" alt="CordovaEats" fill className="object-contain" priority />
-                </div>
-                <h2 className="text-xl sm:text-2xl font-medium text-white mb-1">
-                  Choose an account
-                </h2>
-                <p className="text-xs text-stone-400">
-                  to continue to <span className="font-semibold text-stone-200">CordovaEats</span>
-                </p>
-              </div>
-
-              {/* Accounts List (Matching Photo 3) */}
-              {!isAddingAccount ? (
-                <div className="space-y-1 mb-4">
-                  {GOOGLE_PRESET_ACCOUNTS.map((acc) => (
-                    <button
-                      key={acc.email}
-                      type="button"
-                      onClick={() => handleSelectGoogleAccount(acc)}
-                      disabled={!!oauthLoading}
-                      className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/5 border border-transparent hover:border-stone-700 transition-colors text-left group"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="relative h-10 w-10 rounded-full overflow-hidden shrink-0 bg-stone-700 flex items-center justify-center font-bold text-sm text-white">
-                          <Image src={acc.avatar} alt={acc.name} fill className="object-cover" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-white group-hover:text-blue-400 transition-colors truncate">
-                            {acc.name}
-                          </p>
-                          <p className="text-xs text-stone-400 truncate">{acc.email}</p>
-                        </div>
-                      </div>
-                      <span className="text-[11px] text-stone-500 font-medium shrink-0 ml-2">
-                        {acc.status}
-                      </span>
-                    </button>
-                  ))}
-
-                  {/* Use Another Account */}
-                  <button
-                    type="button"
-                    onClick={() => setIsAddingAccount(true)}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 border border-transparent hover:border-stone-700 transition-colors text-left"
-                  >
-                    <div className="h-10 w-10 rounded-full bg-stone-800 border border-stone-700 flex items-center justify-center shrink-0 text-stone-300">
-                      <Plus className="w-5 h-5" />
-                    </div>
-                    <span className="text-sm font-medium text-stone-200">Use another account</span>
-                  </button>
-                </div>
-              ) : (
-                /* Custom Google Email Input */
-                <form onSubmit={handleCustomGoogleSubmit} className="space-y-4 mb-4">
-                  <div>
-                    <label className="block text-xs font-medium text-stone-300 mb-1">
-                      Enter your Google email
-                    </label>
-                    <input
-                      type="email"
-                      value={customGoogleEmail}
-                      onChange={(e) => setCustomGoogleEmail(e.target.value)}
-                      placeholder="username@gmail.com"
-                      className="w-full px-3.5 py-2.5 rounded-lg bg-[#303134] border border-stone-600 text-white text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      autoFocus
-                      required
-                    />
-                  </div>
-                  <div className="flex items-center justify-between gap-3 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsAddingAccount(false)}
-                      className="px-4 py-2 text-xs font-semibold text-stone-300 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
-                    >
-                      Back to accounts
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-5 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white rounded-lg shadow-md transition-colors"
-                    >
-                      Next
-                    </button>
-                  </div>
-                </form>
-              )}
-
-              {/* Disclaimer footer */}
-              <div className="pt-4 border-t border-stone-700/60 text-[11px] text-stone-500 text-center leading-relaxed">
-                To continue, Google will share your name, email address, language preference, and profile picture with CordovaEats.
-              </div>
-            </div>
+    <div className="min-h-[80vh] flex items-center justify-center py-10 px-4">
+      <div className="spatial-card w-full max-w-md bg-white/90 dark:bg-[#1a211c]/90 backdrop-blur-xl rounded-3xl shadow-[0_12px_40px_rgba(0,0,0,0.08)] border border-stone-200/80 dark:border-stone-800/80 p-8 sm:p-10">
+        {/* Brand Emblem */}
+        <div className="text-center mb-7">
+          <div className="relative h-16 w-16 mx-auto mb-4">
+            <Image src="/cordova_eats_logo.png" alt="CordovaEats" fill className="object-contain" priority />
           </div>
-        </div>
-      )}
-
-      {/* ================= PHOTO 2: TRIPADVISOR-STYLED MODAL ================= */}
-      {authMode === 'options' ? (
-        <div className="relative w-full max-w-[480px] bg-white dark:bg-[#1c231f] rounded-[28px] shadow-[0_20px_60px_rgba(0,0,0,0.12)] border border-stone-200/90 dark:border-stone-800/90 p-8 sm:p-10 transition-all">
-          {/* Close Button */}
-          <button
-            type="button"
-            onClick={handleClose}
-            aria-label="Close"
-            className="absolute top-6 right-6 p-1.5 rounded-full text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-
-          {/* Logo */}
-          <div className="mb-6">
-            <div className="relative h-14 w-14 sm:h-16 sm:w-16">
-              <Image
-                src="/cordova_eats_logo.png"
-                alt="CordovaEats"
-                fill
-                className="object-contain"
-                priority
-              />
-            </div>
-          </div>
-
-          {/* Headline */}
-          <h1 className="text-2xl sm:text-[28px] font-extrabold text-stone-900 dark:text-white leading-[1.25] tracking-tight mb-8">
-            Sign in to unlock the <br />
-            best of CordovaEats.
+          <h1 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900 dark:text-white">
+            Log in to CordovaEats
           </h1>
-
-          {/* Continue with Google (Pill Button -> Opens Photo 3) */}
-          <button
-            type="button"
-            onClick={handleGoogleSignIn}
-            disabled={!!oauthLoading}
-            className="w-full relative flex items-center justify-center py-3.5 px-6 rounded-full border border-stone-900 dark:border-stone-400 hover:border-black dark:hover:border-white text-stone-900 dark:text-white font-bold text-sm sm:text-base hover:bg-stone-50 dark:hover:bg-white/5 transition-all mb-3.5 shadow-sm active:scale-[0.99] disabled:opacity-60"
-          >
-            <div className="absolute left-5 top-1/2 -translate-y-1/2 flex items-center">
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z" />
-                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.25 21.3 7.31 24 12 24z" />
-                <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.17 0 9.99 0 12s.46 3.83 1.26 5.42l4.02-3.15z" />
-                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.25 2.7 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z" />
-              </svg>
-            </div>
-            <span>
-              {oauthLoading === 'google' ? 'Connecting to Google…' : 'Continue with Google'}
-            </span>
-          </button>
-
-          {/* Continue with Email (Pill Button -> Redirects to Photo 1) */}
-          <button
-            type="button"
-            onClick={() => setAuthMode('email')}
-            className="w-full relative flex items-center justify-center py-3.5 px-6 rounded-full border border-stone-900 dark:border-stone-400 hover:border-black dark:hover:border-white text-stone-900 dark:text-white font-bold text-sm sm:text-base hover:bg-stone-50 dark:hover:bg-white/5 transition-all mb-8 shadow-sm active:scale-[0.99]"
-          >
-            <div className="absolute left-5 top-1/2 -translate-y-1/2 flex items-center">
-              <Mail className="w-5 h-5 text-stone-900 dark:text-stone-200" />
-            </div>
-            <span>Continue with email</span>
-          </button>
-
-          {/* Terms & Privacy Disclaimer */}
-          <div className="pt-6 border-t border-stone-100 dark:border-stone-800 text-center">
-            <p className="text-[11px] sm:text-xs text-stone-500 dark:text-stone-400 leading-relaxed max-w-xs mx-auto">
-              By proceeding, you agree to our{' '}
-              <Link
-                href="/terms"
-                className="underline font-medium text-stone-700 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white"
-              >
-                Terms of Use
-              </Link>{' '}
-              and confirm you have read our{' '}
-              <Link
-                href="/cookies"
-                className="underline font-medium text-stone-700 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white"
-              >
-                Privacy and Cookie Statement
-              </Link>
-              .
-            </p>
-          </div>
-        </div>
-      ) : (
-        /* ================= PHOTO 1: FULL EMAIL & PASSWORD LOGIN SCREEN ================= */
-        <div className="spatial-card w-full max-w-md bg-white/90 dark:bg-[#1a211c]/90 backdrop-blur-xl rounded-3xl shadow-[0_12px_40px_rgba(0,0,0,0.08)] border border-stone-200/80 dark:border-stone-800/80 p-8 sm:p-10 relative">
-          {/* Back to Options Button */}
-          <button
-            type="button"
-            onClick={() => setAuthMode('options')}
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-stone-500 hover:text-stone-900 dark:hover:text-white mb-4 transition-colors group"
-          >
-            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-            <span>All sign in options</span>
-          </button>
-
-          {/* Brand Emblem */}
-          <div className="text-center mb-7">
-            <div className="relative h-16 w-16 mx-auto mb-4">
-              <Image src="/cordova_eats_logo.png" alt="CordovaEats" fill className="object-contain" priority />
-            </div>
-            <h1 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900 dark:text-white">
-              Log in to CordovaEats
-            </h1>
-            <p className="text-xs text-stone-500 dark:text-stone-400 mt-1.5">
-              Discover Cordova&apos;s best dining experiences
-            </p>
-          </div>
-
-          {/* Google Sign-In (Photo 3) */}
-          <button
-            type="button"
-            onClick={handleGoogleSignIn}
-            disabled={!!oauthLoading}
-            className="w-full flex items-center justify-center gap-3 bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-200 font-semibold text-sm py-3 px-4 rounded-xl border border-stone-300 dark:border-stone-700 shadow-sm transition-colors mb-3 disabled:opacity-60"
-          >
-            <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z" />
-              <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.25 21.3 7.31 24 12 24z" />
-              <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.17 0 9.99 0 12s.46 3.83 1.26 5.42l4.02-3.15z" />
-              <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.25 2.7 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z" />
-            </svg>
-            {oauthLoading === 'google' ? 'Connecting to Google…' : 'Continue with Google'}
-          </button>
-
-          {/* Facebook Sign-In */}
-          <button
-            type="button"
-            onClick={handleFacebookSignIn}
-            disabled={!!oauthLoading}
-            className="w-full flex items-center justify-center gap-3 bg-[#1877F2] hover:bg-[#166fe5] text-white font-semibold text-sm py-3 px-4 rounded-xl shadow-sm transition-colors mb-6 disabled:opacity-60"
-          >
-            <svg className="w-5 h-5 shrink-0 fill-current" viewBox="0 0 24 24">
-              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-            </svg>
-            {oauthLoading === 'facebook' ? 'Connecting to Facebook…' : 'Continue with Facebook'}
-          </button>
-
-          {/* Divider */}
-          <div className="relative flex items-center justify-center mb-6">
-            <div className="border-t border-stone-200 dark:border-stone-700 w-full" />
-            <span className="absolute bg-white dark:bg-[#1a211c] px-3 text-[11px] font-bold text-stone-400 uppercase tracking-widest">
-              or sign in with email
-            </span>
-          </div>
-
-          {/* Email/Password Form */}
-          <form onSubmit={onSubmit} className="space-y-4" noValidate>
-            <Input
-              label="Email address"
-              type="email"
-              name="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              error={errors.email}
-              autoComplete="email"
-              placeholder="you@example.com"
-              required
-            />
-
-            <div>
-              <label className="label text-xs font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wider">
-                Password
-              </label>
-              <div className="relative mt-1">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  name="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="current-password"
-                  placeholder="Your password"
-                  className={`input pr-10 ${errors.password ? 'ring-2 ring-red-400' : ''}`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 transition-colors"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                >
-                  {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
-                </button>
-              </div>
-              {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
-            </div>
-
-            {/* Remember Me + Forgot Password */}
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="rounded border-stone-300 text-cordova-green focus:ring-cordova-green w-4 h-4"
-                />
-                <span className="text-xs text-stone-600 dark:text-stone-400 font-medium">Remember me</span>
-              </label>
-              <Link
-                href="/forgot-password"
-                className="text-xs font-semibold text-cordova-gold hover:text-cordova-goldHover hover:underline transition-colors"
-              >
-                Forgot password?
-              </Link>
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full bg-cordova-gold hover:bg-cordova-goldHover text-white py-3.5 rounded-xl uppercase font-bold text-xs tracking-wider shadow transition-colors"
-              loading={loading}
-            >
-              Log in
-            </Button>
-          </form>
-
-          <p className="text-sm text-stone-500 dark:text-stone-400 mt-6 text-center">
-            Don&apos;t have an account?{' '}
-            <Link href="/register" className="text-cordova-green font-bold hover:underline">
-              Sign up
-            </Link>
+          <p className="text-xs text-stone-500 dark:text-stone-400 mt-1.5">
+            Discover Cordova&apos;s best dining experiences
           </p>
         </div>
-      )}
+
+        {/* Google Sign-In */}
+        <button
+          type="button"
+          onClick={handleGoogleSignIn}
+          disabled={!!oauthLoading}
+          className="w-full flex items-center justify-center gap-3 bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-200 font-semibold text-sm py-3 px-4 rounded-xl border border-stone-300 dark:border-stone-700 shadow-sm transition-colors mb-3 disabled:opacity-60"
+        >
+          <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z" />
+            <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.25 21.3 7.31 24 12 24z" />
+            <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.17 0 9.99 0 12s.46 3.83 1.26 5.42l4.02-3.15z" />
+            <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.25 2.7 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z" />
+          </svg>
+          {oauthLoading === 'google' ? 'Connecting to Google…' : 'Continue with Google'}
+        </button>
+
+        {/* Facebook Sign-In */}
+        <button
+          type="button"
+          onClick={handleFacebookSignIn}
+          disabled={!!oauthLoading}
+          className="w-full flex items-center justify-center gap-3 bg-[#1877F2] hover:bg-[#166fe5] text-white font-semibold text-sm py-3 px-4 rounded-xl shadow-sm transition-colors mb-6 disabled:opacity-60"
+        >
+          <svg className="w-5 h-5 shrink-0 fill-current" viewBox="0 0 24 24">
+            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+          </svg>
+          {oauthLoading === 'facebook' ? 'Connecting to Facebook…' : 'Continue with Facebook'}
+        </button>
+
+        {/* Divider */}
+        <div className="relative flex items-center justify-center mb-6">
+          <div className="border-t border-stone-200 dark:border-stone-700 w-full" />
+          <span className="absolute bg-white dark:bg-[#1a211c] px-3 text-[11px] font-bold text-stone-400 uppercase tracking-widest">
+            or sign in with email
+          </span>
+        </div>
+
+        {/* Email/Password Form */}
+        <form onSubmit={onSubmit} className="space-y-4" noValidate>
+          <Input
+            label="Email address"
+            type="email"
+            name="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            error={errors.email}
+            autoComplete="email"
+            placeholder="you@example.com"
+            required
+          />
+
+          <div>
+            <label className="label text-xs font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wider">
+              Password
+            </label>
+            <div className="relative mt-1">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                placeholder="Your password"
+                className={`input pr-10 ${errors.password ? 'ring-2 ring-red-400' : ''}`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 transition-colors"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+              </button>
+            </div>
+            {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
+          </div>
+
+          {/* Remember Me + Forgot Password */}
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="rounded border-stone-300 text-cordova-green focus:ring-cordova-green w-4 h-4"
+              />
+              <span className="text-xs text-stone-600 dark:text-stone-400 font-medium">Remember me</span>
+            </label>
+            <Link
+              href="/forgot-password"
+              className="text-xs font-semibold text-cordova-gold hover:text-cordova-goldHover hover:underline transition-colors"
+            >
+              Forgot password?
+            </Link>
+          </div>
+
+          <Button
+            type="submit"
+            className="w-full bg-cordova-gold hover:bg-cordova-goldHover text-white py-3.5 rounded-xl uppercase font-bold text-xs tracking-wider shadow transition-colors"
+            loading={loading}
+          >
+            Log in
+          </Button>
+        </form>
+
+        <p className="text-sm text-stone-500 dark:text-stone-400 mt-6 text-center">
+          Don&apos;t have an account?{' '}
+          <Link href="/register" className="text-cordova-green font-bold hover:underline">
+            Sign up
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }

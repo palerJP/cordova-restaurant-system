@@ -175,24 +175,10 @@ async function googleOAuth({ idToken, credential, accessToken, token: clientToke
 
   // 1. Local Dev Mode fallback (when testing before GOOGLE_CLIENT_ID is set)
   if (typeof token === 'string' && token.startsWith('google_oauth_token_')) {
-    if (token.startsWith('google_oauth_token_json_')) {
-      try {
-        const payloadStr = Buffer.from(token.replace('google_oauth_token_json_', ''), 'base64').toString('utf8');
-        const parsed = JSON.parse(payloadStr);
-        email = parsed.email;
-        googleId = parsed.googleId || `google_${parsed.email}`;
-        name = parsed.name || parsed.email.split('@')[0];
-        picture = parsed.picture || 'https://lh3.googleusercontent.com/a/default-user=s96-c';
-      } catch (e) {
-        // fallback
-      }
-    }
-    if (!email) {
-      googleId = `google_user_${token.split('_').pop()}`;
-      email = `google.user.${token.slice(-6)}@gmail.com`;
-      name = 'Google Diner User';
-      picture = 'https://lh3.googleusercontent.com/a/default-user=s96-c';
-    }
+    googleId = `google_user_${token.split('_').pop()}`;
+    email = `google.user.${token.slice(-6)}@gmail.com`;
+    name = 'Google Diner User';
+    picture = 'https://lh3.googleusercontent.com/a/default-user=s96-c';
   } else {
     // 2. Try Google UserInfo API (handles Google Access Tokens)
     try {
