@@ -29,7 +29,7 @@ const env = {
   clientUrl: process.env.CLIENT_URL || 'http://localhost:3000',
 
   db: {
-    url: required('DATABASE_URL', 'postgres://postgres:postgres@localhost:5432/cordova_restaurants'),
+    url: required('DATABASE_URL', 'postgres://postgres:postgres@localhost:5433/cordova_restaurants'),
     poolMax: parseInt(process.env.DB_POOL_MAX || '10', 10),
     ssl: process.env.DB_SSL === 'true',
   },
