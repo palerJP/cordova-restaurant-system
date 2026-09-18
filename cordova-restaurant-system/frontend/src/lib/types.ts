@@ -109,7 +109,7 @@ export interface MenuItem {
   price: number;
   image_url?: string;
   is_available: boolean;
-  dietary_tags: string[];
+  dietary_tags?: string[];
 }
 
 export interface Review {
