@@ -45,10 +45,10 @@ const create = asyncHandler(async (req, res) => {
     imageUrl,
     paymentMethod: paymentMethod || 'gcash',
     paymentReference: paymentReference || referenceNo || null,
-    paymentStatus: 'verified',
-    status: 'active',
+    paymentStatus: 'pending_verification',
+    status: 'pending_verification',
   });
-  res.status(201).json({ success: true, message: 'Promotion created', data: { promotion } });
+  res.status(201).json({ success: true, message: 'Promotion created and pending verification', data: { promotion } });
 });
 
 const update = asyncHandler(async (req, res) => {

@@ -20,7 +20,12 @@ async function listActive({ limit = 12, offset = 0, restaurantId } = {}) {
 
   const params = [];
   let idx = 1;
-  const conditions = [`p.status = 'active'`, `p.start_date <= CURRENT_DATE`, `p.end_date >= CURRENT_DATE`];
+  const conditions = [
+    `p.status = 'active'`,
+    `(p.payment_status = 'verified' OR p.payment_status IS NULL)`,
+    `p.start_date <= CURRENT_DATE`,
+    `p.end_date >= CURRENT_DATE`
+  ];
   if (restaurantId) {
     conditions.push(`p.restaurant_id = $${idx++}`);
     params.push(restaurantId);
@@ -69,10 +74,10 @@ async function create(restaurantId, data) {
       data.discountLabel || null,
       data.startDate,
       data.endDate,
-      data.status || 'active',
+      data.status || 'pending_verification',
       data.paymentMethod || data.payment_method || 'gcash',
       data.paymentReference || data.payment_reference || data.referenceNo || null,
-      data.paymentStatus || data.payment_status || 'verified',
+      data.paymentStatus || data.payment_status || 'pending_verification',
     ]
   );
   return rows[0];
@@ -117,11 +122,13 @@ async function listAllAdmin({ status, search, limit = 50, offset = 0 } = {}) {
 
   if (status && status !== 'all') {
     if (status === 'active') {
-      conditions.push(`p.status = 'active' AND p.end_date >= CURRENT_DATE`);
+      conditions.push(`p.status = 'active' AND (p.payment_status = 'verified' OR p.payment_status IS NULL) AND p.end_date >= CURRENT_DATE`);
     } else if (status === 'expired') {
       conditions.push(`(p.status = 'expired' OR p.end_date < CURRENT_DATE)`);
     } else if (status === 'pending_verification') {
-      conditions.push(`p.payment_status = 'pending_verification'`);
+      conditions.push(`(p.payment_status = 'pending_verification' OR p.status = 'pending_verification')`);
+    } else if (status === 'rejected') {
+      conditions.push(`(p.status = 'rejected' OR p.payment_status = 'rejected')`);
     } else {
       conditions.push(`p.status = $${idx++}`);
       params.push(status);

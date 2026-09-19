@@ -15,53 +15,48 @@ import { ALBERTOS_MENU_ITEMS } from '@/data/albertosMenu';
 import { TEN_THOUSAND_ROSES_MENU_ITEMS } from '@/data/tenThousandRosesMenu';
 import { ABY_ROAD_MENU_ITEMS } from '@/data/abyRoadMenu';
 import { TITA_KIMS_MENU_ITEMS } from '@/data/titaKimsMenu';
+import { CSALT_MENU_ITEMS } from '@/data/csaltMenu';
 
 /**
  * Curated signature dishes for Cordova establishments without dedicated TS menu files
  */
 const ENTOYS_SIGNATURE_ITEMS: MenuItem[] = [
-  { id: 'entoy-1', restaurant_id: 'entoys-bakasihan', name: 'Nilarang na Bakasi (Signature Reef Eel Soup)', description: 'World-famous Netflix featured sour-spicy herbal broth with tender reef eel.', price: 120, is_available: true },
-  { id: 'entoy-2', restaurant_id: 'entoys-bakasihan', name: 'Tinolang Bakasi (Coastal Ginger Broth)', description: 'Freshly caught reef eel simmered with native ginger, lemongrass, and chili leaves.', price: 130, is_available: true },
-  { id: 'entoy-3', restaurant_id: 'entoys-bakasihan', name: 'Crispy Deep-Fried Bakasi', description: 'Crunchy battered baby reef eels seasoned with sea salt and spiced native vinegar.', price: 150, is_available: true },
-  { id: 'entoy-4', restaurant_id: 'entoys-bakasihan', name: 'Puso (Cordova Hanging Rice)', description: 'Traditional Cebuano boiled woven diamond coconut leaf rice.', price: 10, is_available: true },
+  { id: 'entoy-1', restaurant_id: 'entoys-bakasihan', name: 'Nilarang na Bakasi (Signature Reef Eel Soup)', description: 'World-famous Netflix featured sour-spicy herbal broth with tender reef eel.', price: 120, is_available: true, dietary_tags: ['seafood'] },
+  { id: 'entoy-2', restaurant_id: 'entoys-bakasihan', name: 'Tinolang Bakasi (Coastal Ginger Broth)', description: 'Freshly caught reef eel simmered with native ginger, lemongrass, and chili leaves.', price: 130, is_available: true, dietary_tags: ['seafood'] },
+  { id: 'entoy-3', restaurant_id: 'entoys-bakasihan', name: 'Crispy Deep-Fried Bakasi', description: 'Crunchy battered baby reef eels seasoned with sea salt and spiced native vinegar.', price: 150, is_available: true, dietary_tags: ['seafood'] },
+  { id: 'entoy-4', restaurant_id: 'entoys-bakasihan', name: 'Puso (Cordova Hanging Rice)', description: 'Traditional Cebuano boiled woven diamond coconut leaf rice.', price: 10, is_available: true, dietary_tags: ['vegetarian'] },
 ];
 
 const LANTAW_SIGNATURE_ITEMS: MenuItem[] = [
-  { id: 'lantaw-1', restaurant_id: 'lantaw-floating-native-restaurant', name: 'Lantaw Floating Seafood Platter', description: 'Generous overwater platter of charcoal-grilled pompano, garlic butter prawns, and calamari.', price: 680, is_available: true },
-  { id: 'lantaw-2', restaurant_id: 'lantaw-floating-native-restaurant', name: 'Baked Scallops with Garlic Butter & Cheese', description: 'Local Cordova sea scallops broiled with golden cheddar and roasted garlic.', price: 260, is_available: true },
-  { id: 'lantaw-3', restaurant_id: 'lantaw-floating-native-restaurant', name: 'Grilled Tuna Panga (Jaw)', description: 'Succulent tuna jaw basted with sweet native soy marinade over coconut charcoal.', price: 380, is_available: true },
-  { id: 'lantaw-4', restaurant_id: 'lantaw-floating-native-restaurant', name: 'Cordova Sunset Refresher Cooler', description: 'Tropical mango and passion fruit blend served chilled with a sunset view.', price: 120, is_available: true },
+  { id: 'lantaw-1', restaurant_id: 'lantaw-floating-native-restaurant', name: 'Lantaw Floating Seafood Platter', description: 'Generous overwater platter of charcoal-grilled pompano, garlic butter prawns, and calamari.', price: 680, is_available: true, dietary_tags: ['seafood'] },
+  { id: 'lantaw-2', restaurant_id: 'lantaw-floating-native-restaurant', name: 'Baked Scallops with Garlic Butter & Cheese', description: 'Local Cordova sea scallops broiled with golden cheddar and roasted garlic.', price: 260, is_available: true, dietary_tags: ['seafood'] },
+  { id: 'lantaw-3', restaurant_id: 'lantaw-floating-native-restaurant', name: 'Grilled Tuna Panga (Jaw)', description: 'Succulent tuna jaw basted with sweet native soy marinade over coconut charcoal.', price: 380, is_available: true, dietary_tags: ['seafood'] },
+  { id: 'lantaw-4', restaurant_id: 'lantaw-floating-native-restaurant', name: 'Cordova Sunset Refresher Cooler', description: 'Tropical mango and passion fruit blend served chilled with a sunset view.', price: 120, is_available: true, dietary_tags: ['vegetarian'] },
 ];
 
 const BURANDAT_SIGNATURE_ITEMS: MenuItem[] = [
-  { id: 'burandat-1', restaurant_id: 'burandat-seafood-bucket', name: 'Burandat Ultimate Seafood Bucket', description: 'Shoreline bucket filled with fresh steamed mud crabs, prawns, mussels, and sweet corn in cajun garlic butter.', price: 599, is_available: true },
-  { id: 'burandat-2', restaurant_id: 'burandat-seafood-bucket', name: 'Catch-of-the-Day Charcoal Grilled Fish', description: 'Whole fresh catch from Cordova fishermen grilled directly to order.', price: 320, is_available: true },
-  { id: 'burandat-3', restaurant_id: 'burandat-seafood-bucket', name: 'Garlic Butter Scallop Skewers', description: 'Tender sea scallops basted with rich garlic butter.', price: 220, is_available: true },
+  { id: 'burandat-1', restaurant_id: 'burandat-seafood-bucket', name: 'Burandat Ultimate Seafood Bucket', description: 'Shoreline bucket filled with fresh steamed mud crabs, prawns, mussels, and sweet corn in cajun garlic butter.', price: 599, is_available: true, dietary_tags: ['seafood'] },
+  { id: 'burandat-2', restaurant_id: 'burandat-seafood-bucket', name: 'Catch-of-the-Day Charcoal Grilled Fish', description: 'Whole fresh catch from Cordova fishermen grilled directly to order.', price: 320, is_available: true, dietary_tags: ['seafood'] },
+  { id: 'burandat-3', restaurant_id: 'burandat-seafood-bucket', name: 'Garlic Butter Scallop Skewers', description: 'Tender sea scallops basted with rich garlic butter.', price: 220, is_available: true, dietary_tags: ['seafood'] },
 ];
 
 const BARRACKS_SIGNATURE_ITEMS: MenuItem[] = [
-  { id: 'barracks-1', restaurant_id: 'barracks-grill-and-resto-bar', name: 'Barracks Charcoal Pork BBQ Skewers (5 pcs)', description: 'Signature sweet-savory Cebuano pork skewers flame-grilled over hot coals.', price: 175, is_available: true },
-  { id: 'barracks-2', restaurant_id: 'barracks-grill-and-resto-bar', name: 'Sizzling Pork Sisig with Fresh Egg', description: 'Crispy pork bits seasoned with calamansi, native onions, and chili on a smoking hot plate.', price: 220, is_available: true },
-  { id: 'barracks-3', restaurant_id: 'barracks-grill-and-resto-bar', name: 'Charcoal Grilled Liempo (Pork Belly)', description: 'Thick cut marinated pork belly with crispy skin and juicy meat.', price: 180, is_available: true },
-  { id: 'barracks-4', restaurant_id: 'barracks-grill-and-resto-bar', name: 'Late-Night Ice Cold San Miguel Bucket', description: '6 bottles of chilled beer served until 4:00 AM.', price: 380, is_available: true },
+  { id: 'barracks-1', restaurant_id: 'barracks-grill-and-resto-bar', name: 'Barracks Charcoal Pork BBQ Skewers (5 pcs)', description: 'Signature sweet-savory Cebuano pork skewers flame-grilled over hot coals.', price: 175, is_available: true, dietary_tags: [] },
+  { id: 'barracks-2', restaurant_id: 'barracks-grill-and-resto-bar', name: 'Sizzling Pork Sisig with Fresh Egg', description: 'Crispy pork bits seasoned with calamansi, native onions, and chili on a smoking hot plate.', price: 220, is_available: true, dietary_tags: [] },
+  { id: 'barracks-3', restaurant_id: 'barracks-grill-and-resto-bar', name: 'Charcoal Grilled Liempo (Pork Belly)', description: 'Thick cut marinated pork belly with crispy skin and juicy meat.', price: 180, is_available: true, dietary_tags: [] },
+  { id: 'barracks-4', restaurant_id: 'barracks-grill-and-resto-bar', name: 'Late-Night Ice Cold San Miguel Bucket', description: '6 bottles of chilled beer served until 4:00 AM.', price: 380, is_available: true, dietary_tags: [] },
 ];
 
 const LATTE_CAFE_SIGNATURE_ITEMS: MenuItem[] = [
-  { id: 'latte-1', restaurant_id: 'the-latte-cafe-mtvn5h2j', name: 'Artisan Spanish Latte', description: 'Double shot rich espresso with sweetened condensed milk and silky textured whole milk.', price: 135, is_available: true },
-  { id: 'latte-2', restaurant_id: 'the-latte-cafe-mtvn5h2j', name: 'Ceremonial Matcha Espresso Fusion', description: 'Layered Japanese Uji matcha and artisan espresso over iced fresh milk.', price: 145, is_available: true },
-  { id: 'latte-3', restaurant_id: 'the-latte-cafe-mtvn5h2j', name: 'Cordova Sea Salt Cold Brew', description: '16-hour steeped specialty beans topped with salted cream foam.', price: 130, is_available: true },
-];
-
-const CSALT_SIGNATURE_ITEMS: MenuItem[] = [
-  { id: 'csalt-1', restaurant_id: 'csalt-cafe-cordova', name: 'Wharf Sea Salt Caramel Latte', description: 'Signature espresso crafted with sea salt infused caramel by the Poblacion wharf.', price: 125, is_available: true },
-  { id: 'csalt-2', restaurant_id: 'csalt-cafe-cordova', name: 'Oceanfront Cold Brew', description: 'Smooth, low-acid cold brew enjoyed with panoramic sea breeze.', price: 115, is_available: true },
-  { id: 'csalt-3', restaurant_id: 'csalt-cafe-cordova', name: 'Vegetarian Basil Pesto Pasta', description: 'Freshly crushed basil, roasted garlic, and olive oil pasta.', price: 160, is_available: true },
+  { id: 'latte-1', restaurant_id: 'the-latte-cafe-mtvn5h2j', name: 'Artisan Spanish Latte', description: 'Double shot rich espresso with sweetened condensed milk and silky textured whole milk.', price: 135, is_available: true, dietary_tags: [] },
+  { id: 'latte-2', restaurant_id: 'the-latte-cafe-mtvn5h2j', name: 'Ceremonial Matcha Espresso Fusion', description: 'Layered Japanese Uji matcha and artisan espresso over iced fresh milk.', price: 145, is_available: true, dietary_tags: [] },
+  { id: 'latte-3', restaurant_id: 'the-latte-cafe-mtvn5h2j', name: 'Cordova Sea Salt Cold Brew', description: '16-hour steeped specialty beans topped with salted cream foam.', price: 130, is_available: true, dietary_tags: [] },
 ];
 
 const RCA_SIGNATURE_ITEMS: MenuItem[] = [
-  { id: 'rca-1', restaurant_id: 'rca-bilao-food-station', name: 'Crispy Boneless Lechon Belly sa Bilao', description: 'Crispy crackling roast pork belly served over traditional woven bilao with native dipping sauce.', price: 450, is_available: true },
-  { id: 'rca-2', restaurant_id: 'rca-bilao-food-station', name: 'Pansit Bam-i Special Bilao', description: 'Savory stir-fried noodles with lechon bits, vegetables, and boiled eggs.', price: 320, is_available: true },
-  { id: 'rca-3', restaurant_id: 'rca-bilao-food-station', name: 'Kakanin Assortment Fiesta Tray', description: 'Sweet Filipino rice cakes including puto, biko, and sapin-sapin.', price: 280, is_available: true },
+  { id: 'rca-1', restaurant_id: 'rca-bilao-food-station', name: 'Crispy Boneless Lechon Belly sa Bilao', description: 'Crispy crackling roast pork belly served over traditional woven bilao with native dipping sauce.', price: 450, is_available: true, dietary_tags: [] },
+  { id: 'rca-2', restaurant_id: 'rca-bilao-food-station', name: 'Pansit Bam-i Special Bilao', description: 'Savory stir-fried noodles with lechon bits, vegetables, and boiled eggs.', price: 320, is_available: true, dietary_tags: [] },
+  { id: 'rca-3', restaurant_id: 'rca-bilao-food-station', name: 'Kakanin Assortment Fiesta Tray', description: 'Sweet Filipino rice cakes including puto, biko, and sapin-sapin.', price: 280, is_available: true, dietary_tags: [] },
 ];
 
 /**
@@ -87,7 +82,8 @@ const ALL_MENU_ITEMS: Record<string, MenuItem[]> = {
   'burandat-seafood-bucket': BURANDAT_SIGNATURE_ITEMS,
   'barracks-grill-and-resto-bar': BARRACKS_SIGNATURE_ITEMS,
   'the-latte-cafe-mtvn5h2j': LATTE_CAFE_SIGNATURE_ITEMS,
-  'csalt-cafe-cordova': CSALT_SIGNATURE_ITEMS,
+  'csalt-cafe-cordova': CSALT_MENU_ITEMS,
+  'csalt-cafe': CSALT_MENU_ITEMS,
   'rca-bilao-food-station': RCA_SIGNATURE_ITEMS,
 };
 

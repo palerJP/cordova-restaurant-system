@@ -59,6 +59,7 @@ import { DON_MACCHIATOS_CATEGORIES, DON_MACCHIATOS_MENU_ITEMS } from '@/data/don
 import { ALBERTOS_CATEGORIES, ALBERTOS_MENU_ITEMS } from '@/data/albertosMenu';
 import { TEN_THOUSAND_ROSES_CATEGORIES, TEN_THOUSAND_ROSES_MENU_ITEMS } from '@/data/tenThousandRosesMenu';
 import { ABY_ROAD_CATEGORIES, ABY_ROAD_MENU_ITEMS } from '@/data/abyRoadMenu';
+import { CSALT_CATEGORIES, CSALT_MENU_ITEMS } from '@/data/csaltMenu';
 import { SpatialRestaurantMenu } from '@/components/menu/SpatialRestaurantMenu';
 
 const SPATIAL_EMOJIS = [
@@ -210,6 +211,13 @@ export default function RestaurantDetailPage() {
           customFound.name.toLowerCase().includes('aby road') ||
           customFound.name.toLowerCase().includes('abyroad');
 
+        const isCsalt =
+          slug === 'csalt-cafe-cordova' ||
+          slug === 'csalt-cafe' ||
+          found.slug === 'csalt-cafe-cordova' ||
+          found.slug === 'csalt-cafe' ||
+          customFound.name.toLowerCase().includes('csalt');
+
         if (menu.data?.items?.length) {
           setCategories(menu.data.categories || []);
           setItems(menu.data.items);
@@ -252,6 +260,9 @@ export default function RestaurantDetailPage() {
         } else if (isAbyRoad) {
           setCategories(ABY_ROAD_CATEGORIES.map(c => ({ ...c, restaurant_id: found.id })));
           setItems(ABY_ROAD_MENU_ITEMS.map(i => ({ ...i, restaurant_id: found.id })));
+        } else if (isCsalt) {
+          setCategories(CSALT_CATEGORIES.map(c => ({ ...c, restaurant_id: found.id })));
+          setItems(CSALT_MENU_ITEMS.map(i => ({ ...i, restaurant_id: found.id })));
         } else {
           setCategories(menu.data?.categories?.length ? menu.data.categories : [
             { id: 'cat-1', restaurant_id: found.id, name: 'House Specialties', sort_order: 1 },

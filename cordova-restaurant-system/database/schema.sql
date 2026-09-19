@@ -17,7 +17,7 @@ CREATE TYPE business_status AS ENUM ('pending', 'verified', 'rejected', 'suspend
 CREATE TYPE price_range AS ENUM ('budget', 'moderate', 'expensive', 'premium');
 CREATE TYPE service_type AS ENUM ('dine_in', 'takeout', 'delivery');
 CREATE TYPE review_status AS ENUM ('visible', 'flagged', 'removed');
-CREATE TYPE promotion_status AS ENUM ('draft', 'active', 'expired', 'archived');
+CREATE TYPE promotion_status AS ENUM ('draft', 'active', 'expired', 'archived', 'pending_verification', 'rejected');
 CREATE TYPE subscription_tier AS ENUM ('none', 'basic', 'premium', 'featured');
 CREATE TYPE notification_type AS ENUM (
   'business_verified', 'business_rejected', 'review_flagged',
@@ -229,6 +229,9 @@ CREATE TABLE promotions (
   start_date    DATE NOT NULL,
   end_date      DATE NOT NULL,
   status        promotion_status NOT NULL DEFAULT 'draft',
+  payment_method VARCHAR(50),
+  payment_reference VARCHAR(100),
+  payment_status VARCHAR(50) DEFAULT 'pending_verification',
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
   CHECK (end_date >= start_date)
 );

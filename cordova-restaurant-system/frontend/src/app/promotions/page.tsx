@@ -106,11 +106,26 @@ export default function PromotionsPage() {
                       {p.title}
                     </h3>
 
-                    {p.discount_label && (
-                      <span className="inline-block bg-cordova-gold/15 text-cordova-gold text-xs font-extrabold px-3 py-1 rounded-md uppercase tracking-wider">
-                        {p.discount_label}
-                      </span>
-                    )}
+                    {p.discount_label && (() => {
+                      const labelUpper = p.discount_label.toUpperCase();
+                      const isNewDish = labelUpper.includes('NEW') || labelUpper.includes('DISH');
+                      const isSale = labelUpper.includes('SALE') || labelUpper.includes('BUY');
+
+                      return (
+                        <span
+                          className={`inline-flex items-center gap-1 text-xs font-extrabold px-3 py-1 rounded-md uppercase tracking-wider ${
+                            isNewDish
+                              ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30'
+                              : isSale
+                              ? 'bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30'
+                              : 'bg-cordova-gold/15 text-cordova-gold border border-cordova-gold/30'
+                          }`}
+                        >
+                          <span>{isNewDish ? '🍲' : isSale ? '🛍️' : '🏷️'}</span>
+                          <span>{p.discount_label}</span>
+                        </span>
+                      );
+                    })()}
 
                     {p.description && (
                       <p className="text-xs text-stone-600 dark:text-stone-300 line-clamp-2">
@@ -159,15 +174,30 @@ export default function PromotionsPage() {
                 {selectedPromo.title}
               </h2>
 
-              {selectedPromo.discount_label && (
-                <div className="inline-flex items-center gap-1.5 bg-cordova-gold text-white text-xs font-extrabold px-3 py-1.5 rounded-lg uppercase tracking-wider shadow-sm">
-                  <Sparkles size={14} /> {selectedPromo.discount_label}
-                </div>
-              )}
+              {selectedPromo.discount_label && (() => {
+                const labelUpper = selectedPromo.discount_label.toUpperCase();
+                const isNewDish = labelUpper.includes('NEW') || labelUpper.includes('DISH');
+                const isSale = labelUpper.includes('SALE') || labelUpper.includes('BUY');
+
+                return (
+                  <div
+                    className={`inline-flex items-center gap-1.5 text-xs font-extrabold px-3 py-1.5 rounded-lg uppercase tracking-wider shadow-sm ${
+                      isNewDish
+                        ? 'bg-emerald-600 text-white'
+                        : isSale
+                        ? 'bg-rose-600 text-white'
+                        : 'bg-cordova-gold text-stone-900'
+                    }`}
+                  >
+                    <span>{isNewDish ? '🍲' : isSale ? '🛍️' : '🏷️'}</span>
+                    <span>{selectedPromo.discount_label}</span>
+                  </div>
+                );
+              })()}
 
               {selectedPromo.description && (
                 <div className="bg-stone-50 dark:bg-stone-800/60 p-4 rounded-xl border border-stone-200 dark:border-stone-700/60 text-xs text-stone-700 dark:text-stone-200 leading-relaxed">
-                  <p className="font-semibold mb-1 text-stone-900 dark:text-white">Promotion Terms & Details:</p>
+                  <p className="font-semibold mb-1 text-stone-900 dark:text-white">Promotion Details & Offers:</p>
                   <p>{selectedPromo.description}</p>
                 </div>
               )}

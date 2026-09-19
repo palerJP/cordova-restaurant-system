@@ -143,7 +143,7 @@ export interface Promotion {
   discount_label?: string;
   start_date: string;
   end_date: string;
-  status: 'draft' | 'active' | 'expired' | 'archived';
+  status: 'draft' | 'active' | 'expired' | 'archived' | 'pending_verification' | 'rejected' | string;
   payment_method?: 'gcash' | 'maya' | string;
   payment_reference?: string;
   payment_status?: 'pending_verification' | 'verified' | 'rejected' | string;

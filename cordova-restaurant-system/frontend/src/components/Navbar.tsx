@@ -25,20 +25,16 @@ export function Navbar() {
   const isAdmin = user?.role === 'admin';
   const isAdminPage = pathname?.startsWith('/admin');
 
-  const navLinks = [
-    { href: '/', label: 'Home' },
-  ];
+  const navLinks = isAdminPage
+    ? [{ href: '/', label: 'Home' }]
+    : [
+        { href: '/', label: 'Home' },
+        { href: '/promotions', label: 'Promotions' },
+      ];
 
   const roleLinks: { href: string; label: string }[] =
-    user?.role === 'admin'
-      ? [{ href: '/admin', label: 'Admin Panel' }]
-      : user?.role === 'owner'
+    user?.role === 'owner'
       ? [{ href: '/dashboard', label: 'My Business' }]
-      : user
-      ? [
-          { href: '/favorites', label: 'Favorites' },
-          { href: '/history', label: 'History' },
-        ]
       : [];
 
   return (
@@ -68,17 +64,17 @@ export function Navbar() {
 
         {/* Center / Right Links */}
         <div className="hidden md:flex items-center gap-6">
-          <nav className="flex items-center gap-1.5 p-1 rounded-full bg-stone-100/70 dark:bg-[#1a221d]/70 backdrop-blur-md border border-stone-200/50 dark:border-white/5 shadow-inner mr-2">
-            {navLinks.map((link) => {
+          <nav className="flex items-center gap-1.5 p-1 rounded-full bg-stone-100/70 dark:bg-[#1a221d]/70 backdrop-blur-md border border-stone-200/50 dark:border-white/10 shadow-inner mr-2 transition-all duration-300 hover:border-emerald-500/60 dark:hover:border-emerald-400/60 hover:shadow-[0_0_20px_rgba(16,185,129,0.35)] dark:hover:shadow-[0_0_25px_rgba(52,211,153,0.4)] hover:ring-1 hover:ring-emerald-500/40 dark:hover:ring-emerald-400/40">
+            {[...navLinks, ...roleLinks].map((link) => {
               const isActive = pathname === link.href;
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`relative text-xs font-semibold px-4 py-2 rounded-full transition-all duration-200 ${
+                  className={`relative text-xs font-semibold px-4 py-2 rounded-full transition-all duration-300 border ${
                     isActive
-                      ? 'bg-white dark:bg-[#253028] text-cordova-green dark:text-emerald-400 shadow-spatial-sm border border-black/[0.04] dark:border-white/10'
-                      : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5'
+                      ? 'bg-white dark:bg-[#253028] text-cordova-green dark:text-emerald-400 border-emerald-500/50 dark:border-emerald-400/50 shadow-[0_0_12px_rgba(16,185,129,0.25)] dark:shadow-[0_0_16px_rgba(52,211,153,0.3)] ring-1 ring-emerald-500/30 hover:border-emerald-500 dark:hover:border-emerald-400 hover:shadow-[0_0_20px_rgba(16,185,129,0.45)] dark:hover:shadow-[0_0_25px_rgba(52,211,153,0.5)] hover:ring-emerald-500/50'
+                      : 'text-stone-600 dark:text-stone-300 border-transparent hover:border-emerald-500/70 dark:hover:border-emerald-400/70 hover:text-cordova-green dark:hover:text-emerald-300 hover:bg-white/80 dark:hover:bg-[#253028]/80 hover:shadow-[0_0_16px_rgba(16,185,129,0.35)] dark:hover:shadow-[0_0_20px_rgba(52,211,153,0.4)] hover:ring-1 hover:ring-emerald-500/40 dark:hover:ring-emerald-400/40'
                   }`}
                 >
                   {link.label}

@@ -284,15 +284,12 @@ ON CONFLICT DO NOTHING;
 -- Default Menu ------------------------------------------------------------------
 INSERT INTO menu_categories (id, restaurant_id, name, sort_order) VALUES
 ('55555555-5555-5555-a555-555555555551', '44444444-4444-4444-a444-444444444441', 'Grilled Seafood', 1),
-('55555555-5555-5555-a555-555555555552', '44444444-4444-4444-a444-444444444442', 'Coffee & Beverages', 1),
 ('55555555-5555-5555-a555-555555555553', '44444444-4444-4444-a444-444444444443', 'BBQ Skewers', 1)
 ON CONFLICT DO NOTHING;
 
 INSERT INTO menu_items (restaurant_id, category_id, name, description, price, dietary_tags) VALUES
 ('44444444-4444-4444-a444-444444444441', '55555555-5555-5555-a555-555555555551', 'Grilled Bangus Belly', 'Whole milkfish belly, grilled with calamansi-soy dip', 220.00, ARRAY[]::text[]),
 ('44444444-4444-4444-a444-444444444441', '55555555-5555-5555-a555-555555555551', 'Garlic Butter Shrimp', 'Half kilo of shrimp sauteed in garlic butter', 350.00, ARRAY[]::text[]),
-('44444444-4444-4444-a444-444444444442', '55555555-5555-5555-a555-555555555552', 'Iced Spanish Latte', 'House specialty cold brew latte', 140.00, ARRAY['vegetarian']),
-('44444444-4444-4444-a444-444444444442', '55555555-5555-5555-a555-555555555552', 'Vegan Banana Muffin', 'Freshly baked, dairy-free', 85.00, ARRAY['vegan','vegetarian']),
 ('44444444-4444-4444-a444-444444444443', '55555555-5555-5555-a555-555555555553', 'Pork BBQ Skewer (3pcs)', 'Sweet-savory marinated pork skewers', 90.00, ARRAY[]::text[])
 ON CONFLICT DO NOTHING;
 
@@ -953,3 +950,386 @@ BEGIN
         ON CONFLICT DO NOTHING;
     END IF;
 END $$;
+
+-- ============================================================================
+-- CSALT CAFE - CORDOVA (MENU CATEGORIES & ITEMS FROM CANVA)
+-- ============================================================================
+DO $$
+DECLARE
+    v_rest_id UUID;
+    v_cat_rice UUID;
+    v_cat_chicken UUID;
+    v_cat_burger UUID;
+    v_cat_seafood UUID;
+    v_cat_silog UUID;
+    v_cat_sizzling UUID;
+    v_cat_pasta UUID;
+    v_cat_appetizer UUID;
+    v_cat_coffee UUID;
+    v_cat_noncoffee UUID;
+    v_cat_frosted_coffee UUID;
+    v_cat_frosted_noncoffee UUID;
+    v_cat_pistachio UUID;
+    v_cat_matcha UUID;
+    v_cat_black UUID;
+    v_cat_milktea UUID;
+    v_cat_liquor UUID;
+    v_cat_canned UUID;
+BEGIN
+    SELECT id INTO v_rest_id FROM restaurants WHERE slug = 'csalt-cafe' OR slug = 'csalt-cafe-cordova' OR slug LIKE '%csalt%' LIMIT 1;
+    IF v_rest_id IS NOT NULL THEN
+        -- Categories
+        INSERT INTO menu_categories (restaurant_id, name, sort_order) VALUES (v_rest_id, 'Rice Bowls', 1) ON CONFLICT DO NOTHING;
+        SELECT id INTO v_cat_rice FROM menu_categories WHERE restaurant_id = v_rest_id AND name = 'Rice Bowls' LIMIT 1;
+
+        INSERT INTO menu_categories (restaurant_id, name, sort_order) VALUES (v_rest_id, 'Crispy Fried Chicken', 2) ON CONFLICT DO NOTHING;
+        SELECT id INTO v_cat_chicken FROM menu_categories WHERE restaurant_id = v_rest_id AND name = 'Crispy Fried Chicken' LIMIT 1;
+
+        INSERT INTO menu_categories (restaurant_id, name, sort_order) VALUES (v_rest_id, 'Burgers & Sandwiches', 3) ON CONFLICT DO NOTHING;
+        SELECT id INTO v_cat_burger FROM menu_categories WHERE restaurant_id = v_rest_id AND name = 'Burgers & Sandwiches' LIMIT 1;
+
+        INSERT INTO menu_categories (restaurant_id, name, sort_order) VALUES (v_rest_id, 'Seafood', 4) ON CONFLICT DO NOTHING;
+        SELECT id INTO v_cat_seafood FROM menu_categories WHERE restaurant_id = v_rest_id AND name = 'Seafood' LIMIT 1;
+
+        INSERT INTO menu_categories (restaurant_id, name, sort_order) VALUES (v_rest_id, 'Silog', 5) ON CONFLICT DO NOTHING;
+        SELECT id INTO v_cat_silog FROM menu_categories WHERE restaurant_id = v_rest_id AND name = 'Silog' LIMIT 1;
+
+        INSERT INTO menu_categories (restaurant_id, name, sort_order) VALUES (v_rest_id, 'Sizzling', 6) ON CONFLICT DO NOTHING;
+        SELECT id INTO v_cat_sizzling FROM menu_categories WHERE restaurant_id = v_rest_id AND name = 'Sizzling' LIMIT 1;
+
+        INSERT INTO menu_categories (restaurant_id, name, sort_order) VALUES (v_rest_id, 'Pasta', 7) ON CONFLICT DO NOTHING;
+        SELECT id INTO v_cat_pasta FROM menu_categories WHERE restaurant_id = v_rest_id AND name = 'Pasta' LIMIT 1;
+
+        INSERT INTO menu_categories (restaurant_id, name, sort_order) VALUES (v_rest_id, 'Appetizers', 8) ON CONFLICT DO NOTHING;
+        SELECT id INTO v_cat_appetizer FROM menu_categories WHERE restaurant_id = v_rest_id AND name = 'Appetizers' LIMIT 1;
+
+        INSERT INTO menu_categories (restaurant_id, name, sort_order) VALUES (v_rest_id, 'Coffee Classics', 9) ON CONFLICT DO NOTHING;
+        SELECT id INTO v_cat_coffee FROM menu_categories WHERE restaurant_id = v_rest_id AND name = 'Coffee Classics' LIMIT 1;
+
+        INSERT INTO menu_categories (restaurant_id, name, sort_order) VALUES (v_rest_id, 'Non-Coffee Classics', 10) ON CONFLICT DO NOTHING;
+        SELECT id INTO v_cat_noncoffee FROM menu_categories WHERE restaurant_id = v_rest_id AND name = 'Non-Coffee Classics' LIMIT 1;
+
+        INSERT INTO menu_categories (restaurant_id, name, sort_order) VALUES (v_rest_id, 'Frosted Series (Coffee)', 11) ON CONFLICT DO NOTHING;
+        SELECT id INTO v_cat_frosted_coffee FROM menu_categories WHERE restaurant_id = v_rest_id AND name = 'Frosted Series (Coffee)' LIMIT 1;
+
+        INSERT INTO menu_categories (restaurant_id, name, sort_order) VALUES (v_rest_id, 'Frosted Series (Non-Coffee)', 12) ON CONFLICT DO NOTHING;
+        SELECT id INTO v_cat_frosted_noncoffee FROM menu_categories WHERE restaurant_id = v_rest_id AND name = 'Frosted Series (Non-Coffee)' LIMIT 1;
+
+        INSERT INTO menu_categories (restaurant_id, name, sort_order) VALUES (v_rest_id, 'CSalt Signature Pistachio', 13) ON CONFLICT DO NOTHING;
+        SELECT id INTO v_cat_pistachio FROM menu_categories WHERE restaurant_id = v_rest_id AND name = 'CSalt Signature Pistachio' LIMIT 1;
+
+        INSERT INTO menu_categories (restaurant_id, name, sort_order) VALUES (v_rest_id, 'Matcha Series', 14) ON CONFLICT DO NOTHING;
+        SELECT id INTO v_cat_matcha FROM menu_categories WHERE restaurant_id = v_rest_id AND name = 'Matcha Series' LIMIT 1;
+
+        INSERT INTO menu_categories (restaurant_id, name, sort_order) VALUES (v_rest_id, 'Black Series', 15) ON CONFLICT DO NOTHING;
+        SELECT id INTO v_cat_black FROM menu_categories WHERE restaurant_id = v_rest_id AND name = 'Black Series' LIMIT 1;
+
+        INSERT INTO menu_categories (restaurant_id, name, sort_order) VALUES (v_rest_id, 'Milk Tea Series', 16) ON CONFLICT DO NOTHING;
+        SELECT id INTO v_cat_milktea FROM menu_categories WHERE restaurant_id = v_rest_id AND name = 'Milk Tea Series' LIMIT 1;
+
+        INSERT INTO menu_categories (restaurant_id, name, sort_order) VALUES (v_rest_id, 'Liquor-Infused (18+)', 17) ON CONFLICT DO NOTHING;
+        SELECT id INTO v_cat_liquor FROM menu_categories WHERE restaurant_id = v_rest_id AND name = 'Liquor-Infused (18+)' LIMIT 1;
+
+        INSERT INTO menu_categories (restaurant_id, name, sort_order) VALUES (v_rest_id, 'Canned Drinks', 18) ON CONFLICT DO NOTHING;
+        SELECT id INTO v_cat_canned FROM menu_categories WHERE restaurant_id = v_rest_id AND name = 'Canned Drinks' LIMIT 1;
+
+        -- Items
+        -- Rice Bowls
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_rice, 'Hotdog Rice Bowl', 'Savory sliced hotdog with fried sunny-side egg, sliced tomatoes, cucumbers, and fragrant rice.', 99, '/images/csalt/rice-bowls.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_rice, 'Ham Rice Bowl', 'Seared premium ham slices served with fried egg, sliced tomatoes, cucumbers, and rice.', 99, '/images/csalt/rice-bowls.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_rice, 'Sausage Rice Bowl', 'Juicy grilled sausage links served with fried egg, sliced tomatoes, cucumbers, and rice.', 99, '/images/csalt/rice-bowls.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+
+        -- Crispy Fried Chicken
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_chicken, '1 PC Chicken', '1 piece crispy golden fried chicken served with steamed rice, seasoned french fries, and savory dipping gravy.', 125, '/images/csalt/crispy-fried-chicken.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_chicken, '2 PC Chicken', '2 pieces crispy golden fried chicken served with steamed rice, seasoned french fries, and rich dipping gravy.', 180, '/images/csalt/crispy-fried-chicken.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_chicken, 'Crispy Fried Chicken (Platter)', 'Crispy golden fried chicken, seasoned to perfection and fried until juicy and flavorful. Served with rich, savory gravy.', 350, '/images/csalt/crispy-fried-chicken-platter.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+
+        -- Burgers & Sandwiches
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_burger, 'Chicken Burger (Must Try)', 'Crispy chicken fillet topped with fresh lettuce, special sauce on a toasted sesame bun, served with seasoned fries.', 199, '/images/csalt/chicken-burger.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_burger, 'Chicken Rice Burger', 'Crispy chicken fillet layered with savory ham and cheese between toasted seasoned rice patties on a sizzling hot plate with creamy sauce.', 265, '/images/csalt/chicken-rice-burger.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_burger, 'Classic Burger', 'Juicy beef patty with fresh lettuce, tomato, onion, and signature burger sauce, served with crispy fries.', 296, '/images/csalt/burger-and-sandwich.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_burger, 'Bacon Burger', 'Grilled beef patty loaded with crispy bacon strips, melted cheddar cheese, lettuce, and tomato, served with fries.', 326, '/images/csalt/burger-and-sandwich.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_burger, 'Overload Burger', 'Towering gourmet burger loaded with double cheese, crispy bacon, fried egg, lettuce, tomato, and fries.', 356, '/images/csalt/burger-and-sandwich.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_burger, 'Clubhouse Sandwich', 'Triple-decker toasted sandwich stacked with ham, egg, cheese, fresh greens, and mayo, served with crispy french fries.', 356, '/images/csalt/burger-and-sandwich.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+
+        -- Seafood
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_seafood, 'Shrimp Tempura (Ala Carte 250g)', 'Crispy Japanese-style shrimp tempura (250g) fried golden brown and served with house-made dipping sauce.', 310, '/images/csalt/shrimp-tempura.png', true, ARRAY['seafood'])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_seafood, 'Garlic Buttered Shrimp (Ala Carte 250g)', 'Fresh seasoned shrimp (250g) tossed in a rich savory garlic butter sauce and garnished with fresh herbs.', 350, '/images/csalt/garlic-buttered-shrimp.png', true, ARRAY['seafood'])
+        ON CONFLICT DO NOTHING;
+
+        -- Silog
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_silog, 'Spamsilog', 'Grilled luncheon meat slices served with fragrant garlic fried rice, sunny-side egg, and mixed vegetables.', 189, '/images/csalt/silog-meals.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_silog, 'Lumsilog', 'Crispy golden lumpiang shanghai spring rolls paired with garlic fried rice, sunny-side egg, and mixed veggies.', 165, '/images/csalt/silog-meals.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_silog, 'Chicken Silog', 'Crispy breaded chicken cutlet with savory gravy, served with garlic fried rice, fried egg, and mixed vegetables.', 220, '/images/csalt/silog-meals.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_silog, 'Cornsilog', 'Sautéed premium corned beef served with garlic fried rice, sunny-side egg, and mixed vegetables.', 189, '/images/csalt/silog-meals.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+
+        -- Sizzling
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_sizzling, 'Sizzling Spicy Shrimp', 'Spicy sautéed shrimp on a sizzling hot plate with mixed vegetables and steamed rice.', 260, '/images/csalt/sizzling-meals.png', true, ARRAY['seafood'])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_sizzling, 'Sizzling Burger Steak', 'Tender beef burger patty smothered in rich mushroom gravy on a sizzling hot plate with fried egg, rice, and veggies.', 240, '/images/csalt/sizzling-meals.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_sizzling, 'Sizzling Hungarian Sausage', 'Grilled spiced Hungarian sausage served on a sizzling hot plate with fried egg, garlic rice, and mixed vegetables.', 240, '/images/csalt/sizzling-meals.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+
+        -- Pasta
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_pasta, 'Shrimp Marinara', 'Al dente spaghetti tossed in a rich tomato marinara sauce loaded with juicy shrimp, garnished with parmesan.', 375, '/images/csalt/pasta-and-appetizers.png', true, ARRAY['seafood'])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_pasta, 'Carbonara', 'Classic creamy carbonara pasta with savory bacon bits, parmesan cheese, and toasted garlic bread.', 360, '/images/csalt/pasta-and-appetizers.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_pasta, 'Tuna Pasta', 'Flavorful pasta sautéed with flaked tuna, garlic, olive oil, and herbs, served with toasted garlic bread.', 330, '/images/csalt/pasta-and-appetizers.png', true, ARRAY['seafood'])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_pasta, 'Aglio e Olio', 'Classic Italian pasta tossed in extra virgin olive oil, minced garlic, and chili flakes with toasted garlic bread.', 260, '/images/csalt/pasta-and-appetizers.png', true, ARRAY['vegetarian'])
+        ON CONFLICT DO NOTHING;
+
+        -- Appetizers
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_appetizer, 'Nachos', 'Crispy tortilla chips piled high with seasoned minced beef, melted cheese sauce, diced tomatoes, and drizzle.', 230, '/images/csalt/pasta-and-appetizers.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_appetizer, 'Flavored Fries', 'Crispy golden french fries tossed in your choice of savory seasoning powder.', 195, '/images/csalt/pasta-and-appetizers.png', true, ARRAY['vegetarian'])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_appetizer, 'Cheesy Fries', 'Crisp golden french fries generously drizzled with warm cheddar cheese sauce.', 230, '/images/csalt/pasta-and-appetizers.png', true, ARRAY['vegetarian'])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_appetizer, 'Mozzarella Cheese Sticks', 'Breaded mozzarella sticks fried golden crisp with stretchy melted cheese inside, served with dipping sauce.', 295, '/images/csalt/pasta-and-appetizers.png', true, ARRAY['vegetarian'])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_appetizer, 'Mozzarella Cheese Pull', 'Crispy breaded mozzarella block with epic melted cheese pull, served with special dip.', 360, '/images/csalt/pasta-and-appetizers.png', true, ARRAY['vegetarian'])
+        ON CONFLICT DO NOTHING;
+
+        -- Coffee Classics
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_coffee, 'Americano', 'Bold espresso shot lengthened with hot water or poured over ice. (Regular: ₱110, Large: ₱125)', 110, '/images/csalt/coffee-classics.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_coffee, 'Orange Americano', 'Refreshing iced Americano infused with zesty orange citrus notes. (Regular: ₱149, Large: ₱159)', 149, '/images/csalt/coffee-classics.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_coffee, 'Strawberry Americano', 'Espresso layered over sweet strawberry syrup and ice. (Regular: ₱159, Large: ₱169)', 159, '/images/csalt/coffee-classics.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_coffee, 'Café Latte', 'Rich espresso combined with steamed or cold velvety milk. (Regular: ₱155, Large: ₱165)', 155, '/images/csalt/coffee-classics.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_coffee, 'Cappuccino', 'Espresso balanced with equal parts steamed milk and airy milk foam. (Regular: ₱155, Large: ₱165)', 155, '/images/csalt/coffee-classics.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_coffee, 'Spanish Latte', 'Sweetened espresso latte made with condensed milk and steamed milk. (Regular: ₱155, Large: ₱165)', 155, '/images/csalt/coffee-classics.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_coffee, 'Vanilla Latte', 'Smooth espresso and creamy milk infused with aromatic vanilla syrup. (Regular: ₱175, Large: ₱185)', 175, '/images/csalt/coffee-classics.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_coffee, 'Caramel Latte', 'Espresso and steamed milk swirled with sweet buttery caramel syrup. (Regular: ₱175, Large: ₱190)', 175, '/images/csalt/coffee-classics.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_coffee, 'Salted Caramel Latte', 'Signature espresso latte balanced with sweet caramel and fine sea salt. (Regular: ₱175, Large: ₱190)', 175, '/images/csalt/coffee-classics.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_coffee, 'Caramel Macchiato', 'Freshly steamed milk with vanilla-flavored syrup marked with espresso and topped with caramel drizzle. (Regular: ₱175, Large: ₱190)', 175, '/images/csalt/coffee-classics.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_coffee, 'White Mocha', 'Espresso blended with creamy white chocolate sauce and steamed milk. (Regular: ₱175, Large: ₱190)', 175, '/images/csalt/coffee-classics.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_coffee, 'Coffee Mocha', 'Rich espresso paired with decadent chocolate sauce and velvety milk. (Regular: ₱180, Large: ₱195)', 180, '/images/csalt/coffee-classics.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_coffee, 'Dark Mocha', 'Deep, bittersweet dark cocoa blended with rich espresso and milk. (Regular: ₱189, Large: ₱199)', 189, '/images/csalt/coffee-classics.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+
+        -- Non-Coffee Classics
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_noncoffee, 'Signature Chocolate', 'Rich and creamy handcrafted hot or blended chocolate beverage. (Regular: ₱185, Large: ₱195)', 185, '/images/csalt/non-coffee-classics.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_noncoffee, 'Dark Chocolate', 'Intense, bittersweet dark chocolate crafted hot or blended to perfection. (Regular: ₱185, Large: ₱195)', 185, '/images/csalt/non-coffee-classics.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+
+        -- Frosted Series (Coffee)
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_frosted_coffee, 'Caramel Frappe', 'Blended iced coffee frappe swirled with rich caramel sauce and whipped cream. (Regular: ₱180, Large: ₱190)', 180, '/images/csalt/frosted-coffee.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_frosted_coffee, 'Salted Caramel Frappe', 'Blended coffee frappe infused with sea salt caramel and whipped cream. (Regular: ₱185, Large: ₱195)', 185, '/images/csalt/frosted-coffee.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_frosted_coffee, 'Nutella Mocha Frappe', 'Decadent frappe blending hazelnut Nutella with rich mocha espresso. (Regular: ₱189, Large: ₱199)', 189, '/images/csalt/frosted-coffee.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_frosted_coffee, 'Caramel Frappe Overload', 'Caramel frappe topped with whipped cream, wafers, cookies, and caramel drizzle. (Regular: ₱205, Large: ₱215)', 205, '/images/csalt/frosted-coffee.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_frosted_coffee, 'Salted Caramel Frappe Overload', 'Loaded salted caramel frappe with assorted sweet toppings, wafers, and whipped cream. (Regular: ₱205, Large: ₱215)', 205, '/images/csalt/frosted-coffee.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_frosted_coffee, 'Nutella Mocha Frappe Overload', 'Overloaded Nutella mocha frappe stacked with biscuits, wafers, chocolate drizzle, and whipped cream. (Regular: ₱210, Large: ₱220)', 210, '/images/csalt/frosted-coffee.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+
+        -- Frosted Series (Non-Coffee)
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_frosted_noncoffee, 'Naughty Strawberry Frappe', 'Sweet strawberry blended cream frappe with whipped cream. (Regular: ₱180, Large: ₱190)', 180, '/images/csalt/frosted-non-coffee.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_frosted_noncoffee, 'Naughty Choco Frappe', 'Creamy chocolate frappe blended with chocolate chips and whipped cream. (Regular: ₱189, Large: ₱199)', 189, '/images/csalt/frosted-non-coffee.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_frosted_noncoffee, 'Naughty Strawberry Frappe Overload', 'Loaded strawberry cream frappe overflowing with cookies, wafers, and strawberry syrup. (Regular: ₱205, Large: ₱215)', 205, '/images/csalt/frosted-non-coffee.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_frosted_noncoffee, 'Naughty Choco Frappe Overload', 'Overloaded chocolate frappe with chocolate sticks, cookies, wafers, and whipped cream. (Regular: ₱210, Large: ₱220)', 210, '/images/csalt/frosted-non-coffee.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_frosted_noncoffee, 'Biscoff Oreo Frappe', 'Decadent frappe blending Lotus Biscoff spread and crushed Oreo cookies. (Regular: ₱240, Large: ₱250)', 240, '/images/csalt/frosted-non-coffee.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+
+        -- CSalt Signature Pistachio
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_pistachio, 'CSalt Pistachio Latte', 'Creamy artisan latte infused with rich nutty pistachio flavor. (Regular: ₱180, Large: ₱195)', 180, '/images/csalt/pistachio-series.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_pistachio, 'CSalt Pistachio Frappe', 'Signature blended pistachio frappe topped with fluffy whipped cream. (Regular: ₱195, Large: ₱206)', 195, '/images/csalt/pistachio-series.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_pistachio, 'CSalt Pistachio Frappe Overload', 'Loaded pistachio frappe topped with wafers, chocolate drizzle, and crushed toppings. (Regular: ₱239, Large: ₱249)', 239, '/images/csalt/pistachio-series.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+
+        -- Matcha Series
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_matcha, 'Matcha Latte', 'Premium Japanese matcha whisked with fresh velvety steamed or cold milk. (Regular: ₱170, Large: ₱180)', 170, '/images/csalt/matcha-series.png', true, ARRAY['vegetarian'])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_matcha, 'Dirty Matcha', 'Vibrant green matcha latte crowned with a bold shot of espresso. (Regular: ₱180, Large: ₱190)', 180, '/images/csalt/matcha-series.png', true, ARRAY['vegetarian'])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_matcha, 'Berry Matcha Bliss', 'Layered Japanese matcha paired with sweet berry puree and fresh milk. (Regular: ₱185, Large: ₱195)', 185, '/images/csalt/matcha-series.png', true, ARRAY['vegetarian'])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_matcha, 'Matcha Frappe', 'Blended ceremonial matcha frappe topped with whipped cream. (Regular: ₱235, Large: ₱245)', 235, '/images/csalt/matcha-series.png', true, ARRAY['vegetarian'])
+        ON CONFLICT DO NOTHING;
+
+        -- Black Series
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_black, 'Ash Milktea', 'Unique charcoal-infused ash milk tea with delicate sweetness and creaminess.', 110, '/images/csalt/black-series.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_black, 'Velvet Ash Latte', 'Artisan charcoal velvet ash latte with smooth espresso and creamy milk.', 180, '/images/csalt/black-series.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_black, 'Ash and Cocoa', 'Deep dark chocolate blended with velvety charcoal ash and milk.', 195, '/images/csalt/black-series.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_black, 'Midnight Ash Frappe', 'Mysterious dark blended frappe topped with whipped cream and cocoa dusting.', 230, '/images/csalt/black-series.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_black, 'Midnight Ash Frappe Overload', 'The ultimate black series frappe overloaded with chocolate bars, wafers, pretzels, and whipped cream.', 250, '/images/csalt/black-series.jpg', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+
+        -- Milk Tea Series
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_milktea, 'Taro Milk Tea', 'Creamy and sweet purple taro flavored milk tea. (Regular: ₱95, Large: ₱110)', 95, '/images/csalt/milktea-series.png', true, ARRAY['vegetarian'])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_milktea, 'Hokkaido Milk Tea', 'Rich caramel-infused Japanese Hokkaido milk tea. (Regular: ₱95, Large: ₱110)', 95, '/images/csalt/milktea-series.png', true, ARRAY['vegetarian'])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_milktea, 'Cookies and Cream Milk Tea', 'Creamy milk tea blended with crushed cookies. (Regular: ₱95, Large: ₱110)', 95, '/images/csalt/milktea-series.png', true, ARRAY['vegetarian'])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_milktea, 'Okinawa Milk Tea', 'Classic brown sugar roasted Okinawa milk tea with chewy pearls. (Regular: ₱95, Large: ₱110)', 95, '/images/csalt/milktea-series.png', true, ARRAY['vegetarian'])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_milktea, 'Wintermelon Milk Tea', 'Refreshing and mildly sweet traditional wintermelon milk tea. (Regular: ₱95, Large: ₱110)', 95, '/images/csalt/milktea-series.png', true, ARRAY['vegetarian'])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_milktea, 'Red Velvet Milk Tea', 'Decadent cocoa and vanilla red velvet flavored milk tea. (Regular: ₱99, Large: ₱119)', 99, '/images/csalt/milktea-series.png', true, ARRAY['vegetarian'])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_milktea, 'Dark Choco Milk Tea', 'Deep bittersweet dark chocolate milk tea. (Regular: ₱99, Large: ₱119)', 99, '/images/csalt/milktea-series.png', true, ARRAY['vegetarian'])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_milktea, 'Matcha Milk Tea', 'Authentic Japanese green tea infused milk tea. (Regular: ₱125, Large: ₱135)', 125, '/images/csalt/milktea-series.png', true, ARRAY['vegetarian'])
+        ON CONFLICT DO NOTHING;
+
+        -- Liquor-Infused (18+)
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_liquor, 'Irish Cream Cloud (18+)', 'Decadent coffee cocktail infused with authentic Irish cream liqueur, chocolate syrup, whipped cream, and chocolate wafer rolls. (Regular: ₱239, Large: ₱254)', 239, '/images/csalt/irish-cream-cloud.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+
+        -- Canned Drinks
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_canned, 'Royal / Mountain Dew / Sprite', 'Chilled canned sodas served ice cold.', 60, '/images/csalt/canned-drinks.png', true, ARRAY['vegetarian'])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_canned, 'Coke Zero', 'Zero-calorie Coca-Cola in a chilled can.', 60, '/images/csalt/canned-drinks.png', true, ARRAY['vegetarian'])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_canned, 'Mug Root Beer', 'Classic American root beer served ice-cold.', 60, '/images/csalt/canned-drinks.png', true, ARRAY['vegetarian'])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_canned, 'Schweppes Soda Water', 'Crisp effervescent carbonated soda water in can.', 65, '/images/csalt/canned-drinks.png', true, ARRAY['vegetarian'])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_canned, 'Coke Fiber (White)', 'Imported Coca-Cola Plus with dietary fiber in white can.', 70, '/images/csalt/canned-drinks.png', true, ARRAY['vegetarian'])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_canned, 'San Mig Flavor', 'Flavored San Miguel beer (Apple or Lemon).', 80, '/images/csalt/canned-drinks.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_canned, 'Sprite Vodka', 'Refreshing cocktail mix of chilled Sprite and vodka.', 90, '/images/csalt/canned-drinks.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_canned, 'Red Horse', 'Extra strong Philippine lager in a cold can.', 95, '/images/csalt/canned-drinks.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_canned, 'San Mig Pilsen', 'Classic San Miguel Pale Pilsen beer.', 110, '/images/csalt/canned-drinks.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+        INSERT INTO menu_items (restaurant_id, category_id, name, description, price, image_url, is_available, dietary_tags)
+        VALUES (v_rest_id, v_cat_canned, 'Jack Daniel Coke', 'Classic ready-to-drink whiskey & cola mix in a can.', 120, '/images/csalt/canned-drinks.png', true, ARRAY[]::TEXT[])
+        ON CONFLICT DO NOTHING;
+    END IF;
+END $$;
+
