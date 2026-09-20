@@ -115,6 +115,7 @@ export const CSALT_MENU_ITEMS: MenuItem[] = [
     is_available: true,
     dietary_tags: [],
   },
+  
   {
     id: 'mi-csalt-09',
     restaurant_id: 'csalt-cafe-cordova',

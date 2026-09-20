@@ -315,6 +315,17 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
     address: 'Gabi, Cordova, Cebu',
     phone: '0910 618 1758',
   },
+
+  // Sip ‘n Street Brew and Refreshments
+  'sip-n-street-brew-and-refreshments-mu9qvrtr': {
+    name: 'Sip ‘n Street Brew and Refreshments',
+    category: 'Cafe',
+    coverImage: '/uploads/restaurant-images/1789904428171-0769693d4cfcfd3b.png',
+    barangay: 'Catarman Cordova',
+    description: 'a local beverage spot in Dakit-dakit, Catarman, Cordova, offering iced and hot coffee, non-coffee drinks, and soda.',
+    address: 'Dakit-dakit Catarman Cordova',
+    phone: '09659144727',
+  },
 };
 
 export function normalizeKey(str?: string): string {

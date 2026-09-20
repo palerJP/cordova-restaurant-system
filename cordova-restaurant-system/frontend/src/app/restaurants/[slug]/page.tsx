@@ -60,6 +60,8 @@ import { ALBERTOS_CATEGORIES, ALBERTOS_MENU_ITEMS } from '@/data/albertosMenu';
 import { TEN_THOUSAND_ROSES_CATEGORIES, TEN_THOUSAND_ROSES_MENU_ITEMS } from '@/data/tenThousandRosesMenu';
 import { ABY_ROAD_CATEGORIES, ABY_ROAD_MENU_ITEMS } from '@/data/abyRoadMenu';
 import { CSALT_CATEGORIES, CSALT_MENU_ITEMS } from '@/data/csaltMenu';
+import { SIP_N_STREET_CATEGORIES, SIP_N_STREET_MENU_ITEMS } from '@/data/sipNStreetMenu';
+import { BARRACKS_CATEGORIES, BARRACKS_MENU_ITEMS } from '@/data/barracksMenu';
 import { SpatialRestaurantMenu } from '@/components/menu/SpatialRestaurantMenu';
 
 const SPATIAL_EMOJIS = [
@@ -218,6 +220,20 @@ export default function RestaurantDetailPage() {
           found.slug === 'csalt-cafe' ||
           customFound.name.toLowerCase().includes('csalt');
 
+        const isSipNStreet =
+          slug === 'sip-n-street-brew-and-refreshments-mu9qvrtr' ||
+          slug === 'sip-n-street' ||
+          slug === 'sip-n-street-brew-and-refreshments' ||
+          found.slug?.includes('sip-n-street') ||
+          customFound.name.toLowerCase().includes('sip');
+
+        const isBarracks =
+          slug === 'barracks-grill-and-resto-bar' ||
+          slug === 'barracks-grill' ||
+          slug === 'barracks' ||
+          found.slug?.includes('barrack') ||
+          customFound.name.toLowerCase().includes('barrack');
+
         if (menu.data?.items?.length) {
           setCategories(menu.data.categories || []);
           setItems(menu.data.items);
@@ -263,6 +279,12 @@ export default function RestaurantDetailPage() {
         } else if (isCsalt) {
           setCategories(CSALT_CATEGORIES.map(c => ({ ...c, restaurant_id: found.id })));
           setItems(CSALT_MENU_ITEMS.map(i => ({ ...i, restaurant_id: found.id })));
+        } else if (isSipNStreet) {
+          setCategories(SIP_N_STREET_CATEGORIES.map(c => ({ ...c, restaurant_id: found.id })));
+          setItems(SIP_N_STREET_MENU_ITEMS.map(i => ({ ...i, restaurant_id: found.id })));
+        } else if (isBarracks) {
+          setCategories(BARRACKS_CATEGORIES.map(c => ({ ...c, restaurant_id: found.id })));
+          setItems(BARRACKS_MENU_ITEMS.map(i => ({ ...i, restaurant_id: found.id })));
         } else {
           setCategories(menu.data?.categories?.length ? menu.data.categories : [
             { id: 'cat-1', restaurant_id: found.id, name: 'House Specialties', sort_order: 1 },
