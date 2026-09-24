@@ -9,14 +9,22 @@ const asyncHandler = require('../utils/asyncHandler');
 const ApiError = require('../utils/apiError');
 const { query } = require('../config/db');
 const { parsePagination, buildPageMeta } = require('../utils/pagination');
+const cache = require('../utils/cache');
 const { syncToRestaurantTs, removeFromRestaurantTs, getDefaultCoverImage, inferCategory } = require('../services/restaurantSync.service');
 
 /** GET /api/restaurants — public browse/search/filter/sort/paginate */
 const search = asyncHandler(async (req, res) => {
   const { page, limit, offset } = parsePagination(req.query);
+  const cuisineSlugs = req.query.cuisines
+    ? req.query.cuisines.split(',')
+    : req.query.cuisine
+    ? [req.query.cuisine]
+    : req.query.category
+    ? [req.query.category]
+    : [];
   const { rows, totalCount } = await restaurantModel.search({
-    searchTerm: req.query.q,
-    cuisineSlugs: req.query.cuisines ? req.query.cuisines.split(',') : [],
+    searchTerm: req.query.q || req.query.search,
+    cuisineSlugs,
     priceRange: req.query.priceRange,
     dietaryOptions: req.query.dietary ? req.query.dietary.split(',') : [],
     services: req.query.services ? req.query.services.split(',') : [],

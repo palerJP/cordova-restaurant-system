@@ -123,6 +123,15 @@ async function search({
         expandedSlugs.add('pizza-pasta');
         expandedPatterns.add('%pizza%');
         expandedPatterns.add('%pasta%');
+      } else if (lower === 'fast-food' || lower === 'fast food' || lower === 'fastfood' || lower === 'burger' || lower === 'burgers') {
+        expandedSlugs.add('fast-food');
+        expandedSlugs.add('fast food');
+        expandedPatterns.add('%fast food%');
+        expandedPatterns.add('%fast-food%');
+        expandedPatterns.add('%fastfood%');
+        expandedPatterns.add('%burger%');
+        expandedPatterns.add('%fries%');
+        expandedPatterns.add('%mcdonald%');
       }
     }
 

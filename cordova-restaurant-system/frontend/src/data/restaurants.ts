@@ -362,6 +362,9 @@ function inferCuisines(name: string, description: string = '', barangay: string 
   if (text.includes('street food') || text.includes('tambayan') || text.includes('food park') || text.includes('bilao')) {
     list.push('Street Food');
   }
+  if (text.includes('fast food') || text.includes('fast-food') || text.includes('fastfood') || text.includes('burger') || text.includes('fries') || text.includes('mcdonald')) {
+    list.push('Fast Food');
+  }
   if (list.length === 0 || text.includes('pinoy') || text.includes('filipino') || text.includes('cebuano') || text.includes('lutong-bahay') || text.includes('native')) {
     list.push('Filipino');
   }
@@ -442,6 +445,16 @@ export function matchesCategory(restaurant: Restaurant, category: string): boole
   if (catNorm === 'all') return true;
   if (restCatNorm && (restCatNorm === catNorm || restCatNorm.includes(catNorm) || catNorm.includes(restCatNorm))) {
     return true;
+  }
+
+  // Also match against cuisines array (e.g. from backend or inferred)
+  if (restaurant.cuisines && Array.isArray(restaurant.cuisines)) {
+    if (restaurant.cuisines.some((c) => {
+      const cNorm = normalizeKey(c);
+      return cNorm === catNorm || cNorm.includes(catNorm) || catNorm.includes(cNorm);
+    })) {
+      return true;
+    }
   }
 
   return false;

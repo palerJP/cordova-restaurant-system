@@ -160,6 +160,16 @@ async function addCordovaEstablishments() {
     ON CONFLICT DO NOTHING;
   `);
 
+  // Ensure McDonald's and Papsy's BBQ have fast-food cuisine
+  await pool.query(`
+    INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
+    SELECT r.id, c.id
+    FROM restaurants r, cuisines c
+    WHERE r.slug IN ('mcdonalds-cordova', 'papsys-bbq')
+      AND c.slug = 'fast-food'
+    ON CONFLICT DO NOTHING;
+  `);
+
   console.log('Successfully inserted Entoy\'s Bakasihan, Tita Kim\'s, Sungka, and updated cuisine mappings!');
   await pool.end();
 }

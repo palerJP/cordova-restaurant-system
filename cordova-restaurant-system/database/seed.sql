@@ -259,7 +259,10 @@ INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
 SELECT '44444444-4444-4444-a444-444444444443', id FROM cuisines WHERE slug IN ('grill-bbq','filipino')
 ON CONFLICT DO NOTHING;
 INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
-SELECT '44444444-4444-4444-a444-44444444445b', id FROM cuisines WHERE slug IN ('grill-bbq','filipino')
+SELECT '44444444-4444-4444-a444-44444444445b', id FROM cuisines WHERE slug IN ('grill-bbq','filipino','fast-food')
+ON CONFLICT DO NOTHING;
+INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
+SELECT '44444444-4444-4444-a444-444444444449', id FROM cuisines WHERE slug IN ('fast-food')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO restaurant_dietary_options (restaurant_id, option) VALUES
