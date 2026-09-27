@@ -63,7 +63,6 @@ export function ProfileDropdown() {
   } else if (user.role === 'owner') {
     menuItems.push(
       { href: '/dashboard', label: 'My Business', icon: LayoutDashboard },
-      { href: '/dashboard/new', label: 'Add Business', icon: PlusCircle },
       { href: '/favorites', label: 'My Favorites', icon: Heart },
       { href: '/history', label: 'Search History', icon: History }
     );
