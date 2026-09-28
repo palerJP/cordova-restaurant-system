@@ -25,14 +25,13 @@ import { RestaurantGridSkeleton } from '@/components/ui/Skeleton';
 import { Pagination } from '@/components/ui/Pagination';
 import type { Restaurant, PageMeta } from '@/lib/types';
 import { isRestaurantVisible, getAllStaticRestaurants, normalizeKey, matchesCategory } from '@/data/restaurants';
-import { aiSearchRestaurants, standardSearchRestaurants } from '@/lib/aiSearch';
+import { standardSearchRestaurants } from '@/lib/aiSearch';
 
 export default function HomePage() {
   const router = useRouter();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
-  const [aiMode, setAiMode] = useState(true);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
@@ -68,24 +67,7 @@ export default function HomePage() {
       let apiList: Restaurant[] = [];
       const queryTerm = debouncedQuery.trim();
 
-      // If AI mode is active and there's a search term, query the smart AI ranking endpoint
-      if (aiMode && queryTerm) {
-        try {
-          const res = await api.post(
-            '/api/search',
-            {
-              keyword: queryTerm,
-              cuisine: activeCategory && activeCategory !== 'restaurants' ? activeCategory : undefined,
-            },
-            { auth: false }
-          );
-          if (res.data && Array.isArray(res.data) && res.data.length > 0) {
-            apiList = res.data;
-          }
-        } catch {
-          apiList = [];
-        }
-      } else if (!aiMode && queryTerm) {
+      if (queryTerm) {
         try {
           const params = new URLSearchParams();
           params.set('q', queryTerm);
@@ -132,29 +114,10 @@ export default function HomePage() {
       let all: Restaurant[] = [];
 
       if (queryTerm) {
-        if (aiMode) {
-          if (apiList.length > 0) {
-            // Retain the AI ranking order from apiList
-            const seen = new Set<string>();
-            for (const item of apiList) {
-              const key = normalizeKey(item.slug || item.name);
-              const fullItem = map.get(key) || item;
-              if (isRestaurantVisible(fullItem) && !seen.has(key)) {
-                all.push(fullItem);
-                seen.add(key);
-              }
-            }
-          } else {
-            // High-precision client-side AI semantic search with menus & reviews
-            all = aiSearchRestaurants(staticList, queryTerm, activeCategory);
-          }
+        if (apiList.length > 0) {
+          all = Array.from(map.values()).filter(isRestaurantVisible);
         } else {
-          // Standard token-based search without whole-phrase substring breakage
-          if (apiList.length > 0) {
-            all = Array.from(map.values()).filter(isRestaurantVisible);
-          } else {
-            all = standardSearchRestaurants(staticList, queryTerm, activeCategory);
-          }
+          all = standardSearchRestaurants(staticList, queryTerm, activeCategory);
         }
       } else {
         all = Array.from(map.values()).filter(isRestaurantVisible);
@@ -185,7 +148,7 @@ export default function HomePage() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedQuery, activeCategory, page, aiMode]);
+  }, [debouncedQuery, activeCategory, page]);
 
   const fetchRecommendations = useCallback(async () => {
     setRecLoading(true);
@@ -243,23 +206,6 @@ export default function HomePage() {
     setPage(1);
     if (establishmentsRef.current) {
       establishmentsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
-
-  const handleChipClick = (chip: string) => {
-    if (searchQuery.trim().toLowerCase() === chip.toLowerCase()) {
-      setSearchQuery('');
-      setDebouncedQuery('');
-      setPage(1);
-    } else {
-      setSearchQuery(chip);
-      setDebouncedQuery(chip);
-      setPage(1);
-      setTimeout(() => {
-        if (establishmentsRef.current) {
-          establishmentsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 50);
     }
   };
 
@@ -354,44 +300,22 @@ export default function HomePage() {
       {/* FLOATING SPATIAL SEARCH BAR SECTION */}
       <section className="relative z-20 -mt-12 px-4 max-w-3xl mx-auto group">
         {/* Spatial Ambient Glow Backlight */}
-        <div
-          className={`absolute -inset-1.5 rounded-3xl blur-2xl opacity-60 dark:opacity-40 transition-all duration-500 pointer-events-none -z-10 ${
-            aiMode
-              ? 'bg-gradient-to-r from-purple-500/30 via-fuchsia-500/25 to-indigo-500/30'
-              : 'bg-gradient-to-r from-emerald-500/25 via-teal-500/20 to-amber-500/25'
-          }`}
-        />
+        <div className="absolute -inset-1.5 rounded-3xl blur-2xl opacity-60 dark:opacity-40 transition-all duration-500 pointer-events-none -z-10 bg-gradient-to-r from-emerald-500/25 via-teal-500/20 to-amber-500/25" />
 
         <form
           onSubmit={handleSearchSubmit}
-          className={`relative rounded-2xl transition-all duration-300 p-2 sm:p-2.5 flex items-center gap-2 backdrop-blur-2xl ${
-            aiMode
-              ? 'bg-white/90 dark:bg-[#140e24]/85 border border-purple-400/40 dark:border-purple-400/30 shadow-[0_16px_40px_rgba(147,51,234,0.14),inset_0_1px_1.5px_rgba(255,255,255,0.7)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.4),inset_0_1px_1.5px_rgba(255,255,255,0.15)] ring-1 ring-purple-400/20'
-              : 'bg-white/90 dark:bg-[#161e18]/90 border border-white/80 dark:border-white/15 shadow-[0_16px_40px_rgba(0,0,0,0.08),inset_0_1px_1.5px_rgba(255,255,255,0.9)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.4),inset_0_1px_1.5px_rgba(255,255,255,0.12)] ring-1 ring-black/[0.04] dark:ring-white/[0.05]'
-          }`}
+          className="relative rounded-2xl transition-all duration-300 p-2 sm:p-2.5 flex items-center gap-2 backdrop-blur-2xl bg-white/90 dark:bg-[#161e18]/90 border border-white/80 dark:border-white/15 shadow-[0_16px_40px_rgba(0,0,0,0.08),inset_0_1px_1.5px_rgba(255,255,255,0.9)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.4),inset_0_1px_1.5px_rgba(255,255,255,0.12)] ring-1 ring-black/[0.04] dark:ring-white/[0.05]"
         >
           <div className="flex items-center pl-3 text-stone-500 shrink-0">
-            {aiMode ? (
-              <Sparkles size={20} className="text-purple-600 dark:text-purple-400 animate-pulse" />
-            ) : (
-              <Search size={20} className="text-emerald-700 dark:text-emerald-400" />
-            )}
+            <Search size={20} className="text-emerald-700 dark:text-emerald-400" />
           </div>
 
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={
-              aiMode
-                ? 'Ask AI: search seafood, bakasi, sunset view, romantic dinner...'
-                : 'Search restaurants, fresh seafood, BBQ, cafes...'
-            }
-            className={`flex-1 px-2.5 py-3 bg-transparent text-sm sm:text-base outline-none font-sans font-medium transition-colors ${
-              aiMode
-                ? 'text-stone-900 dark:text-white placeholder:text-purple-700/70 dark:placeholder:text-purple-300/70'
-                : 'text-stone-900 dark:text-white placeholder:text-stone-500 dark:placeholder:text-stone-400'
-            }`}
+            placeholder="Search restaurants, fresh seafood, BBQ, cafes..."
+            className="flex-1 px-2.5 py-3 bg-transparent text-sm sm:text-base outline-none font-sans font-medium transition-colors text-stone-900 dark:text-white placeholder:text-stone-500 dark:placeholder:text-stone-400"
           />
 
           {searchQuery && (
@@ -409,21 +333,6 @@ export default function HomePage() {
             </button>
           )}
 
-          {/* AI Mode Toggle Pill Button */}
-          <button
-            type="button"
-            onClick={() => setAiMode(!aiMode)}
-            className={`flex items-center gap-1.5 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl text-xs font-bold tracking-wide transition-all duration-300 shrink-0 select-none ${
-              aiMode
-                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-[0_4px_14px_rgba(147,51,234,0.35),inset_0_1px_1px_rgba(255,255,255,0.4)] border border-purple-300/40 ring-1 ring-purple-400/30 scale-105'
-                : 'bg-stone-100/90 dark:bg-white/10 hover:bg-stone-200/90 dark:hover:bg-white/15 text-stone-800 dark:text-stone-200 border border-stone-300/80 dark:border-white/10'
-            }`}
-            title="Toggle AI Search Mode"
-          >
-            <Sparkles size={13} className={aiMode ? 'text-purple-200' : 'text-stone-500'} />
-            <span>AI Mode</span>
-          </button>
-
           {/* Search Action Button */}
           <button
             type="submit"
@@ -433,33 +342,6 @@ export default function HomePage() {
             <Search size={18} />
           </button>
         </form>
-
-        {/* Quick Suggestion Chips */}
-        {aiMode && (
-          <div className="flex flex-wrap items-center justify-center gap-2 mt-4 text-xs">
-            <span className="text-stone-700 dark:text-stone-300 font-bold text-[11px] flex items-center gap-1">
-              <Sparkles size={12} className="text-purple-500" /> Popular Searches:
-            </span>
-            {['Fresh Seafood', 'Bakasi Eel', 'Sunset & Parola View', 'Budget-Friendly BBQ', 'Artisan Coffee'].map((chip) => {
-              const isActive = searchQuery.trim().toLowerCase() === chip.toLowerCase();
-              return (
-                <button
-                  key={chip}
-                  type="button"
-                  onClick={() => handleChipClick(chip)}
-                  className={`px-3.5 py-1.5 rounded-full font-bold transition-all text-[11px] backdrop-blur-xl active:scale-95 ${
-                    isActive
-                      ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white border border-purple-300 shadow-[0_4px_14px_rgba(147,51,234,0.4)] scale-105 ring-2 ring-purple-400/40'
-                      : 'bg-white/80 dark:bg-purple-950/50 hover:bg-white dark:hover:bg-purple-900/80 border border-purple-300/60 dark:border-purple-700/60 text-purple-900 dark:text-purple-200 shadow-spatial-sm hover:shadow-spatial-md hover:scale-105'
-                  }`}
-                  title={`Search ${chip}`}
-                >
-                  ✨ {chip}
-                </button>
-              );
-            })}
-          </div>
-        )}
       </section>
 
       {/* EXPLORE BY CATEGORY SECTION */}
@@ -602,21 +484,21 @@ export default function HomePage() {
 
       {/* ALL ESTABLISHMENTS SECTION */}
       <section ref={establishmentsRef} className="max-w-6xl mx-auto px-4 mt-24 scroll-mt-6 relative z-10">
-        {/* AI / Active Search Feedback Banner */}
+        {/* Active Search Feedback Banner */}
         {debouncedQuery.trim() && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-8 p-4 sm:p-5 rounded-2xl bg-purple-500/10 dark:bg-purple-950/40 border border-purple-300/40 dark:border-purple-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 backdrop-blur-xl shadow-spatial-sm"
+            className="mb-8 p-4 sm:p-5 rounded-2xl bg-emerald-500/10 dark:bg-emerald-950/40 border border-emerald-300/40 dark:border-emerald-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 backdrop-blur-xl shadow-spatial-sm"
           >
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-purple-600/15 text-purple-600 dark:text-purple-400 shrink-0">
-                <Sparkles size={20} className="animate-pulse" />
+              <div className="p-2.5 rounded-xl bg-emerald-600/15 text-emerald-600 dark:text-emerald-400 shrink-0">
+                <Search size={20} />
               </div>
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs font-extrabold uppercase tracking-wider text-purple-800 dark:text-purple-300 bg-purple-200/60 dark:bg-purple-900/60 px-2 py-0.5 rounded-md">
-                    {aiMode ? 'AI Search Active' : 'Search Active'}
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 bg-emerald-200/60 dark:bg-emerald-900/60 px-2 py-0.5 rounded-md">
+                    Search Active
                   </span>
                   <p className="text-sm sm:text-base font-bold text-stone-900 dark:text-white">
                     Showing results for &ldquo;{debouncedQuery}&rdquo;
@@ -634,7 +516,7 @@ export default function HomePage() {
                 setDebouncedQuery('');
                 setPage(1);
               }}
-              className="text-xs font-bold text-purple-800 dark:text-purple-200 hover:text-purple-950 dark:hover:text-white px-3.5 py-2 rounded-xl bg-purple-200/50 hover:bg-purple-200 dark:bg-purple-800/40 dark:hover:bg-purple-800/80 transition-all flex items-center gap-1.5 shrink-0 border border-purple-300/50 dark:border-purple-600/50 shadow-spatial-sm active:scale-95"
+              className="text-xs font-bold text-emerald-800 dark:text-emerald-200 hover:text-emerald-950 dark:hover:text-white px-3.5 py-2 rounded-xl bg-emerald-200/50 hover:bg-emerald-200 dark:bg-emerald-800/40 dark:hover:bg-emerald-800/80 transition-all flex items-center gap-1.5 shrink-0 border border-emerald-300/50 dark:border-emerald-600/50 shadow-spatial-sm active:scale-95"
             >
               <X size={14} />
               <span>Clear Search</span>
@@ -646,7 +528,7 @@ export default function HomePage() {
           <div>
             <h2 className="font-serif text-3xl sm:text-4xl font-bold text-stone-900 dark:text-white capitalize">
               {debouncedQuery.trim()
-                ? (aiMode ? 'AI Ranked Recommendations' : `Search Results for "${debouncedQuery}"`)
+                ? `Search Results for "${debouncedQuery}"`
                 : (activeCategory ? `${activeCategory} Establishments` : 'All Establishments')}
             </h2>
             <div className="h-0.5 w-16 bg-cordova-gold mt-3 rounded-full" />
@@ -663,7 +545,7 @@ export default function HomePage() {
             </p>
             <p className="text-xs text-stone-500">
               {debouncedQuery.trim()
-                ? `No restaurants found matching "${debouncedQuery}". Try a different search term or check popular searches above.`
+                ? `No restaurants found matching "${debouncedQuery}". Try a different search term.`
                 : 'Try adjusting your search query or selecting a different category.'}
             </p>
             {(activeCategory || searchQuery || debouncedQuery) && (
