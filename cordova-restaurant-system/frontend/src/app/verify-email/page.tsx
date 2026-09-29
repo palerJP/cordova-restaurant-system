@@ -87,10 +87,10 @@ export default function VerifyEmailPage() {
 
             <div className="pt-3 space-y-3">
               <Link
-                href="/preferences?firstTime=true"
+                href="/login"
                 className="w-full bg-cordova-green hover:bg-cordova-greenHover text-white font-bold text-xs py-3.5 px-4 rounded-xl shadow transition-colors flex items-center justify-center gap-2 uppercase tracking-wider"
               >
-                Set Your Food Preferences <ArrowRight size={16} />
+                Log in and continue <ArrowRight size={16} />
               </Link>
               <Link
                 href="/"

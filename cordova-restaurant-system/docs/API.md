@@ -114,8 +114,11 @@ API client handles refreshing automatically on a 401.
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | POST | `/` | optional | See body below. Logged-in users' saved preferences fill in any field not explicitly sent. |
+| POST | `/feedback` | customer | `{ restaurantId, sentiment, ...preferenceSnapshot }` — sentiment is `1` (helpful) or `-1` (not helpful); updates this user's learning data. |
 | GET | `/weights` | admin | Current active scoring weight profile |
 | PATCH | `/weights` | admin | `{ cuisineWeight, budgetWeight, proximityWeight, dietaryWeight, ratingWeight }` — must sum to 1.0 |
+| GET | `/training` | admin | Global training signal counts, minimum requirements, active model version and history count |
+| POST | `/training` | admin | Train and activate a new global logistic-regression scorer from feedback, favorites and reviews |
 
 **POST `/api/recommendations` body:**
 ```json
@@ -141,8 +144,19 @@ API client handles refreshing automatically on a 401.
   }
 }
 ```
-See `docs/DATABASE.md` and `backend/src/services/recommendation.service.js`
-for the full scoring algorithm explanation.
+For a logged-in user, response `meta.personalization.mode` is `learned` when the
+user has at least 8 training signals, including at least 2 positive and 2
+negative signals. Signals include helpful/not-helpful votes, favorites, and
+visible reviews rated 4–5 or 1–2 stars. Otherwise, a trained global logistic-
+regression model is used (`mode: global_model`) when available; if it is not,
+the admin-configurable preference weights are used (`mode: preference_match`).
+Saving admin weights also attempts a global retrain. Admins can manually retrain
+from the `/training` endpoints after new feedback has accumulated. The latest
+model version is only activated when the training threshold is met.
+Dietary, required dine-in/takeout/delivery service, distance and open-now
+constraints remain filters. Requested amenities such as Wi-Fi, parking and
+seaside views contribute to the ranked match score. Guests use the global model
+when trained and otherwise the weighted preference-based cold-start ranker.
 
 ## Admin — `/api/admin` (all routes require `role: admin`)
 

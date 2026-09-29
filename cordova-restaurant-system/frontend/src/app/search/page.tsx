@@ -40,8 +40,9 @@ export default function SearchPage() {
           dietaryTags: activeFilters.dietaryTags,
           userLat: activeFilters.userLat,
           userLng: activeFilters.userLng,
+          applyPreferences: activeFilters.applyPreferences,
         },
-        { auth: false }
+        { auth: true }
       );
 
       if (res.data && Array.isArray(res.data) && res.data.length > 0) {

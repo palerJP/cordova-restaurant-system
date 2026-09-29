@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, useRef, FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -41,11 +41,11 @@ const strengthConfig: Record<PasswordStrength, { label: string; color: string; w
 };
 
 export default function RegisterPage() {
-  const { user, register, login, loginWithGoogle, loginWithFacebook } = useAuth();
+  const { user, loading: authLoading, register, login, loginWithGoogle, loginWithFacebook } = useAuth();
   const { showToast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirect');
+  const redirectTo = searchParams.get('redirect') || searchParams.get('returnTo');
   const roleParam = searchParams.get('role');
 
   const [firstName, setFirstName] = useState('');
@@ -61,9 +61,11 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<'google' | 'facebook' | null>(null);
   const [hasRegistered, setHasRegistered] = useState(false);
+  const redirectedRef = useRef(false);
 
   useEffect(() => {
-    if (user && !loading && !oauthLoading && !hasRegistered) {
+    if (user && !authLoading && !loading && !oauthLoading && !hasRegistered && !redirectedRef.current) {
+      redirectedRef.current = true;
       if (redirectTo && redirectTo !== '/' && redirectTo.startsWith('/')) {
         const isRestrictedAdmin = redirectTo.startsWith('/admin') && user.role !== 'admin';
         const isRestrictedDashboard = redirectTo.startsWith('/dashboard') && user.role !== 'owner' && user.role !== 'admin';
@@ -72,15 +74,11 @@ export default function RegisterPage() {
           return;
         }
       }
-      if (user.role === 'owner') {
-        router.replace('/dashboard');
-      } else if (user.role === 'admin') {
-        router.replace('/admin');
-      } else {
-        router.replace('/');
-      }
+      if (user.role === 'owner') router.replace('/dashboard');
+      else if (user.role === 'admin') router.replace('/admin');
+      else router.replace('/');
     }
-  }, [user, loading, oauthLoading, redirectTo, router, hasRegistered]);
+  }, [user, authLoading, loading, oauthLoading, redirectTo, router, hasRegistered]);
 
   const strength = password.length > 0 ? getPasswordStrength(password) : null;
 
@@ -117,11 +115,13 @@ export default function RegisterPage() {
         try {
           const loggedInUser = await login(email, password);
           showToast('Account created successfully! Welcome to CordovaEats.', 'success');
+
           if (redirectTo && redirectTo !== '/' && redirectTo.startsWith('/')) {
             router.push(redirectTo);
           } else if (loggedInUser.role === 'owner') {
             router.push('/dashboard/new');
           } else {
+            // Customer: immediately take them to preferences so they can set up their taste profile!
             router.push('/preferences?firstTime=true');
           }
         } catch {
@@ -142,6 +142,7 @@ export default function RegisterPage() {
 
   const handleOAuthSuccess = (authUserData: any) => {
     setHasRegistered(true);
+    redirectedRef.current = true;
     if (redirectTo && redirectTo !== '/' && redirectTo.startsWith('/')) {
       router.push(redirectTo);
     } else if (authUserData?.role === 'owner') {
@@ -154,7 +155,6 @@ export default function RegisterPage() {
   const handleGoogleSignUp = async () => {
     setOauthLoading('google');
 
-    // 1. If Google Client ID is configured, use official Google Identity Services popup
     if (GOOGLE_CLIENT_ID) {
       const client = (window as any).google?.accounts?.oauth2?.initTokenClient({
         client_id: GOOGLE_CLIENT_ID,
@@ -166,9 +166,9 @@ export default function RegisterPage() {
             return;
           }
           try {
-            const user = await loginWithGoogle(tokenResponse.access_token);
+            const userRes = await loginWithGoogle(tokenResponse.access_token);
             showToast('Account created & verified via Google!', 'success');
-            handleOAuthSuccess(user);
+            handleOAuthSuccess(userRes);
           } catch (err) {
             if (err instanceof ApiClientError) showToast(err.message, 'error');
             else showToast('Google sign-up failed. Please try again.', 'error');
@@ -188,13 +188,12 @@ export default function RegisterPage() {
       }
     }
 
-    // 2. Local Dev fallback if Google Client ID is not yet configured in .env.local
     try {
       showToast('Dev Mode: Creating account with simulated Google profile…', 'info');
       const devToken = `google_oauth_token_${Date.now()}`;
-      const user = await loginWithGoogle(devToken);
+      const userRes = await loginWithGoogle(devToken);
       showToast('Account created & verified via Google (Dev Mode)!', 'success');
-      handleOAuthSuccess(user);
+      handleOAuthSuccess(userRes);
     } catch (err) {
       if (err instanceof ApiClientError) showToast(err.message, 'error');
       else showToast('Google sign-up failed.', 'error');
@@ -207,9 +206,9 @@ export default function RegisterPage() {
     setOauthLoading('facebook');
     try {
       const mockFbToken = `fb_oauth_token_${Date.now()}`;
-      const user = await loginWithFacebook(mockFbToken);
+      const userRes = await loginWithFacebook(mockFbToken);
       showToast('Account created & verified via Facebook!', 'success');
-      handleOAuthSuccess(user);
+      handleOAuthSuccess(userRes);
     } catch (err) {
       if (err instanceof ApiClientError) showToast(err.message, 'error');
       else showToast('Facebook sign-up failed.', 'error');
@@ -217,6 +216,14 @@ export default function RegisterPage() {
       setOauthLoading(null);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center py-10 px-4">
+        <div className="w-10 h-10 rounded-full border-4 border-amber-500 border-t-transparent animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center py-10 px-4">
@@ -354,7 +361,6 @@ export default function RegisterPage() {
               </button>
             </div>
             {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
-            {/* Strength Indicator */}
             {strength && (
               <div className="mt-2">
                 <div className="h-1.5 w-full bg-stone-200 dark:bg-stone-700 rounded-full overflow-hidden">
@@ -398,7 +404,6 @@ export default function RegisterPage() {
             {errors.confirmPassword && (
               <p className="mt-1 text-sm text-red-500">{errors.confirmPassword}</p>
             )}
-            {/* Match indicator */}
             {confirmPassword.length > 0 && !errors.confirmPassword && (
               <div className="flex items-center gap-1.5 mt-1">
                 {confirmPassword === password ? (
@@ -432,11 +437,11 @@ export default function RegisterPage() {
 
           <Button
             type="submit"
-            className="w-full bg-cordova-gold hover:bg-cordova-goldHover text-white py-3.5 rounded-xl uppercase font-bold text-xs tracking-wider shadow transition-colors"
+            className="w-full bg-[#F59E0B] hover:bg-[#D97706] text-white py-3.5 rounded-xl uppercase font-bold text-xs tracking-wider shadow transition-colors"
             loading={loading}
             disabled={loading}
           >
-            Create account
+            {role === 'owner' ? 'Create Business Owner Account' : 'Create account'}
           </Button>
         </form>
 

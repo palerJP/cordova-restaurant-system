@@ -1162,6 +1162,7 @@ function PromotionsTab({ restaurantId }: { restaurantId: string }) {
                     alt={paymentMethod === 'gcash' ? 'GCash QR' : 'Maya QR'}
                     fill
                     className="object-contain p-1"
+                    style={{ objectFit: 'contain' }}
                   />
                 </div>
                 <p className="text-[10px] text-stone-400 mt-1.5 flex items-center justify-center gap-1 font-medium">
@@ -1183,6 +1184,30 @@ function PromotionsTab({ restaurantId }: { restaurantId: string }) {
                   <span className={`inline-block w-2 h-2 rounded-full ${paymentMethod === 'gcash' ? 'bg-[#007DFE]' : 'bg-[#00D665]'}`} />
                   {paymentMethod === 'gcash' ? 'GCash (InstaPay Supported)' : 'Maya (InstaPay Supported)'}
                 </p>
+
+                <div className="bg-white dark:bg-stone-800 rounded-xl p-2.5 border border-stone-200 dark:border-stone-700 text-[11px] space-y-1">
+                  <div className="flex justify-between">
+                    <span className="text-stone-500">Name:</span>
+                    <span className="font-bold text-stone-800 dark:text-stone-200">
+                      {paymentMethod === 'gcash' ? 'JO*N HE***N L.' : 'JOHN HERNAN LICAMI'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-stone-500">Number:</span>
+                    <span className="font-bold text-stone-800 dark:text-stone-200 font-mono">
+                      {paymentMethod === 'gcash' ? '+63 992 512 ••••' : '+63 *** *** 5811'}
+                    </span>
+                  </div>
+                  {paymentMethod === 'maya' && (
+                    <div className="flex justify-between">
+                      <span className="text-stone-500">Handle:</span>
+                      <span className="font-semibold text-emerald-600 dark:text-emerald-400 font-mono">
+                        @licamijohnhernan
+                      </span>
+                    </div>
+                  )}
+                </div>
+
                 <p className="text-[11px] text-stone-500 dark:text-stone-400 leading-snug">
                   Scan the QR code using your {paymentMethod === 'gcash' ? 'GCash' : 'Maya'} app to complete the ₱199.00 promotion activation.
                 </p>
@@ -1352,7 +1377,31 @@ function PromotionsTab({ restaurantId }: { restaurantId: string }) {
                 alt={`${renewMethod.toUpperCase()} QR Code`}
                 fill
                 className="object-contain p-1"
+                style={{ objectFit: 'contain' }}
               />
+            </div>
+
+            <div className="w-full bg-white dark:bg-stone-800 rounded-xl p-2.5 border border-stone-200 dark:border-stone-700 text-[11px] space-y-1">
+              <div className="flex justify-between">
+                <span className="text-stone-500">Name:</span>
+                <span className="font-bold text-stone-800 dark:text-stone-200">
+                  {renewMethod === 'gcash' ? 'JO*N HE***N L.' : 'JOHN HERNAN LICAMI'}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-stone-500">Number:</span>
+                <span className="font-bold text-stone-800 dark:text-stone-200 font-mono">
+                  {renewMethod === 'gcash' ? '+63 992 512 ••••' : '+63 *** *** 5811'}
+                </span>
+              </div>
+              {renewMethod === 'maya' && (
+                <div className="flex justify-between">
+                  <span className="text-stone-500">Handle:</span>
+                  <span className="font-semibold text-emerald-600 dark:text-emerald-400 font-mono">
+                    @licamijohnhernan
+                  </span>
+                </div>
+              )}
             </div>
 
             <p className="text-[11px] text-stone-400 font-medium text-center">

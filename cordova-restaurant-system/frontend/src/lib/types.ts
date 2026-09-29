@@ -178,15 +178,27 @@ export interface OperatingHour {
   is_closed: boolean;
 }
 
+export interface MatchedPreferences {
+  cuisines?: string[];
+  dietary?: string[];
+  services?: string[];
+  budgetFit?: boolean;
+  isNear?: boolean;
+}
+
 export interface RecommendationResult {
   restaurant: Restaurant;
   score: number;
+  matchPercentage?: number;
+  aiSuggested?: boolean;
+  matchedPreferences?: MatchedPreferences;
   scoreBreakdown: {
     cuisineMatch: number;
     budgetFit: number;
     proximity: number;
     dietaryMatch: number;
     rating: number;
+    servicesMatch?: number;
   };
   reason: string;
 }

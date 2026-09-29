@@ -54,6 +54,7 @@ export function Navbar() {
               alt="CordovaEats Logo"
               fill
               className="object-contain"
+              style={{ objectFit: 'contain' }}
               priority
             />
           </div>

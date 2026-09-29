@@ -20,16 +20,18 @@ import {
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
+import { getTastePreferences, hasTastePreferences } from '@/lib/taste-preferences';
 import { RestaurantCard } from '@/components/RestaurantCard';
 import { RestaurantGridSkeleton } from '@/components/ui/Skeleton';
 import { Pagination } from '@/components/ui/Pagination';
-import type { Restaurant, PageMeta } from '@/lib/types';
+import type { Restaurant, PageMeta, MatchedPreferences } from '@/lib/types';
 import { isRestaurantVisible, getAllStaticRestaurants, normalizeKey, matchesCategory } from '@/data/restaurants';
 import { standardSearchRestaurants } from '@/lib/aiSearch';
 
 export default function HomePage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const [hasPassedTasteGate, setHasPassedTasteGate] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -39,12 +41,26 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
 
   // Recommended For You Carousel State & Ref
-  const [recommendations, setRecommendations] = useState<{ restaurant: Restaurant; score: number }[]>([]);
+  const [recommendations, setRecommendations] = useState<{
+    restaurant: Restaurant;
+    score: number;
+    matchedPreferences?: MatchedPreferences;
+    reason?: string;
+  }[]>([]);
   const [recLoading, setRecLoading] = useState(true);
   const recScrollRef = useRef<HTMLDivElement>(null);
   const establishmentsRef = useRef<HTMLDivElement>(null);
 
   const PAGE_SIZE = 6;
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user && !hasTastePreferences()) {
+      router.replace('/preferences?firstTime=true&returnTo=%2F');
+      return;
+    }
+    setHasPassedTasteGate(true);
+  }, [authLoading, user, router]);
 
   // Debounce typing in search input to prevent network spam and UI stutter
   useEffect(() => {
@@ -153,23 +169,39 @@ export default function HomePage() {
   const fetchRecommendations = useCallback(async () => {
     setRecLoading(true);
     try {
-      let recList: { restaurant: Restaurant; score: number }[] = [];
+      let recList: {
+        restaurant: Restaurant;
+        score: number;
+        matchedPreferences?: MatchedPreferences;
+        reason?: string;
+      }[] = [];
+      let recommendationsApiResponded = false;
       try {
-        const res = await api.post('/api/recommendations', { limit: 10 }, { auth: !!user });
+        const guestPreferences = user ? null : getTastePreferences();
+        const res = await api.post('/api/recommendations', {
+          preferredCuisines: guestPreferences?.preferredCuisines || [],
+          dietaryRestrictions: guestPreferences?.dietaryRestrictions || [],
+          requiredServices: guestPreferences?.preferredServices || [],
+          budgetRange: guestPreferences?.budgetRange || undefined,
+          limit: 10,
+        }, { auth: !!user });
+        recommendationsApiResponded = true;
         if (res.data && Array.isArray(res.data)) {
           recList = res.data
             .filter((r: any) => isRestaurantVisible(r.restaurant))
             .map((r: any) => ({
               restaurant: r.restaurant,
-              score: r.score,
+              score: r.matchPercentage || Math.round(r.score),
+              matchedPreferences: r.matchedPreferences,
+              reason: r.reason,
             }));
         }
       } catch {
         recList = [];
       }
 
-      // If recommendations API is empty or user has no custom recs yet, show high-rated establishments
-      if (recList.length === 0) {
+      // Use generic offline fallback only for guests; never bypass a user's saved constraints.
+      if (recList.length === 0 && !recommendationsApiResponded && !user) {
         const staticList = getAllStaticRestaurants().filter(isRestaurantVisible);
         recList = staticList.slice(0, 8).map((r, i) => ({
           restaurant: r,
@@ -218,6 +250,14 @@ export default function HomePage() {
     setPage(1);
   };
 
+  if (!hasPassedTasteGate) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center bg-cordova-cream dark:bg-[#121614]">
+        <div className="w-10 h-10 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-cordova-cream dark:bg-[#121614] pb-20 relative overflow-hidden">
       {/* AMBIENT SPATIAL LIGHTING ACCENTS */}
@@ -234,6 +274,7 @@ export default function HomePage() {
           fill
           priority
           className="object-cover object-center"
+          style={{ objectFit: 'cover', objectPosition: 'center' }}
         />
 
         {/* Dark Gradient Overlay */}
@@ -253,6 +294,7 @@ export default function HomePage() {
               alt="CordovaEats Emblem"
               fill
               className="object-contain"
+              style={{ objectFit: 'contain' }}
               priority
             />
           </motion.div>
@@ -398,7 +440,7 @@ export default function HomePage() {
             </div>
             <p className="text-xs sm:text-sm text-stone-500 dark:text-stone-400 mt-1">
               {user
-                ? 'Handpicked recommendations curated for your taste preferences.'
+                ? 'Ranked for your saved preferences and personalized by your feedback.'
                 : 'Top-rated culinary hotspots and local favorites in Cordova.'}
             </p>
             <div className="h-0.5 w-16 bg-cordova-gold mt-3 rounded-full" />
@@ -451,7 +493,7 @@ export default function HomePage() {
             ref={recScrollRef}
             className="flex gap-6 overflow-x-auto snap-x snap-mandatory scrollbar-none pb-4 pt-2 px-1 scroll-smooth"
           >
-            {recommendations.map(({ restaurant, score }, idx) => (
+            {recommendations.map(({ restaurant, score, matchedPreferences, reason }, idx) => (
               <motion.div
                 key={restaurant.id}
                 initial={{ opacity: 0, x: 20 }}
@@ -459,7 +501,12 @@ export default function HomePage() {
                 transition={{ duration: 0.35, delay: Math.min(idx, 8) * 0.06 }}
                 className="snap-start shrink-0 w-[290px] sm:w-[320px] lg:w-[350px]"
               >
-                <RestaurantCard restaurant={restaurant} matchScore={score} />
+                <RestaurantCard
+                  restaurant={restaurant}
+                  matchScore={score}
+                  matchedPreferences={matchedPreferences}
+                  suggestionReason={reason}
+                />
               </motion.div>
             ))}
           </div>

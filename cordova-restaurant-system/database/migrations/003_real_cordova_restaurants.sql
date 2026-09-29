@@ -203,8 +203,6 @@ SELECT 'c436f7e2-c0b4-4eff-9aee-911b3741ab1b', id FROM cuisines WHERE slug IN ('
 INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
 SELECT '2d9bdb3c-5cb3-4e1b-b6a6-82137087d563', id FROM cuisines WHERE slug IN ('pizza-pasta','filipino') ON CONFLICT DO NOTHING;
 INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
-SELECT '4783f3c0-9a45-46fa-aa7c-7921ce5c1b44', id FROM cuisines WHERE slug IN ('filipino','grill-bbq') ON CONFLICT DO NOTHING;
-INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
 SELECT '26c7c212-0b35-4189-8095-5676c7603dfd', id FROM cuisines WHERE slug IN ('cafe-desserts') ON CONFLICT DO NOTHING;
 INSERT INTO restaurant_cuisines (restaurant_id, cuisine_id)
 SELECT '3561770f-e6b4-4ef4-bd24-5c202e949bff', id FROM cuisines WHERE slug IN ('filipino') ON CONFLICT DO NOTHING;

@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { api, ApiClientError } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
+import { clearTastePreferences, getTastePreferences, saveTastePreferences, type TastePreferences } from '@/lib/taste-preferences';
 import type { PriceRange } from '@/lib/types';
 
 const FOOD_TYPES = [
@@ -44,18 +45,42 @@ export default function PreferencesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isFirstTime = searchParams.get('firstTime') === 'true';
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
 
   const [selectedCuisines, setSelectedCuisines] = useState<string[]>([]);
   const [selectedDietary, setSelectedDietary] = useState<string[]>([]);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
-  const [selectedBudget, setSelectedBudget] = useState<PriceRange | null>('budget');
+  const [selectedBudget, setSelectedBudget] = useState<PriceRange | null>(null);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
 
   useEffect(() => {
+    if (authLoading) return;
+
     async function loadExistingPreferences() {
+      const guestPreferences = getTastePreferences();
+      if (!user) {
+        if (guestPreferences?.syncedUserId) {
+          // Do not show a previous account's preferences to the next guest.
+          clearTastePreferences();
+        } else if (guestPreferences) {
+          setSelectedCuisines(guestPreferences.preferredCuisines);
+          setSelectedDietary(guestPreferences.dietaryRestrictions);
+          setSelectedServices(guestPreferences.preferredServices);
+          setSelectedBudget(guestPreferences.budgetRange);
+        }
+        setFetching(false);
+        return;
+      }
+
+      if (guestPreferences) {
+        setSelectedCuisines(guestPreferences.preferredCuisines);
+        setSelectedDietary(guestPreferences.dietaryRestrictions);
+        setSelectedServices(guestPreferences.preferredServices);
+        setSelectedBudget(guestPreferences.budgetRange);
+      }
+
       try {
         const res = await api.get('/api/users/me/preferences');
         if (res.data?.preferences) {
@@ -72,7 +97,7 @@ export default function PreferencesPage() {
       }
     }
     loadExistingPreferences();
-  }, []);
+  }, [authLoading, user]);
 
   const toggleCuisine = (item: string) => {
     setSelectedCuisines((prev) =>
@@ -92,26 +117,38 @@ export default function PreferencesPage() {
     );
   };
 
-  const returnTo = searchParams.get('returnTo');
+  const requestedReturnTo = searchParams.get('returnTo');
+  const returnTo = requestedReturnTo?.startsWith('/') && !requestedReturnTo.startsWith('//')
+    ? requestedReturnTo
+    : (isFirstTime ? '/recommendations' : '/');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isFirstTime && !selectedCuisines.length && !selectedDietary.length && !selectedServices.length && !selectedBudget) {
+      toast('Choose at least one taste preference to continue.', 'info');
+      return;
+    }
+
+    const preferences: TastePreferences = {
+      preferredCuisines: selectedCuisines,
+      dietaryRestrictions: selectedDietary,
+      preferredServices: selectedServices,
+      budgetRange: selectedBudget,
+    };
+
     if (!user) {
-      toast('Please log in or sign up to save preferences', 'info');
-      router.push(`/login?returnTo=${encodeURIComponent(returnTo || '/preferences')}`);
+      saveTastePreferences(preferences);
+      toast('Your taste preferences are saved. Let’s explore CordovaEats!', 'success');
+      router.push(returnTo);
       return;
     }
 
     setLoading(true);
     try {
-      await api.put('/api/users/me/preferences', {
-        preferredCuisines: selectedCuisines,
-        dietaryRestrictions: selectedDietary,
-        preferredServices: selectedServices,
-        budgetRange: selectedBudget,
-      });
+      await api.put('/api/users/me/preferences', preferences);
+      saveTastePreferences(preferences, user.id);
       toast('Preferences saved successfully! Welcome to CordovaEats.', 'success');
-      router.push(returnTo || '/');
+      router.push(returnTo);
     } catch (err) {
       toast(err instanceof ApiClientError ? err.message : 'Failed to save preferences', 'error');
     } finally {
@@ -137,7 +174,9 @@ export default function PreferencesPage() {
             CordovaEats
           </h1>
           <p className="text-stone-500 dark:text-stone-400 text-xs sm:text-sm font-medium">
-            Personalize your dining experience & taste preferences
+            {isFirstTime
+              ? 'Tell us what you enjoy so we can recommend places that fit your taste.'
+              : 'Personalize your dining experience & taste preferences'}
           </p>
         </div>
 
@@ -256,12 +295,12 @@ export default function PreferencesPage() {
                 disabled={loading}
                 className="w-full bg-[#F59E0B] hover:bg-[#D97706] text-white font-bold py-3.5 px-6 rounded-2xl text-sm transition-all duration-200 shadow-md disabled:opacity-50"
               >
-                {loading ? 'Saving...' : isFirstTime ? 'Complete Sign Up & Go to Home' : 'Save Preferences'}
+                {loading ? 'Saving...' : isFirstTime ? 'Save tastes & continue' : 'Save Preferences'}
               </button>
 
               <button
                 type="button"
-                onClick={() => router.push(returnTo || '/')}
+                onClick={() => router.push(returnTo)}
                 className="w-full bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 font-semibold py-3 px-6 rounded-2xl text-xs transition-colors"
               >
                 {isFirstTime ? 'Skip for now' : 'Back to Home'}

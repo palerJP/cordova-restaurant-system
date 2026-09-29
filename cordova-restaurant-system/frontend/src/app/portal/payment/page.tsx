@@ -278,10 +278,43 @@ export default function PaymentPortalPage() {
               alt={`${paymentMethod.toUpperCase()} QR Code`}
               fill
               className="object-contain p-2"
+              style={{ objectFit: 'contain' }}
               priority
             />
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1 backdrop-blur-[2px]">
               <Maximize2 size={16} /> Enlarge QR
+            </div>
+          </div>
+
+          {/* Account Details Box */}
+          <div className="w-full bg-white dark:bg-stone-800/90 rounded-2xl p-4 border border-stone-200/90 dark:border-stone-700/90 text-xs space-y-2 shadow-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-stone-500 dark:text-stone-400 font-medium">Account Name:</span>
+              <span className="font-bold text-stone-900 dark:text-white font-mono tracking-wide text-xs sm:text-sm">
+                {paymentMethod === 'gcash' ? 'JO*N HE***N L.' : 'JOHN HERNAN LICAMI'}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-stone-500 dark:text-stone-400 font-medium">
+                {paymentMethod === 'gcash' ? 'Mobile No.:' : 'Mobile / Account No.:'}
+              </span>
+              <span className="font-bold text-stone-900 dark:text-white font-mono tracking-wide">
+                {paymentMethod === 'gcash' ? '+63 992 512 ••••' : '+63 *** *** 5811'}
+              </span>
+            </div>
+            {paymentMethod === 'maya' && (
+              <div className="flex items-center justify-between">
+                <span className="text-stone-500 dark:text-stone-400 font-medium">Maya Handle:</span>
+                <span className="font-semibold text-emerald-600 dark:text-emerald-400 font-mono">
+                  @licamijohnhernan
+                </span>
+              </div>
+            )}
+            <div className="flex items-center justify-between pt-1.5 border-t border-stone-100 dark:border-stone-700/50 text-[11px]">
+              <span className="text-stone-500 dark:text-stone-400 font-medium">Supported Network:</span>
+              <span className="font-semibold text-stone-700 dark:text-stone-300">
+                InstaPay &amp; {paymentMethod === 'gcash' ? 'GCash' : 'Maya'} QR
+              </span>
             </div>
           </div>
 
@@ -418,9 +451,23 @@ export default function PaymentPortalPage() {
                 alt="Enlarged QR"
                 fill
                 className="object-contain p-2"
+                style={{ objectFit: 'contain' }}
               />
             </div>
-            <p className="text-xs text-stone-500 mt-3 text-center">
+            <div className="mt-3 text-center">
+              <p className="font-bold text-sm text-stone-900 dark:text-white">
+                {paymentMethod === 'gcash' ? 'JO*N HE***N L.' : 'JOHN HERNAN LICAMI'}
+              </p>
+              <p className="text-xs font-mono text-stone-500 dark:text-stone-400">
+                {paymentMethod === 'gcash' ? '+63 992 512 ••••' : '+63 *** *** 5811'}
+              </p>
+              {paymentMethod === 'maya' && (
+                <p className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400">
+                  @licamijohnhernan
+                </p>
+              )}
+            </div>
+            <p className="text-xs text-stone-500 mt-2 text-center">
               Scan with your phone or tap anywhere to close
             </p>
           </div>

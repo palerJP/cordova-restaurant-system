@@ -283,11 +283,26 @@ function passesFilters(restaurant, query) {
     }
   }
 
+function satisfiesDietary(userDiet, offeredList) {
+  if (!userDiet) return true;
+  const normUser = String(userDiet).toLowerCase().replace(/[-_\s]/g, '');
+  const normOffered = (offeredList || []).map((d) =>
+    String(d).toLowerCase().replace(/[-_\s]/g, '')
+  );
+  if (normOffered.includes(normUser)) return true;
+  if (normOffered.some((opt) => opt.includes(normUser) || normUser.includes(opt))) return true;
+  if (normUser === 'nopork' || normUser === 'porkfree') {
+    return normOffered.some((o) => ['nopork', 'porkfree', 'halal', 'vegan', 'vegetarian'].includes(o));
+  }
+  if (normUser === 'vegetarian') {
+    return normOffered.some((o) => ['vegetarian', 'vegan'].includes(o));
+  }
+  return false;
+}
+
   if (Array.isArray(dietaryTags) && dietaryTags.length > 0) {
-    const offered = (restaurant.dietary_options || []).map((d) => d.toLowerCase());
-    const satisfiesAll = dietaryTags.every((d) =>
-      offered.some((opt) => opt.includes(d.toLowerCase()) || d.toLowerCase().includes(opt))
-    );
+    const offered = restaurant.dietary_options || [];
+    const satisfiesAll = dietaryTags.every((d) => satisfiesDietary(d, offered));
     if (!satisfiesAll) return false;
   }
 
@@ -297,7 +312,7 @@ function passesFilters(restaurant, query) {
 /**
  * Main Rank Function
  * @param {Array} restaurants - list of restaurant objects
- * @param {Object} query - user query object { keyword, cuisine, priceRange, maxDistanceKm, dietaryTags, userLat, userLng }
+ * @param {Object} query - user query object { keyword, cuisine, priceRange, maxDistanceKm, dietaryTags, userLat, userLng, preferredCuisines }
  * @param {Object} menuItemsMap - Map of restaurantId -> Array of menuItems
  */
 function rankRestaurants(restaurants, query = {}, menuItemsMap = {}) {
@@ -307,6 +322,7 @@ function rankRestaurants(restaurants, query = {}, menuItemsMap = {}) {
     maxDistanceKm,
     userLat,
     userLng,
+    preferredCuisines = [],
   } = query;
 
   // Step 1: Filter candidates based on dietary/cuisine
@@ -322,13 +338,26 @@ function rankRestaurants(restaurants, query = {}, menuItemsMap = {}) {
     const rtScore = scoreRating(restaurant);
     const avScore = scoreAvailability(restaurant);
 
+    // Preference affinity boost when user preferences are applied
+    let prefBonus = 0;
+    if (Array.isArray(preferredCuisines) && preferredCuisines.length > 0) {
+      const restCuisines = (restaurant.cuisines || []).map((c) => String(c).toLowerCase());
+      const matchesPref = preferredCuisines.some((pc) => {
+        const normPc = String(pc).toLowerCase();
+        return restCuisines.some((rc) => rc.includes(normPc) || normPc.includes(rc));
+      });
+      if (matchesPref) prefBonus = 0.08;
+    }
+
     const relevance_score = Number(
-      (
+      Math.min(
+        1.0,
         kwScore * WEIGHTS.keyword +
-        prScore * WEIGHTS.priceRange +
-        distScore * WEIGHTS.distance +
-        rtScore * WEIGHTS.rating +
-        avScore * WEIGHTS.availability
+          prScore * WEIGHTS.priceRange +
+          distScore * WEIGHTS.distance +
+          rtScore * WEIGHTS.rating +
+          avScore * WEIGHTS.availability +
+          prefBonus
       ).toFixed(4)
     );
 

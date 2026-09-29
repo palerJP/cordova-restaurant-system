@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useRef, useState, useCallback, ReactNode } from 'react';
-import { api, setAccessToken, ApiClientError } from './api';
+import { api, getAccessToken, setAccessToken, ApiClientError } from './api';
 import type { User } from './types';
 
 interface UpdateProfileData {
@@ -103,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const verifyEmail = useCallback(async (token: string) => {
     const res = await api.post('/api/auth/verify-email', { token }, { auth: false });
-    if (res.data?.user) {
+    if (res.data?.user && getAccessToken()) {
       setUser(res.data.user);
     }
     return res.data?.user as User;
