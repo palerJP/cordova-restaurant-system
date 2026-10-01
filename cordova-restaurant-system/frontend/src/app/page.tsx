@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
-import { getTastePreferences, hasTastePreferences } from '@/lib/taste-preferences';
+import { getTastePreferences } from '@/lib/taste-preferences';
 import { RestaurantCard } from '@/components/RestaurantCard';
 import { RestaurantGridSkeleton } from '@/components/ui/Skeleton';
 import { Pagination } from '@/components/ui/Pagination';
@@ -30,8 +30,7 @@ import { standardSearchRestaurants } from '@/lib/aiSearch';
 
 export default function HomePage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
-  const [hasPassedTasteGate, setHasPassedTasteGate] = useState(false);
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -53,14 +52,7 @@ export default function HomePage() {
 
   const PAGE_SIZE = 6;
 
-  useEffect(() => {
-    if (authLoading) return;
-    if (!user && !hasTastePreferences()) {
-      router.replace('/preferences?firstTime=true&returnTo=%2F');
-      return;
-    }
-    setHasPassedTasteGate(true);
-  }, [authLoading, user, router]);
+
 
   // Debounce typing in search input to prevent network spam and UI stutter
   useEffect(() => {
@@ -250,13 +242,7 @@ export default function HomePage() {
     setPage(1);
   };
 
-  if (!hasPassedTasteGate) {
-    return (
-      <div className="min-h-[80vh] flex items-center justify-center bg-cordova-cream dark:bg-[#121614]">
-        <div className="w-10 h-10 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
-      </div>
-    );
-  }
+
 
   return (
     <div className="min-h-screen bg-cordova-cream dark:bg-[#121614] pb-20 relative overflow-hidden">
