@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, FormEvent } from 'react';
+import { useState, useEffect, useRef, useCallback, FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -8,6 +8,7 @@ import { Eye, EyeOff, Sparkles, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import { ApiClientError } from '@/lib/api';
+import { syncTastePreferencesToAccount } from '@/lib/taste-preferences';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 
@@ -20,11 +21,11 @@ const GOOGLE_CLIENT_ID =
 const REQUIRE_EMAIL_VERIFICATION = process.env.NEXT_PUBLIC_REQUIRE_EMAIL_VERIFICATION === 'true';
 
 export default function LoginPage() {
-  const { user, login, loginWithGoogle, loginWithFacebook } = useAuth();
+  const { user, loading: authLoading, login, loginWithGoogle, loginWithFacebook } = useAuth();
   const { showToast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirect') || '/';
+  const redirectTo = searchParams.get('redirect') || searchParams.get('returnTo') || '/';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -35,7 +36,7 @@ export default function LoginPage() {
   const [oauthLoading, setOauthLoading] = useState<'google' | 'facebook' | null>(null);
   const redirectedRef = useRef(false);
 
-  const handleSuccessfulAuth = (authUserData?: any) => {
+  const handleSuccessfulAuth = useCallback(async (authUserData?: any) => {
     if (redirectedRef.current) return;
     redirectedRef.current = true;
 
@@ -45,6 +46,15 @@ export default function LoginPage() {
       router.replace('/verify-email-required');
       return;
     }
+
+    if (targetUser) {
+      try {
+        await syncTastePreferencesToAccount(targetUser);
+      } catch {
+        showToast('Your taste preferences could not be synced yet. You can update them from your profile.', 'warning');
+      }
+    }
+
     // Honour ?redirect= param from protected-route redirects (e.g. /dashboard/new) if role is authorized
     if (redirectTo && redirectTo !== '/' && redirectTo.startsWith('/')) {
       const isRestrictedAdmin = redirectTo.startsWith('/admin') && targetUser?.role !== 'admin';
@@ -64,14 +74,16 @@ export default function LoginPage() {
     } else {
       router.replace('/');
     }
-  };
+  }, [user, redirectTo, showToast, router]);
+
+
 
   // If user is already authenticated, immediately navigate away from login
   useEffect(() => {
     if (user && !loading && !oauthLoading && !redirectedRef.current) {
-      handleSuccessfulAuth(user);
+      void handleSuccessfulAuth(user);
     }
-  }, [user, loading, oauthLoading]);
+  }, [user, loading, oauthLoading, handleSuccessfulAuth]);
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -89,7 +101,7 @@ export default function LoginPage() {
     try {
       const loggedUser = await login(email, password);
       showToast('Welcome back to CordovaEats!', 'success');
-      handleSuccessfulAuth(loggedUser);
+      await handleSuccessfulAuth(loggedUser);
     } catch (err) {
       if (err instanceof ApiClientError) {
         showToast(err.message, 'error');
@@ -121,7 +133,7 @@ export default function LoginPage() {
           try {
             const loggedUser = await loginWithGoogle(tokenResponse.access_token);
             showToast('Signed in with Google successfully!', 'success');
-            handleSuccessfulAuth(loggedUser);
+            await handleSuccessfulAuth(loggedUser);
           } catch (err) {
             if (err instanceof ApiClientError) showToast(err.message, 'error');
             else showToast('Google authentication failed. Please try again.', 'error');
@@ -147,7 +159,7 @@ export default function LoginPage() {
       const devToken = `google_oauth_token_${Date.now()}`;
       const loggedUser = await loginWithGoogle(devToken);
       showToast('Signed in with Google (Dev Mode)!', 'success');
-      handleSuccessfulAuth(loggedUser);
+      await handleSuccessfulAuth(loggedUser);
     } catch (err) {
       if (err instanceof ApiClientError) showToast(err.message, 'error');
       else showToast('Google authentication failed.', 'error');
@@ -162,7 +174,7 @@ export default function LoginPage() {
       const mockFbToken = `fb_oauth_token_${Date.now()}`;
       const loggedUser = await loginWithFacebook(mockFbToken);
       showToast('Signed in with Facebook successfully!', 'success');
-      handleSuccessfulAuth(loggedUser);
+      await handleSuccessfulAuth(loggedUser);
     } catch (err) {
       if (err instanceof ApiClientError) showToast(err.message, 'error');
       else showToast('Facebook authentication failed.', 'error');
@@ -170,6 +182,14 @@ export default function LoginPage() {
       setOauthLoading(null);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center py-10 px-4">
+        <div className="w-10 h-10 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
+      </div>
+    );
+  }
 
   if (user && !loading && !oauthLoading) {
     return (

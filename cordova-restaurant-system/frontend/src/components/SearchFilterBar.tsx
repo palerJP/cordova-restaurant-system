@@ -1,8 +1,9 @@
-'use client';
-
 import { useState, useEffect } from 'react';
-import { Search, MapPin, SlidersHorizontal, X, Compass, DollarSign, Utensils, Sparkles } from 'lucide-react';
+import { Search, MapPin, SlidersHorizontal, X, Compass, DollarSign, Utensils, Sparkles, Check } from 'lucide-react';
 import type { PriceRange } from '@/lib/types';
+import { useAuth } from '@/lib/auth-context';
+import { useToast } from '@/lib/toast-context';
+import { api } from '@/lib/api';
 
 export interface SearchFilterState {
   keyword: string;
@@ -12,6 +13,7 @@ export interface SearchFilterState {
   dietaryTags: string[];
   userLat?: number;
   userLng?: number;
+  applyPreferences?: boolean;
 }
 
 interface SearchFilterBarProps {
@@ -57,6 +59,73 @@ export function SearchFilterBar({
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [locating, setLocating] = useState(false);
   const [locationStatus, setLocationStatus] = useState<string | null>(null);
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [loadingPrefs, setLoadingPrefs] = useState(false);
+  const [appliedPrefSummary, setAppliedPrefSummary] = useState<string | null>(null);
+
+  const handleApplyPreferences = async () => {
+    if (!user) {
+      toast('Please log in or sign up to personalize search with your taste preferences', 'info');
+      return;
+    }
+
+    if (filters.applyPreferences) {
+      // Toggle off
+      const next = { ...filters, applyPreferences: false };
+      onFilterChange(next);
+      onSearch(next);
+      setAppliedPrefSummary(null);
+      toast('Preference personalization turned off', 'info');
+      return;
+    }
+
+    setLoadingPrefs(true);
+    try {
+      const res = await api.get('/api/users/me/preferences');
+      const prefs = res.data?.preferences;
+      if (
+        !prefs ||
+        (!prefs.preferred_cuisines?.length && !prefs.budget_range && !prefs.dietary_restrictions?.length)
+      ) {
+        toast('No saved taste preferences found. Set them in your profile!', 'info');
+        return;
+      }
+
+      const nextFilters: SearchFilterState = {
+        ...filters,
+        applyPreferences: true,
+        priceRange: prefs.budget_range || filters.priceRange,
+        dietaryTags:
+          Array.isArray(prefs.dietary_restrictions) && prefs.dietary_restrictions.length > 0
+            ? Array.from(new Set([...filters.dietaryTags, ...prefs.dietary_restrictions]))
+            : filters.dietaryTags,
+      };
+
+      if (!filters.cuisine && prefs.preferred_cuisines?.[0]) {
+        const matchedCat = CATEGORIES.find(
+          (c) =>
+            c.toLowerCase() === prefs.preferred_cuisines[0].toLowerCase() ||
+            prefs.preferred_cuisines[0].toLowerCase().includes(c.toLowerCase())
+        );
+        if (matchedCat) nextFilters.cuisine = matchedCat;
+      }
+
+      const summaryParts: string[] = [];
+      if (prefs.preferred_cuisines?.length) summaryParts.push(prefs.preferred_cuisines.slice(0, 2).join(', '));
+      if (prefs.budget_range) summaryParts.push(prefs.budget_range.toUpperCase());
+      if (prefs.dietary_restrictions?.length) summaryParts.push(prefs.dietary_restrictions.join(', '));
+
+      setAppliedPrefSummary(summaryParts.join(' • '));
+      onFilterChange(nextFilters);
+      onSearch(nextFilters);
+      toast('Applied your taste preferences to this search!', 'success');
+    } catch {
+      toast('Could not retrieve preferences. Please try again.', 'error');
+    } finally {
+      setLoadingPrefs(false);
+    }
+  };
 
   const handleKeywordChange = (keyword: string) => {
     onFilterChange({ ...filters, keyword });
@@ -117,10 +186,12 @@ export function SearchFilterBar({
       dietaryTags: [],
       userLat: undefined,
       userLng: undefined,
+      applyPreferences: false,
     };
     onFilterChange(cleared);
     onSearch(cleared);
     setLocationStatus(null);
+    setAppliedPrefSummary(null);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -132,7 +203,8 @@ export function SearchFilterBar({
     (filters.cuisine ? 1 : 0) +
     (filters.priceRange ? 1 : 0) +
     (filters.dietaryTags.length > 0 ? 1 : 0) +
-    (filters.userLat != null ? 1 : 0);
+    (filters.userLat != null ? 1 : 0) +
+    (filters.applyPreferences ? 1 : 0);
 
   return (
     <div className="bg-white/80 dark:bg-[#161c18]/80 backdrop-blur-2xl border border-white/60 dark:border-white/10 rounded-2xl shadow-spatial-md p-4 sm:p-6 mb-8 transition-all duration-300">
@@ -148,23 +220,18 @@ export function SearchFilterBar({
             value={filters.keyword}
             onChange={(e) => handleKeywordChange(e.target.value)}
             placeholder="Search restaurants, dishes (e.g. Bangus, Pizza, Baked Scallops)..."
-            className="w-full pl-10 pr-32 py-3 text-sm bg-stone-100/70 dark:bg-black/30 border border-stone-200/80 dark:border-white/10 rounded-xl text-stone-900 dark:text-white placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-cordova-green/50 backdrop-blur-sm"
+            className="w-full pl-10 pr-10 py-3 text-sm bg-stone-100/70 dark:bg-black/30 border border-stone-200/80 dark:border-white/10 rounded-xl text-stone-900 dark:text-white placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-cordova-green/50 backdrop-blur-sm"
           />
-          <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
-            {filters.keyword && (
-              <button
-                type="button"
-                onClick={() => handleKeywordChange('')}
-                className="p-1 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200"
-              >
-                <X size={15} />
-              </button>
-            )}
-            <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-sm border border-purple-300/40 select-none">
-              <Sparkles size={11} className="text-purple-200" />
-              <span>AI Mode</span>
-            </span>
-          </div>
+          {filters.keyword && (
+            <button
+              type="button"
+              onClick={() => handleKeywordChange('')}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200"
+              title="Clear search"
+            >
+              <X size={15} />
+            </button>
+          )}
         </div>
 
         {/* Action Buttons */}
@@ -202,6 +269,47 @@ export function SearchFilterBar({
       {/* Advanced Filter Drawer */}
       {showAdvanced && (
         <div className="mt-6 pt-5 border-t border-stone-200 dark:border-stone-800 space-y-5 animate-in fade-in slide-in-from-top-2 duration-200">
+          {/* Taste Preferences Quick-Apply Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30">
+            <div className="flex items-center gap-2.5">
+              <Sparkles size={18} className="text-cordova-gold shrink-0 animate-pulse" />
+              <div>
+                <p className="text-xs font-bold text-stone-900 dark:text-white">
+                  Personalize with My Taste Preferences
+                </p>
+                <p className="text-[11px] text-stone-600 dark:text-stone-300">
+                  {appliedPrefSummary
+                    ? `Active profile filters: ${appliedPrefSummary}`
+                    : 'Auto-apply your saved favorite cuisines, budget tier, and dietary needs'}
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleApplyPreferences}
+              disabled={loadingPrefs}
+              className={`text-xs font-bold px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 shadow-2xs ${
+                filters.applyPreferences
+                  ? 'bg-cordova-green text-white hover:bg-emerald-700'
+                  : 'bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-700 text-stone-800 dark:text-stone-200 hover:border-cordova-gold'
+              }`}
+            >
+              {loadingPrefs ? (
+                'Loading...'
+              ) : filters.applyPreferences ? (
+                <>
+                  <Check size={13} />
+                  <span>Preferences Active (Click to Clear)</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles size={13} className="text-cordova-gold" />
+                  <span>Apply My Profile Tastes</span>
+                </>
+              )}
+            </button>
+          </div>
           {/* Row 1: Cuisine & Price */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Category Selector */}

@@ -74,6 +74,12 @@ const env = {
     from: process.env.EMAIL_FROM || 'CordovaEats <noreply@cordovaeats.com>',
   },
 
+  openai: {
+    apiKey: process.env.OPENAI_API_KEY || null,
+    model: process.env.OPENAI_MODEL || 'gpt-4.1-mini',
+    timeoutMs: Math.max(1000, parseInt(process.env.OPENAI_TIMEOUT_MS || '10000', 10) || 10000),
+  },
+
   auth: {
     requireEmailVerification: process.env.REQUIRE_EMAIL_VERIFICATION !== undefined
       ? process.env.REQUIRE_EMAIL_VERIFICATION === 'true'

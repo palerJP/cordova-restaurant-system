@@ -26,6 +26,9 @@ erDiagram
     MENU_CATEGORIES ||--o{ MENU_ITEMS : contains
     RESTAURANTS ||--o{ REVIEWS : receives
     RESTAURANTS ||--o{ FAVORITES : saved_by
+    USERS ||--o{ RECOMMENDATION_FEEDBACK : rates
+    RESTAURANTS ||--o{ RECOMMENDATION_FEEDBACK : receives
+    USERS ||--o{ RECOMMENDATION_MODEL_VERSIONS : trains
     RESTAURANTS ||--o{ PROMOTIONS : runs
     RESTAURANTS ||--o{ RESTAURANT_VIEW_LOGS : tracked_by
     RESTAURANTS ||--o{ RECOMMENDATION_LOGS : appears_in
@@ -77,6 +80,17 @@ erDiagram
         numeric dietary_weight
         numeric rating_weight
     }
+
+    RECOMMENDATION_MODEL_VERSIONS {
+        uuid id PK
+        jsonb model
+        int training_examples
+        int positive_examples
+        int negative_examples
+        uuid trained_by FK
+        boolean is_active
+        timestamptz created_at
+    }
 ```
 
 ## Design Notes & Rationale
@@ -93,10 +107,13 @@ erDiagram
   kept in sync via the `recalc_restaurant_rating()` trigger, because every
   restaurant list/search view needs them and recomputing an AVG() over
   reviews on every list request doesn't scale.
-- **`recommendation_weights`** is a single-row-active configuration table
-  that implements the "Update AI Model" admin use case without needing real
-  ML infrastructure — admins tune the rule-based scoring weights (see
-  `docs/API.md` → Recommendation Engine).
+- **`recommendation_weights`** supplies the cold-start ranking for customers
+  without enough feedback. `recommendation_feedback` stores direct helpful/not-
+  helpful labels; saved favorites and high/low reviews supply additional labels.
+  The recommender fits a per-customer logistic-regression ranker after at least
+  8 signals with at least 2 positive and 2 negative examples. Admins can train
+  versioned global logistic-regression models from pooled signals; active users
+  with a trained personal model use that first. See `docs/API.md` → Recommendation Engine.
 - **`recommendation_logs` / `restaurant_view_logs`** feed the "Admin: System-
   wide analytics" and "Owner: views, clicks & recommendation frequency"
   features. `query_params` is JSONB so new filter types don't require a
@@ -115,6 +132,8 @@ erDiagram
 |---|---|
 | `migrations/001_initial_schema.sql` | All extensions, enums, tables, indexes, triggers |
 | `migrations/002_reference_data.sql` | Cuisine lookup values + default AI weight profile (idempotent) |
+| `migrations/009_recommendation_feedback.sql` | Customer feedback labels for recommendation model training |
+| `migrations/010_recommendation_model_training.sql` | Versioned global recommendation models and active-model index |
 
 Run with the Node `pg` client via `npm run db:migrate` (see backend README),
 or directly:

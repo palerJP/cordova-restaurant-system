@@ -24,6 +24,7 @@ A modern restaurant discovery, recommendation, and municipal business management
   - Preferred Amenities & Atmosphere (WiFi, Parking, Pet Friendly, Al Fresco, Ocean View, Live Music)
   - Proximity radius slider (1 km – 20 km)
 - **Home Carousel ("Recommended For You")**: Swipeable, horizontally scrollable recommendation section on the Home page ranked dynamically by user preferences with direct link to adjust preferences in profile.
+- **Personalized machine-learning ranker**: The recommendation API now uses per-user logistic regression trained from helpful/not-helpful votes, saved favorites, and visible reviews rated 4–5 or 1–2 stars. It activates after at least 8 signals (including at least 2 positive and 2 negative); until then, users get the existing preference-based cold-start ranking. Dietary, service, distance, and open-now requirements remain strict filters. Apply the new table with `cd backend && npm run db:migrate`.
 
 ### 4. 🎨 UI & Layout Polishing
 - **Explore & Recommendation Rules**: "Recommended For You" section displays when logged in or signed up; unauthenticated users are guided with a sign-in prompt.

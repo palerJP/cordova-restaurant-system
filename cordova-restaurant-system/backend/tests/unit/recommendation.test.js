@@ -118,6 +118,26 @@ describe('Recommendation Engine — scoring factors', () => {
       expect(passesHardFilters(baseRestaurant, { maxDistanceKm: 5 })).toBe(true);
     });
 
+    it('filters candidates to cuisines named in the AI request', () => {
+      const seafoodRestaurant = { ...baseRestaurant, cuisines: ['Seafood'] };
+      const cafe = { ...baseRestaurant, cuisines: ['Cafe'] };
+
+      expect(passesHardFilters(seafoodRestaurant, { filterCuisines: ['Seafood'] })).toBe(true);
+      expect(passesHardFilters(cafe, { filterCuisines: ['Seafood'] })).toBe(false);
+    });
+
+    it('filters candidates to service and atmosphere intents named in the AI request', () => {
+      const seasideRestaurant = {
+        ...baseRestaurant,
+        name: 'Parola Seaview Restaurant',
+        amenities: ['Al Fresco'],
+      };
+      const cafe = { ...baseRestaurant, name: 'Cordova Cafe', amenities: ['Air Conditioned'] };
+
+      expect(passesHardFilters(seasideRestaurant, { filterServices: ['Seaside / Sunset View'] })).toBe(true);
+      expect(passesHardFilters(cafe, { filterServices: ['Seaside / Sunset View'] })).toBe(false);
+    });
+
     it('accepts when no constraints are given at all', () => {
       expect(passesHardFilters(baseRestaurant, {})).toBe(true);
     });

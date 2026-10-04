@@ -726,7 +726,9 @@ export function standardSearchRestaurants(
   if (tokens.length === 0) return list;
 
   return list.filter((r) => {
-    const combined = `${r.name} ${r.description || ''} ${r.barangay || ''} ${(r.cuisines || []).join(' ')} ${r.category || ''}`.toLowerCase();
+    const menuList = ALL_MENU_ITEMS[r.slug] || [];
+    const menuText = menuList.map((m) => `${m.name} ${m.description || ''}`).join(' ');
+    const combined = `${r.name} ${r.description || ''} ${r.barangay || ''} ${(r.cuisines || []).join(' ')} ${r.category || ''} ${menuText}`.toLowerCase();
     return tokens.some((token) => combined.includes(token));
   });
 }

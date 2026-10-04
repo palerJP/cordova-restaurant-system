@@ -1,7 +1,30 @@
 # Backend — Cordova Local Restaurant Recommendation System
 
-Node.js/Express REST API with PostgreSQL, JWT auth, RBAC, a rule-based AI
-recommendation engine, file uploads, rate limiting, and Swagger docs.
+Node.js/Express REST API with PostgreSQL, JWT auth, RBAC, a hybrid restaurant
+recommender with per-user logistic regression, file uploads, rate limiting,
+and Swagger docs.
+
+The recommender hard-filters dietary, service, distance, and open-now constraints.
+It ranks new users from saved preferences, then learns each customer's ranking
+from helpful/not-helpful votes, saved favorites, and visible review ratings. The
+personal model activates after at least 8 signals including 2 positive and 2
+negative examples. Apply new database migrations with `npm run db:migrate`.
+
+## External AI suggestions
+
+The recommendations endpoint can use OpenAI to interpret free-text food
+requests and write grounded reasons for suggested establishments. The model
+does not set match scores: the existing preference/rating ranker and the
+feedback-trained per-user ML model continue to score and order results.
+
+To enable it, set `OPENAI_API_KEY` in `backend/.env` (never in the frontend),
+then restart the backend. `OPENAI_MODEL` defaults to `gpt-4.1-mini` and
+`OPENAI_TIMEOUT_MS` defaults to 10000. Without a key, the local preference
+interpreter remains active. If the provider times out or rejects a request,
+the endpoint logs a warning and returns local recommendations.
+
+When enabled, the backend sends the user's search text and a compact set of
+public establishment details to OpenAI. The API key remains server-side.
 
 ## Prerequisites
 

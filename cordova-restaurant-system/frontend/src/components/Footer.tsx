@@ -37,6 +37,7 @@ const COLUMNS: FooterColumn[] = [
     links: [
       { label: 'List Your Restaurant', href: '/dashboard/new' },
       { label: 'Advertise With Us', href: '/for-restaurants#advertise' },
+      { label: 'Payment Portal (GCash / Maya)', href: '/portal/payment' },
       { label: 'Owner Dashboard', href: '/dashboard' },
     ],
   },

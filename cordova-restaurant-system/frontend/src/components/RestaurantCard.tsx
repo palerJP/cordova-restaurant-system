@@ -3,17 +3,21 @@
 import { memo, useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { MapPin, Star } from 'lucide-react';
-import type { Restaurant } from '@/lib/types';
+import { MapPin, Star, Sparkles } from 'lucide-react';
+import type { Restaurant, MatchedPreferences } from '@/lib/types';
 import { applyRestaurantCustomization } from '@/data/restaurants';
 import { getRestaurantReviewStats, normalizeKey } from '@/data/restaurantReviews';
 
 export const RestaurantCard = memo(function RestaurantCard({
   restaurant: rawRestaurant,
   matchScore,
+  matchedPreferences,
+  suggestionReason,
 }: {
   restaurant: Restaurant;
   matchScore?: number;
+  matchedPreferences?: MatchedPreferences;
+  suggestionReason?: string;
 }) {
   const restaurant = applyRestaurantCustomization(rawRestaurant);
   const [imgError, setImgError] = useState(false);
@@ -231,6 +235,58 @@ export const RestaurantCard = memo(function RestaurantCard({
                 ))}
               </div>
             </div>
+          )}
+          {/* Matched Preferences Chips (AI Personalization) */}
+          {matchedPreferences && (
+            Boolean(matchedPreferences.cuisines?.length) ||
+            Boolean(matchedPreferences.services?.length) ||
+            Boolean(matchedPreferences.dietary?.length) ||
+            Boolean(matchedPreferences.budgetFit)
+          ) && (
+            <div className="pt-2 border-t border-stone-100 dark:border-white/5 space-y-1.5">
+              <div className="flex items-center gap-1 text-[11px] font-bold text-cordova-green dark:text-emerald-400">
+                <Sparkles size={12} />
+                <span>Matches Your Taste Preferences:</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {matchedPreferences.cuisines?.slice(0, 2).map((c, i) => (
+                  <span
+                    key={`c-${i}`}
+                    className="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/25"
+                  >
+                    ✓ {c}
+                  </span>
+                ))}
+                {matchedPreferences.services?.slice(0, 1).map((s, i) => (
+                  <span
+                    key={`s-${i}`}
+                    className="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/25"
+                  >
+                    ✓ {s.replace(/_/g, ' ')}
+                  </span>
+                ))}
+                {matchedPreferences.dietary?.slice(0, 1).map((d, i) => (
+                  <span
+                    key={`d-${i}`}
+                    className="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-800 dark:text-blue-300 border border-blue-500/25"
+                  >
+                    ✓ {d.replace(/_/g, ' ')}
+                  </span>
+                ))}
+                {matchedPreferences.budgetFit && (
+                  <span className="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-800 dark:text-purple-300 border border-purple-500/25">
+                    ✓ Budget fit
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Natural Language Suggestion Reason */}
+          {suggestionReason && (
+            <p className="text-[11px] text-stone-500 dark:text-stone-400 italic line-clamp-2">
+              &ldquo;{suggestionReason}&rdquo;
+            </p>
           )}
         </div>
 
