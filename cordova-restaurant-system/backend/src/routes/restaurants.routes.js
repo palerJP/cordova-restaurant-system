@@ -22,6 +22,9 @@ const {
 // ---- Public browse/search ----
 router.get('/', validate(searchValidator), restaurantController.search);
 router.get('/mine', requireAuth, requireRole('owner', 'admin', 'customer'), restaurantController.listMine);
+router.get('/recently-viewed', requireAuth, restaurantController.getRecentlyViewed);
+router.delete('/recently-viewed', requireAuth, restaurantController.clearRecentlyViewed);
+router.delete('/recently-viewed/:restaurantId', requireAuth, restaurantController.removeRecentlyViewedItem);
 router.get('/by-slug/:slug', optionalAuth, restaurantController.getBySlug);
 router.get('/:id/similar', restaurantController.getSimilar);
 router.get('/:id', optionalAuth, restaurantController.getById);

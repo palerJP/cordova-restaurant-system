@@ -149,4 +149,73 @@ async function getHistoryForUser(userId, { limit = 10, offset = 0 } = {}) {
   };
 }
 
-module.exports = { logRestaurantView, logRecommendationQuery, ownerRestaurantStats, adminOverview, getHistoryForUser };
+/**
+ * Logged-in user's recently viewed restaurants (deduplicated by restaurant, ordered by latest view).
+ */
+async function getRecentlyViewedForUser(userId, { limit = 10, offset = 0 } = {}) {
+  const { rows } = await query(
+    `SELECT
+       rvl.restaurant_id,
+       MAX(rvl.created_at) AS viewed_at,
+       r.id, r.name, r.slug, r.cover_image_url, r.avg_rating, r.review_count, r.price_range, r.address, r.barangay
+     FROM restaurant_view_logs rvl
+     JOIN restaurants r ON r.id = rvl.restaurant_id
+     WHERE rvl.user_id = $1
+     GROUP BY rvl.restaurant_id, r.id, r.name, r.slug, r.cover_image_url, r.avg_rating, r.review_count, r.price_range, r.address, r.barangay
+     ORDER BY viewed_at DESC
+     LIMIT $2 OFFSET $3`,
+    [userId, limit, offset]
+  );
+  const { rows: countRows } = await query(
+    `SELECT COUNT(DISTINCT restaurant_id) FROM restaurant_view_logs WHERE user_id = $1`,
+    [userId]
+  );
+  return {
+    rows: rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      slug: r.slug,
+      coverImageUrl: r.cover_image_url,
+      avgRating: parseFloat(r.avg_rating) || 0,
+      reviewCount: parseInt(r.review_count, 10) || 0,
+      priceRange: r.price_range,
+      address: r.address,
+      barangay: r.barangay,
+      viewedAt: r.viewed_at,
+    })),
+    totalCount: parseInt(countRows[0].count, 10),
+  };
+}
+
+/** Clear all recently viewed records for a user */
+async function clearRecentlyViewedForUser(userId) {
+  await query(`DELETE FROM restaurant_view_logs WHERE user_id = $1`, [userId]);
+}
+
+/** Remove a specific restaurant from user's recently viewed history */
+async function deleteRecentlyViewedItem(userId, restaurantId) {
+  await query(`DELETE FROM restaurant_view_logs WHERE user_id = $1 AND restaurant_id = $2`, [userId, restaurantId]);
+}
+
+/** Clear all AI and search history logs for a user */
+async function clearSearchHistoryForUser(userId) {
+  await query(`DELETE FROM recommendation_logs WHERE user_id = $1`, [userId]);
+}
+
+/** Delete a single search history log entry for a user */
+async function deleteSearchHistoryItem(userId, historyId) {
+  await query(`DELETE FROM recommendation_logs WHERE user_id = $1 AND id = $2`, [userId, historyId]);
+}
+
+module.exports = {
+  logRestaurantView,
+  logRecommendationQuery,
+  ownerRestaurantStats,
+  adminOverview,
+  getHistoryForUser,
+  getRecentlyViewedForUser,
+  clearRecentlyViewedForUser,
+  deleteRecentlyViewedItem,
+  clearSearchHistoryForUser,
+  deleteSearchHistoryItem,
+};

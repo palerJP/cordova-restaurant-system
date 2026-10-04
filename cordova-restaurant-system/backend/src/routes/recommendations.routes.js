@@ -24,6 +24,8 @@ router.post(
 
 // Logged-in users: view their own past AI recommendation search history
 router.get('/history', requireAuth, controller.getHistory);
+router.delete('/history', requireAuth, controller.clearHistory);
+router.delete('/history/:id', requireAuth, controller.deleteHistoryItem);
 
 // Admin: "Update AI Model" use case — view/tune the scoring weights
 router.get('/weights', requireAuth, requireRole('admin'), controller.getWeights);

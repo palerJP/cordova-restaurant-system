@@ -436,9 +436,29 @@ const adminDelete = asyncHandler(async (req, res) => {
   });
 });
 
+/** GET /api/restaurants/recently-viewed — logged-in user's recently viewed restaurants */
+const getRecentlyViewed = asyncHandler(async (req, res) => {
+  const { page, limit, offset } = parsePagination(req.query);
+  const { rows, totalCount } = await analyticsModel.getRecentlyViewedForUser(req.user.id, { limit, offset });
+  res.json({ success: true, data: rows, meta: buildPageMeta({ page, limit, totalCount }) });
+});
+
+/** DELETE /api/restaurants/recently-viewed — clear all recently viewed */
+const clearRecentlyViewed = asyncHandler(async (req, res) => {
+  await analyticsModel.clearRecentlyViewedForUser(req.user.id);
+  res.json({ success: true, message: 'Recently viewed restaurants cleared' });
+});
+
+/** DELETE /api/restaurants/recently-viewed/:restaurantId — remove specific viewed restaurant */
+const removeRecentlyViewedItem = asyncHandler(async (req, res) => {
+  await analyticsModel.deleteRecentlyViewedItem(req.user.id, req.params.restaurantId);
+  res.json({ success: true, message: 'Removed from recently viewed' });
+});
+
 module.exports = {
   search, getById, getBySlug, listMine, create, update, uploadCoverImage,
   listCuisines, adminList, verify, suspend, adminDelete, getSimilar, listImages, uploadImage, deleteImage,
   updateSubscription, getSubscriptionStatus,
+  getRecentlyViewed, clearRecentlyViewed, removeRecentlyViewedItem,
 };
 

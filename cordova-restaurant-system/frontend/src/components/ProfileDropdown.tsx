@@ -58,18 +58,19 @@ export function ProfileDropdown() {
 
   if (user.role === 'admin') {
     menuItems.push(
-      { href: '/admin', label: 'Admin Panel', icon: Shield }
+      { href: '/admin', label: 'Admin Panel', icon: Shield },
+      { href: '/history', label: 'Activity & History', icon: History }
     );
   } else if (user.role === 'owner') {
     menuItems.push(
       { href: '/dashboard', label: 'My Business', icon: LayoutDashboard },
       { href: '/favorites', label: 'My Favorites', icon: Heart },
-      { href: '/history', label: 'Search History', icon: History }
+      { href: '/history', label: 'Activity & History', icon: History }
     );
   } else {
     menuItems.push(
       { href: '/favorites', label: 'My Favorites', icon: Heart },
-      { href: '/history', label: 'Search History', icon: History },
+      { href: '/history', label: 'Activity & History', icon: History },
       { href: '/dashboard/new', label: 'Add Business', icon: PlusCircle }
     );
   }

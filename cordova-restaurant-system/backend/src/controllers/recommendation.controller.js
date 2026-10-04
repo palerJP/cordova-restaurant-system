@@ -203,6 +203,18 @@ const getHistory = asyncHandler(async (req, res) => {
   res.json({ success: true, data: rows, meta: buildPageMeta({ page, limit, totalCount }) });
 });
 
+/** DELETE /api/recommendations/history — clear all recommendation search history */
+const clearHistory = asyncHandler(async (req, res) => {
+  await analyticsModel.clearSearchHistoryForUser(req.user.id);
+  res.json({ success: true, message: 'Search history cleared' });
+});
+
+/** DELETE /api/recommendations/history/:id — delete a specific search history entry */
+const deleteHistoryItem = asyncHandler(async (req, res) => {
+  await analyticsModel.deleteSearchHistoryItem(req.user.id, req.params.id);
+  res.json({ success: true, message: 'Search history entry removed' });
+});
+
 module.exports = {
   getRecommendations,
   saveFeedback,
@@ -211,4 +223,6 @@ module.exports = {
   getTrainingStatus,
   trainModel,
   getHistory,
+  clearHistory,
+  deleteHistoryItem,
 };

@@ -29,7 +29,14 @@ import {
   ExternalLink,
   Calendar,
   UtensilsCrossed,
+  Eye,
 } from 'lucide-react';
+import {
+  recordRestaurantView,
+  getRecentlyViewed,
+  onActivityChange,
+  type RecentlyViewedRestaurant,
+} from '@/lib/activity-history';
 import { api, ApiClientError } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
@@ -98,6 +105,15 @@ export default function RestaurantDetailPage() {
   const [userReactions, setUserReactions] = useState<Record<string, string>>({});
   const [submittingReview, setSubmittingReview] = useState(false);
   const [heroImgError, setHeroImgError] = useState(false);
+  const [recentViews, setRecentViews] = useState<RecentlyViewedRestaurant[]>([]);
+
+  useEffect(() => {
+    const updateRecent = () => {
+      setRecentViews(getRecentlyViewed().filter((r) => r.slug !== slug && r.id !== restaurant?.id));
+    };
+    updateRecent();
+    return onActivityChange(updateRecent);
+  }, [slug, restaurant?.id]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -119,6 +135,19 @@ export default function RestaurantDetailPage() {
 
       const customFound = applyRestaurantCustomization(found);
       setRestaurant(customFound);
+
+      recordRestaurantView({
+        id: customFound.id,
+        name: customFound.name,
+        slug: customFound.slug || slug,
+        coverImageUrl: customFound.cover_image_url,
+        avgRating: customFound.avg_rating,
+        reviewCount: customFound.review_count,
+        priceRange: customFound.price_range,
+        category: customFound.category,
+        address: customFound.address,
+        barangay: customFound.barangay,
+      });
 
       try {
         const [menu, reviewsRes, hoursRes, galleryRes, promoRes] = await Promise.all([
@@ -1229,6 +1258,68 @@ export default function RestaurantDetailPage() {
           </div>
         </div>
       </section>
+
+      {/* Recently Viewed Restaurants Shelf */}
+      {recentViews.length > 0 && (
+        <section className="border-t border-stone-200/80 dark:border-white/10 py-10 bg-stone-50/70 dark:bg-[#121714]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <Eye size={18} className="text-cordova-green dark:text-emerald-400" />
+                <h3 className="font-serif text-lg font-bold text-stone-900 dark:text-white">
+                  Other Places You Recently Viewed
+                </h3>
+              </div>
+              <Link
+                href="/history"
+                className="text-xs font-semibold text-cordova-green dark:text-emerald-400 hover:underline"
+              >
+                View Activity History →
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {recentViews.slice(0, 4).map((r) => (
+                <Link
+                  key={r.id}
+                  href={`/restaurants/${r.slug}`}
+                  className="group block p-3 rounded-2xl bg-white dark:bg-[#181f1a] border border-stone-200/70 dark:border-white/10 shadow-spatial-sm hover:shadow-spatial-md transition-all duration-300 hover:-translate-y-1"
+                >
+                  <div className="relative h-32 w-full rounded-xl overflow-hidden mb-2.5 bg-stone-100 dark:bg-stone-800">
+                    {r.coverImageUrl ? (
+                      <Image
+                        src={r.coverImageUrl}
+                        alt={r.name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-stone-400">🍽️</div>
+                    )}
+                    {r.priceRange && (
+                      <span className="absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white uppercase">
+                        {r.priceRange}
+                      </span>
+                    )}
+                  </div>
+                  <h4 className="font-bold text-sm text-stone-900 dark:text-white truncate group-hover:text-cordova-green dark:group-hover:text-emerald-400 transition-colors">
+                    {r.name}
+                  </h4>
+                  <div className="flex items-center justify-between mt-1 text-xs text-stone-500 dark:text-stone-400">
+                    <span className="truncate">{r.category || r.barangay || 'Cordova'}</span>
+                    {r.avgRating ? (
+                      <span className="flex items-center gap-0.5 font-bold text-amber-600 dark:text-amber-400">
+                        <Star size={11} className="fill-cordova-gold text-cordova-gold" />
+                        {r.avgRating.toFixed(1)}
+                      </span>
+                    ) : null}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Full-Screen Lightbox Modal for Dish Photos */}
       {lightboxImage && (

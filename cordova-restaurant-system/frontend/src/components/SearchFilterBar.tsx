@@ -1,9 +1,17 @@
 import { useState, useEffect } from 'react';
-import { Search, MapPin, SlidersHorizontal, X, Compass, DollarSign, Utensils, Sparkles, Check } from 'lucide-react';
+import { Search, MapPin, SlidersHorizontal, X, Compass, DollarSign, Utensils, Sparkles, Check, Clock } from 'lucide-react';
 import type { PriceRange } from '@/lib/types';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import { api } from '@/lib/api';
+import {
+  getSearchHistory,
+  saveSearchHistory,
+  deleteSearchHistoryItem,
+  clearSearchHistory,
+  onActivityChange,
+  type SearchHistoryItem,
+} from '@/lib/activity-history';
 
 export interface SearchFilterState {
   keyword: string;
@@ -63,6 +71,14 @@ export function SearchFilterBar({
   const { toast } = useToast();
   const [loadingPrefs, setLoadingPrefs] = useState(false);
   const [appliedPrefSummary, setAppliedPrefSummary] = useState<string | null>(null);
+  const [recentSearches, setRecentSearches] = useState<SearchHistoryItem[]>([]);
+
+  useEffect(() => {
+    setRecentSearches(getSearchHistory());
+    return onActivityChange(() => {
+      setRecentSearches(getSearchHistory());
+    });
+  }, []);
 
   const handleApplyPreferences = async () => {
     if (!user) {
@@ -196,6 +212,14 @@ export function SearchFilterBar({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (filters.keyword.trim() || filters.cuisine) {
+      saveSearchHistory({
+        query: filters.keyword,
+        cuisine: filters.cuisine,
+        priceRange: filters.priceRange,
+        source: 'search',
+      });
+    }
     onSearch();
   };
 
@@ -265,6 +289,64 @@ export function SearchFilterBar({
           </button>
         </div>
       </form>
+
+      {/* Quick Recent Searches Bar */}
+      {recentSearches.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5 pt-3.5 border-t border-stone-200/60 dark:border-white/5 mt-3.5">
+          <div className="flex items-center gap-1 text-[11px] font-bold text-stone-500 dark:text-stone-400 mr-1 uppercase tracking-wider">
+            <Clock size={12} className="text-cordova-gold" />
+            <span>Recent:</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5 flex-1">
+            {recentSearches.slice(0, 6).map((item) => (
+              <span
+                key={item.id}
+                className="group inline-flex items-center gap-1 bg-stone-100/90 dark:bg-[#202923] hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-stone-700 dark:text-stone-300 text-xs px-2.5 py-1 rounded-lg transition-all duration-200 border border-stone-200/80 dark:border-white/10 hover:border-emerald-400/50"
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    const updated = {
+                      ...filters,
+                      keyword: item.query,
+                      cuisine: item.cuisine || filters.cuisine,
+                    };
+                    saveSearchHistory({
+                      query: item.query,
+                      cuisine: item.cuisine,
+                      priceRange: item.priceRange,
+                      source: 'search',
+                    });
+                    onFilterChange(updated);
+                    onSearch(updated);
+                  }}
+                  className="hover:text-cordova-green dark:hover:text-emerald-400 cursor-pointer font-medium"
+                >
+                  {item.query}
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteSearchHistoryItem(item.id);
+                  }}
+                  className="text-stone-400 hover:text-red-500 dark:hover:text-red-400 p-0.5 rounded transition-colors"
+                  title="Remove from history"
+                >
+                  <X size={11} />
+                </button>
+              </span>
+            ))}
+            <button
+              type="button"
+              onClick={clearSearchHistory}
+              className="text-[11px] text-stone-400 hover:text-red-500 dark:hover:text-red-400 underline ml-auto px-1 transition-colors"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Advanced Filter Drawer */}
       {showAdvanced && (
