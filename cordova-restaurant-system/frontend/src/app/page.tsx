@@ -17,6 +17,7 @@ import {
   ChevronRight,
   Sparkles,
   X,
+  Clock,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
@@ -27,6 +28,12 @@ import { Pagination } from '@/components/ui/Pagination';
 import type { Restaurant, PageMeta, MatchedPreferences } from '@/lib/types';
 import { isRestaurantVisible, getAllStaticRestaurants, normalizeKey, matchesCategory } from '@/data/restaurants';
 import { standardSearchRestaurants } from '@/lib/aiSearch';
+import {
+  saveSearchHistory,
+  getSearchHistory,
+  onActivityChange,
+  type SearchHistoryItem,
+} from '@/lib/activity-history';
 
 export default function HomePage() {
   const router = useRouter();
@@ -38,6 +45,14 @@ export default function HomePage() {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [meta, setMeta] = useState<PageMeta | null>(null);
   const [loading, setLoading] = useState(true);
+  const [recentSearches, setRecentSearches] = useState<SearchHistoryItem[]>([]);
+
+  useEffect(() => {
+    setRecentSearches(getSearchHistory());
+    return onActivityChange(() => {
+      setRecentSearches(getSearchHistory());
+    });
+  }, []);
 
   // Recommended For You Carousel State & Ref
   const [recommendations, setRecommendations] = useState<{
@@ -226,11 +241,13 @@ export default function HomePage() {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setDebouncedQuery(searchQuery);
-    setPage(1);
-    if (establishmentsRef.current) {
-      establishmentsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (searchQuery.trim()) {
+      saveSearchHistory({
+        query: searchQuery.trim(),
+        source: 'search',
+      });
     }
+    router.push('/history?tab=searches');
   };
 
   const handleCategoryClick = (categorySlug: string) => {
@@ -370,6 +387,41 @@ export default function HomePage() {
             <Search size={18} />
           </button>
         </form>
+
+        {/* Quick Recent Searches below homepage hero search */}
+        {recentSearches.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-3 flex flex-wrap items-center justify-center gap-1.5 px-2"
+          >
+            <div className="flex items-center gap-1 text-[11px] font-bold text-white/90 drop-shadow mr-1 uppercase tracking-wider">
+              <Clock size={12} className="text-amber-400" />
+              <span>Recent:</span>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-1.5">
+              {recentSearches.slice(0, 5).map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    saveSearchHistory({ query: item.query, source: 'search' });
+                    router.push('/history?tab=searches');
+                  }}
+                  className="bg-black/50 hover:bg-black/75 backdrop-blur-md border border-white/20 hover:border-amber-400 text-white text-xs px-3 py-1 rounded-full transition-all duration-200 shadow-sm flex items-center gap-1"
+                >
+                  <span>{item.query}</span>
+                </button>
+              ))}
+              <Link
+                href="/history?tab=searches"
+                className="text-[11px] font-semibold text-amber-300 hover:text-white underline ml-1 drop-shadow transition-colors"
+              >
+                View All →
+              </Link>
+            </div>
+          </motion.div>
+        )}
       </section>
 
       {/* EXPLORE BY CATEGORY SECTION */}

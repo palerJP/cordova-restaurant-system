@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Clock,
   Eye,
@@ -61,12 +61,24 @@ interface ServerHistoryEntry {
   } | null;
 }
 
-export default function HistoryPage() {
+function HistoryContent() {
   const { user } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
 
-  const [activeTab, setActiveTab] = useState<'viewed' | 'searches'>('viewed');
+  const [activeTab, setActiveTab] = useState<'viewed' | 'searches'>(
+    tabParam === 'viewed' ? 'viewed' : 'searches'
+  );
+
+  useEffect(() => {
+    if (tabParam === 'viewed') {
+      setActiveTab('viewed');
+    } else if (tabParam === 'searches') {
+      setActiveTab('searches');
+    }
+  }, [tabParam]);
 
   // Local storage state
   const [localSearches, setLocalSearches] = useState<SearchHistoryItem[]>([]);
@@ -241,24 +253,6 @@ export default function HistoryPage() {
         <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-stone-200/60 dark:bg-stone-900/60 backdrop-blur-md border border-stone-200/80 dark:border-white/10 mb-6 max-w-md">
           <button
             type="button"
-            onClick={() => setActiveTab('viewed')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition-all ${
-              activeTab === 'viewed'
-                ? 'bg-white dark:bg-[#1e2621] text-cordova-green dark:text-emerald-400 shadow-sm border border-stone-200/60 dark:border-emerald-500/30'
-                : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
-            }`}
-          >
-            <Eye size={14} />
-            <span>Recently Viewed</span>
-            {localViews.length > 0 && (
-              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 font-semibold">
-                {localViews.length}
-              </span>
-            )}
-          </button>
-
-          <button
-            type="button"
             onClick={() => setActiveTab('searches')}
             className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition-all ${
               activeTab === 'searches'
@@ -271,6 +265,24 @@ export default function HistoryPage() {
             {(localSearches.length > 0 || serverSearches.length > 0) && (
               <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 font-semibold">
                 {user && serverSearches.length > 0 ? serverSearches.length : localSearches.length}
+              </span>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('viewed')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition-all ${
+              activeTab === 'viewed'
+                ? 'bg-white dark:bg-[#1e2621] text-cordova-green dark:text-emerald-400 shadow-sm border border-stone-200/60 dark:border-emerald-500/30'
+                : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white'
+            }`}
+          >
+            <Eye size={14} />
+            <span>Recently Viewed</span>
+            {localViews.length > 0 && (
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 font-semibold">
+                {localViews.length}
               </span>
             )}
           </button>
@@ -547,5 +559,27 @@ export default function HistoryPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function HistoryPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-cordova-cream dark:bg-[#121614] pb-24 pt-8">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <Skeleton className="h-10 w-48 mb-4 rounded-xl" />
+            <Skeleton className="h-6 w-72 mb-8 rounded-lg" />
+            <div className="space-y-4">
+              <Skeleton className="h-20 w-full rounded-2xl" />
+              <Skeleton className="h-20 w-full rounded-2xl" />
+              <Skeleton className="h-20 w-full rounded-2xl" />
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <HistoryContent />
+    </Suspense>
   );
 }

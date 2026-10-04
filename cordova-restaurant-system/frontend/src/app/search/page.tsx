@@ -116,13 +116,13 @@ export default function SearchPage() {
         {/* Page Header */}
         <div className="text-center max-w-2xl mx-auto mb-8">
           <span className="text-xs font-bold uppercase tracking-widest text-cordova-gold">
-            AI-POWERED SEARCH & RANKING
+            CORDOVA DINING DISCOVERY
           </span>
           <h1 className="font-serif text-3xl sm:text-4xl font-bold text-stone-900 dark:text-white mt-1 mb-3">
             Find the Perfect Cordova Dining Experience
           </h1>
           <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-300">
-            Intelligently ranked by dish relevance, cuisine match, price tier, live distance, and paid subscription boosts.
+            Search verified establishments, specialties, and local dining spots across Cordova.
           </p>
         </div>
 
