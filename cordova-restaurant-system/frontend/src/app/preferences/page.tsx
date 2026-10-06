@@ -118,9 +118,12 @@ export default function PreferencesPage() {
   };
 
   const requestedReturnTo = searchParams.get('returnTo');
-  const returnTo = requestedReturnTo?.startsWith('/') && !requestedReturnTo.startsWith('//')
-    ? requestedReturnTo
-    : (isFirstTime ? '/recommendations' : '/');
+  const returnTo =
+    requestedReturnTo?.startsWith('/') &&
+    !requestedReturnTo.startsWith('//') &&
+    !requestedReturnTo.startsWith('/recommendations')
+      ? requestedReturnTo
+      : '/';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
