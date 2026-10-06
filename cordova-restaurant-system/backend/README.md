@@ -23,6 +23,12 @@ never returned to the browser. The page can also test the saved connection.
 Local browser access is required to edit these settings. For hosted systems,
 set `OPENAI_API_KEY` as a server environment variable. Server environment
 variables take precedence over local files. Do not put a key in the frontend.
+If your key has a scheduled expiration, set `OPENAI_API_KEY_EXPIRES_AT` to its
+date or enter it on the admin page. The page warns as the date approaches. An
+OpenAI API key cannot renew itself; create a replacement before it expires and
+save the replacement on the admin page or in the server environment. Training
+the shared recommendation model does not use OpenAI and its active version
+does not expire.
 
 `OPENAI_MODEL` defaults to `gpt-4.1-mini`, `OPENAI_TIMEOUT_MS` to 10000,
 and `OPENAI_MAX_REQUESTS_PER_15_MIN` to 60 per backend process. This cap

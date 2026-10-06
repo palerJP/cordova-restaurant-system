@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useRef, useState, useCallback, ReactNode } from 'react';
-import { api, getAccessToken, setAccessToken, ApiClientError } from './api';
+import { api, getAccessToken, setAccessToken, onSessionExpired, ApiClientError } from './api';
 import type { User } from './types';
 
 interface UpdateProfileData {
@@ -65,6 +65,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     bootstrapped.current = true;
     bootstrap();
   }, [bootstrap]);
+
+  useEffect(() => onSessionExpired(() => setUser(null)), []);
 
   const login = useCallback(async (email: string, password: string) => {
     const res = await api.post('/api/auth/login', { email, password }, { auth: false });

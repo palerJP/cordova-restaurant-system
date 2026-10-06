@@ -11,6 +11,7 @@ export class ApiClientError extends Error {
 }
 
 let accessToken: string | null = null;
+const sessionExpiredListeners = new Set<() => void>();
 
 /** Called by AuthProvider on login/refresh/logout to keep the in-memory token fresh. */
 export function setAccessToken(token: string | null) {
@@ -19,6 +20,12 @@ export function setAccessToken(token: string | null) {
 
 export function getAccessToken() {
   return accessToken;
+}
+
+/** Notify auth state when the server confirms the refresh session has ended. */
+export function onSessionExpired(listener: () => void) {
+  sessionExpiredListeners.add(listener);
+  return () => { sessionExpiredListeners.delete(listener); };
 }
 
 interface RequestOptions extends RequestInit {
@@ -30,11 +37,16 @@ let refreshPromise: Promise<boolean> | null = null;
 
 async function tryRefresh(): Promise<boolean> {
   if (!refreshPromise) {
+    const tokenBeforeRefresh = accessToken;
     refreshPromise = fetch(`${API_URL}/api/auth/refresh`, {
       method: 'POST',
       credentials: 'include',
     })
       .then(async (res) => {
+        if ((res.status === 401 || res.status === 403) && accessToken === tokenBeforeRefresh) {
+          setAccessToken(null);
+          sessionExpiredListeners.forEach((listener) => listener());
+        }
         if (!res.ok) return false;
         const json = await res.json();
         setAccessToken(json.data.accessToken);

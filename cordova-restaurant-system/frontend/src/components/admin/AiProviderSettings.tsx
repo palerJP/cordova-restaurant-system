@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 
 interface ProviderSettings {
   configured: boolean;
+  expiresAt: string | null;
   model: string;
   timeoutMs: number;
   canConfigure: boolean;
@@ -20,11 +21,27 @@ interface ConnectionCheck {
   model: string;
 }
 
+function expiryNotice(expiresAt: string | null) {
+  if (!expiresAt || !/^\d{4}-\d{2}-\d{2}$/.test(expiresAt)) return null;
+  const [year, month, day] = expiresAt.split('-').map(Number);
+  const expiration = new Date(year, month - 1, day);
+  if (Number.isNaN(expiration.getTime())) return null;
+  const now = new Date();
+  const daysLeft = Math.round((
+    Date.UTC(year, month - 1, day) - Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())
+  ) / 86400000);
+  const date = expiration.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+  if (daysLeft < 0) return { urgent: true, message: `The saved key's recorded expiration date was ${date}. Replace it and test the connection.` };
+  if (daysLeft <= 7) return { urgent: true, message: `The saved key expires on ${date}. Replace it soon to keep OpenAI suggestions available.` };
+  return { urgent: false, message: `The saved key expires on ${date}. Replace it before that date.` };
+}
+
 export function AiProviderSettings({ onConfiguredChange }: { onConfiguredChange: (configured: boolean | null) => void }) {
   const [settings, setSettings] = useState<ProviderSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState('');
+  const [expiresAt, setExpiresAt] = useState('');
   const [model, setModel] = useState('');
   const [timeoutMs, setTimeoutMs] = useState('');
   const [saving, setSaving] = useState(false);
@@ -39,6 +56,7 @@ export function AiProviderSettings({ onConfiguredChange }: { onConfiguredChange:
     try {
       const response = await api.get<{ data: ProviderSettings }>('/api/recommendations/provider');
       setSettings(response.data);
+      setExpiresAt(response.data.expiresAt || '');
       setModel(response.data.model);
       setTimeoutMs(String(response.data.timeoutMs));
       onConfiguredChange(response.data.configured);
@@ -53,9 +71,11 @@ export function AiProviderSettings({ onConfiguredChange }: { onConfiguredChange:
   useEffect(() => { void loadSettings(); }, [loadSettings]);
 
   const hasChanges = Boolean(settings && (
-    apiKey.trim() || model.trim() !== settings.model || Number(timeoutMs) !== settings.timeoutMs
+    apiKey.trim() || expiresAt !== (settings.expiresAt || '')
+    || model.trim() !== settings.model || Number(timeoutMs) !== settings.timeoutMs
   ));
   const busy = saving || testing;
+  const expiry = expiryNotice(settings?.configured ? settings.expiresAt : null);
 
   async function saveSettings(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -66,11 +86,13 @@ export function AiProviderSettings({ onConfiguredChange }: { onConfiguredChange:
     try {
       const response = await api.patch<{ data: ProviderSettings }>('/api/recommendations/provider', {
         ...(apiKey.trim() ? { apiKey: apiKey.trim() } : {}),
+        expiresAt,
         model: model.trim(),
         timeoutMs: Number(timeoutMs),
       });
       setApiKey('');
       setSettings(response.data);
+      setExpiresAt(response.data.expiresAt || '');
       setModel(response.data.model);
       setTimeoutMs(String(response.data.timeoutMs));
       setConnection(null);
@@ -116,6 +138,10 @@ export function AiProviderSettings({ onConfiguredChange }: { onConfiguredChange:
             <p className="mt-1 text-stone-500">{settings.configured
               ? 'A saved key does not confirm access. Use the connection test below.'
               : 'Local recommendations and model training are available while OpenAI is disconnected.'}</p>
+            {expiry && <p role={expiry.urgent ? 'alert' : undefined}
+              className={`mt-2 ${expiry.urgent ? 'text-amber-700 dark:text-amber-300' : 'text-stone-600 dark:text-stone-300'}`}>
+              {expiry.message}
+            </p>}
           </div>
           {!settings.canConfigure && <p className="text-sm text-amber-700 dark:text-amber-300">
             Connection settings can be edited only from this computer in local development. For a hosted system, ask the server administrator to configure OpenAI.
@@ -123,7 +149,11 @@ export function AiProviderSettings({ onConfiguredChange }: { onConfiguredChange:
           <form onSubmit={saveSettings} className="space-y-4">
             <fieldset disabled={!settings.canConfigure || busy} className="space-y-4 disabled:opacity-60">
               <Input id="openai-api-key" type="password" label={settings.configured ? 'Replace API key (optional)' : 'OpenAI API key'}
-                value={apiKey} onChange={(event) => { setApiKey(event.target.value); setSaveMessage(null); }}
+                value={apiKey} onChange={(event) => {
+                  if (!apiKey && event.target.value) setExpiresAt('');
+                  setApiKey(event.target.value);
+                  setSaveMessage(null);
+                }}
                 autoComplete="off" spellCheck={false} maxLength={515}
                 placeholder={settings.configured ? 'Leave blank to keep the saved key' : 'Paste your API key'} required={!settings.configured} />
               <p className="text-xs text-stone-500">
@@ -131,6 +161,11 @@ export function AiProviderSettings({ onConfiguredChange }: { onConfiguredChange:
                   : 'The key is held by the server and is not shown here.'}{' '}
                 <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer"
                   className="text-cordova-green dark:text-emerald-400 underline underline-offset-2">Create an OpenAI API key</a>.
+              </p>
+              <Input id="openai-key-expiry" type="date" label="API key expiration date (if known)"
+                value={expiresAt} onChange={(event) => { setExpiresAt(event.target.value); setSaveMessage(null); }} />
+              <p className="text-xs text-stone-500">
+                The expiration date shows a warning here. OpenAI API keys cannot renew themselves; create a replacement before this date and save it above.
               </p>
               <div className="grid sm:grid-cols-2 gap-4">
                 <Input id="openai-model" label="OpenAI model" value={model}

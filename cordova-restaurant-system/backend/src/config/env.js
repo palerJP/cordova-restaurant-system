@@ -81,6 +81,7 @@ const env = {
 
   openai: {
     apiKey: process.env.OPENAI_API_KEY || null,
+    expiresAt: process.env.OPENAI_API_KEY_EXPIRES_AT || null,
     model: process.env.OPENAI_MODEL || 'gpt-4.1-mini',
     timeoutMs: Math.max(1000, parseInt(process.env.OPENAI_TIMEOUT_MS || '10000', 10) || 10000),
     maxRequestsPerWindow: Math.max(1, parseInt(process.env.OPENAI_MAX_REQUESTS_PER_15_MIN || '60', 10) || 60),

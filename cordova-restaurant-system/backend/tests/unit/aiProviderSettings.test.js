@@ -19,7 +19,8 @@ describe('local AI provider settings', () => {
   test('admin status never returns the secret key', () => {
     env.openai.apiKey = 'sk-sensitive-value-must-not-leak';
     expect(settings.getStatus(localRequest())).toEqual({
-      configured: true, model: env.openai.model, timeoutMs: env.openai.timeoutMs, canConfigure: true,
+      configured: true, expiresAt: env.openai.expiresAt || null,
+      model: env.openai.model, timeoutMs: env.openai.timeoutMs, canConfigure: true,
     });
     expect(JSON.stringify(settings.getStatus(localRequest()))).not.toContain('sk-sensitive');
   });
@@ -38,6 +39,12 @@ describe('local AI provider settings', () => {
   test('rejects extra settings and malformed keys before a write', () => {
     expect(() => settings._internal.validateSettings({ apiKey: 'sk-short' })).toThrow('valid OpenAI secret');
     expect(() => settings._internal.validateSettings({ apiKey: 'sk-' + 'a'.repeat(30), secretOther: true })).toThrow('Only apiKey');
+  });
+
+  test('accepts a key expiry date but rejects impossible dates', () => {
+    expect(settings._internal.validateSettings({ expiresAt: '2026-11-05' })).toEqual({ expiresAt: '2026-11-05' });
+    expect(() => settings._internal.validateSettings({ expiresAt: '2026-02-30' })).toThrow('key expiration');
+    expect(() => settings._internal.validateSettings({ expiresAt: 123 })).toThrow('key expiration');
   });
 
   test('connection errors are returned without raw provider text', async () => {

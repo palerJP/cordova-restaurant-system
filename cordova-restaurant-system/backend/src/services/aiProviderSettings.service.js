@@ -6,7 +6,12 @@ const ApiError = require('../utils/apiError');
 const openaiRecommendation = require('./openaiRecommendation.service');
 
 const ENV_PATH = path.resolve(__dirname, '../../.env.local');
-const SETTING_KEYS = { apiKey: 'OPENAI_API_KEY', model: 'OPENAI_MODEL', timeoutMs: 'OPENAI_TIMEOUT_MS' };
+const SETTING_KEYS = {
+  apiKey: 'OPENAI_API_KEY',
+  expiresAt: 'OPENAI_API_KEY_EXPIRES_AT',
+  model: 'OPENAI_MODEL',
+  timeoutMs: 'OPENAI_TIMEOUT_MS',
+};
 let pendingSave = Promise.resolve();
 
 function isLocalHost(value) {
@@ -39,6 +44,7 @@ function canConfigure(req) {
 function getStatus(req) {
   return {
     configured: openaiRecommendation.isEnabled(),
+    expiresAt: env.openai.expiresAt || null,
     model: env.openai.model,
     timeoutMs: env.openai.timeoutMs,
     canConfigure: canConfigure(req),
@@ -50,7 +56,7 @@ function validateSettings(input) {
     throw ApiError.badRequest('Provide AI provider settings as an object.');
   }
   if (Object.keys(input).some((key) => !Object.hasOwn(SETTING_KEYS, key))) {
-    throw ApiError.badRequest('Only apiKey, model, and timeoutMs can be updated.');
+    throw ApiError.badRequest('Only apiKey, expiresAt, model, and timeoutMs can be updated.');
   }
   const updates = {};
   if (Object.hasOwn(input, 'apiKey')) {
@@ -70,6 +76,17 @@ function validateSettings(input) {
       throw ApiError.badRequest('Enter a valid model name.');
     }
     updates.model = input.model.trim();
+  }
+  if (Object.hasOwn(input, 'expiresAt')) {
+    const expiresAt = input.expiresAt;
+    if (typeof expiresAt !== 'string' || (expiresAt && (
+      !/^\d{4}-\d{2}-\d{2}$/.test(expiresAt)
+      || Number.isNaN(Date.parse(`${expiresAt}T00:00:00Z`))
+      || new Date(`${expiresAt}T00:00:00Z`).toISOString().slice(0, 10) !== expiresAt
+    ))) {
+      throw ApiError.badRequest('Enter the key expiration as YYYY-MM-DD, or leave it blank.');
+    }
+    updates.expiresAt = expiresAt;
   }
   if (Object.hasOwn(input, 'timeoutMs')) {
     if (!Number.isInteger(input.timeoutMs) || input.timeoutMs < 1000 || input.timeoutMs > 60000) {
