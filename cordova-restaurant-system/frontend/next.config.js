@@ -15,6 +15,11 @@ const nextConfig = {
         destination: '/',
         permanent: true,
       },
+      {
+        source: '/recommendations',
+        destination: '/#recommendations',
+        permanent: true,
+      },
     ];
   },
   async rewrites() {

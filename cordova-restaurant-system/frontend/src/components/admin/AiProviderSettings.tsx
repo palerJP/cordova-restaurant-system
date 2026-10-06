@@ -1,0 +1,165 @@
+'use client';
+
+import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { api, ApiClientError } from '@/lib/api';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Skeleton } from '@/components/ui/Skeleton';
+
+interface ProviderSettings {
+  configured: boolean;
+  model: string;
+  timeoutMs: number;
+  canConfigure: boolean;
+}
+
+interface ConnectionCheck {
+  connected: boolean;
+  message: string;
+  checkedAt: string;
+  model: string;
+}
+
+export function AiProviderSettings({ onConfiguredChange }: { onConfiguredChange: (configured: boolean | null) => void }) {
+  const [settings, setSettings] = useState<ProviderSettings | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [apiKey, setApiKey] = useState('');
+  const [model, setModel] = useState('');
+  const [timeoutMs, setTimeoutMs] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [connection, setConnection] = useState<ConnectionCheck | null>(null);
+
+  const loadSettings = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const response = await api.get<{ data: ProviderSettings }>('/api/recommendations/provider');
+      setSettings(response.data);
+      setModel(response.data.model);
+      setTimeoutMs(String(response.data.timeoutMs));
+      onConfiguredChange(response.data.configured);
+    } catch (error) {
+      setLoadError(error instanceof ApiClientError ? error.message : 'Could not load the OpenAI connection settings.');
+      onConfiguredChange(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [onConfiguredChange]);
+
+  useEffect(() => { void loadSettings(); }, [loadSettings]);
+
+  const hasChanges = Boolean(settings && (
+    apiKey.trim() || model.trim() !== settings.model || Number(timeoutMs) !== settings.timeoutMs
+  ));
+  const busy = saving || testing;
+
+  async function saveSettings(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!settings?.canConfigure || busy) return;
+    setActionError(null);
+    setSaveMessage(null);
+    setSaving(true);
+    try {
+      const response = await api.patch<{ data: ProviderSettings }>('/api/recommendations/provider', {
+        ...(apiKey.trim() ? { apiKey: apiKey.trim() } : {}),
+        model: model.trim(),
+        timeoutMs: Number(timeoutMs),
+      });
+      setApiKey('');
+      setSettings(response.data);
+      setModel(response.data.model);
+      setTimeoutMs(String(response.data.timeoutMs));
+      setConnection(null);
+      onConfiguredChange(response.data.configured);
+      setSaveMessage('Settings saved on this server. Test the connection to confirm OpenAI can respond.');
+    } catch (error) {
+      setActionError(error instanceof ApiClientError ? error.message : 'Could not save the connection settings.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function testConnection() {
+    if (!settings?.configured || busy || hasChanges) return;
+    setTesting(true);
+    setActionError(null);
+    setConnection(null);
+    try {
+      const response = await api.post<{ data: ConnectionCheck }>('/api/recommendations/provider/test');
+      setConnection(response.data);
+    } catch (error) {
+      setActionError(error instanceof ApiClientError ? error.message : 'The connection check could not be completed.');
+    } finally {
+      setTesting(false);
+    }
+  }
+
+  return (
+    <section className="bg-white dark:bg-[#1a211c] border border-stone-200 dark:border-stone-800 rounded-lg p-6 space-y-5 shadow-sm">
+      <div>
+        <h2 className="font-bold text-stone-900 dark:text-white">OpenAI connection</h2>
+        <p className="text-sm text-stone-500 mt-1">Use OpenAI to understand natural language requests and suggest matching restaurants.</p>
+      </div>
+      {loading ? <Skeleton className="h-48 w-full" /> : loadError ? (
+        <div className="space-y-3">
+          <p role="alert" className="text-sm text-red-600 dark:text-red-400">{loadError}</p>
+          <Button variant="secondary" size="sm" onClick={loadSettings}>Retry connection settings</Button>
+        </div>
+      ) : settings ? (
+        <>
+          <div className="rounded-lg border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 p-4 text-sm">
+            <p className="font-semibold text-stone-800 dark:text-stone-200">{settings.configured ? 'API key is configured' : 'API key is needed'}</p>
+            <p className="mt-1 text-stone-500">{settings.configured
+              ? 'A saved key does not confirm access. Use the connection test below.'
+              : 'Local recommendations and model training are available while OpenAI is disconnected.'}</p>
+          </div>
+          {!settings.canConfigure && <p className="text-sm text-amber-700 dark:text-amber-300">
+            Connection settings can be edited only from this computer in local development. For a hosted system, ask the server administrator to configure OpenAI.
+          </p>}
+          <form onSubmit={saveSettings} className="space-y-4">
+            <fieldset disabled={!settings.canConfigure || busy} className="space-y-4 disabled:opacity-60">
+              <Input id="openai-api-key" type="password" label={settings.configured ? 'Replace API key (optional)' : 'OpenAI API key'}
+                value={apiKey} onChange={(event) => { setApiKey(event.target.value); setSaveMessage(null); }}
+                autoComplete="off" spellCheck={false} maxLength={515}
+                placeholder={settings.configured ? 'Leave blank to keep the saved key' : 'Paste your API key'} required={!settings.configured} />
+              <p className="text-xs text-stone-500">
+                {settings.canConfigure ? 'A key saved here stays in a server-only local settings file excluded from Git and is not shown again.'
+                  : 'The key is held by the server and is not shown here.'}{' '}
+                <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer"
+                  className="text-cordova-green dark:text-emerald-400 underline underline-offset-2">Create an OpenAI API key</a>.
+              </p>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <Input id="openai-model" label="OpenAI model" value={model}
+                  onChange={(event) => { setModel(event.target.value); setSaveMessage(null); }} required maxLength={100} spellCheck={false} />
+                <Input id="openai-timeout" label="Response timeout (milliseconds)" type="number" min={1000} max={60000} step={1}
+                  value={timeoutMs} onChange={(event) => { setTimeoutMs(event.target.value); setSaveMessage(null); }} required />
+              </div>
+            </fieldset>
+            <div className="flex flex-wrap gap-3">
+              <Button type="submit" loading={saving} disabled={!settings.canConfigure || !hasChanges || testing}>Save connection</Button>
+              <Button type="button" variant="secondary" onClick={testConnection} loading={testing}
+                disabled={!settings.configured || saving || hasChanges}>Test saved connection</Button>
+            </div>
+            <p className="text-xs text-stone-500">{hasChanges ? 'Save your changes before testing. ' : ''}
+              Testing sends a small sample request to OpenAI and may use API credits.</p>
+          </form>
+          <div aria-live="polite" className="space-y-2">
+            {saveMessage && <p className="text-sm text-emerald-700 dark:text-emerald-400">{saveMessage}</p>}
+            {actionError && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{actionError}</p>}
+            {connection && <div className={`rounded-lg border p-4 text-sm ${connection.connected
+              ? 'border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300'
+              : 'border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200'}`}>
+              <p className="font-semibold">{connection.connected ? 'OpenAI connection verified' : 'OpenAI connection failed'}</p>
+              <p className="mt-1">{connection.message}</p>
+              <p className="text-xs mt-2">{connection.model} · Checked {new Date(connection.checkedAt).toLocaleString()}</p>
+            </div>}
+          </div>
+        </>
+      ) : null}
+    </section>
+  );
+}

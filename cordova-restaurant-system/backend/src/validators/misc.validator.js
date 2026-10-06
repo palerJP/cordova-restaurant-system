@@ -31,14 +31,18 @@ const createPromotionValidator = [
 
 const recommendationValidator = [
   body('query').optional().isString().trim().isLength({ max: 500 }),
-  body('preferredCuisines').optional().isArray(),
+  body('preferredCuisines').optional().isArray({ max: 20 }),
+  body('preferredCuisines.*').optional().isString().trim().isLength({ min: 1, max: 80 }),
   body('budgetRange').optional().isIn(['budget', 'moderate', 'expensive', 'premium']),
-  body('dietaryRestrictions').optional().isArray(),
-  body('requiredServices').optional().isArray(),
+  body('dietaryRestrictions').optional().isArray({ max: 20 }),
+  body('dietaryRestrictions.*').optional().isString().trim().isLength({ min: 1, max: 80 }),
+  body('requiredServices').optional().isArray({ max: 20 }),
+  body('requiredServices.*').optional().isString().trim().isLength({ min: 1, max: 80 }),
   body('lat').optional().isFloat({ min: -90, max: 90 }),
   body('lng').optional().isFloat({ min: -180, max: 180 }),
   body('maxDistanceKm').optional().isFloat({ min: 0.1, max: 50 }),
   body('onlyOpenNow').optional().isBoolean(),
+  body('limit').optional().isInt({ min: 1, max: 20 }),
 ];
 
 const recommendationFeedbackValidator = [

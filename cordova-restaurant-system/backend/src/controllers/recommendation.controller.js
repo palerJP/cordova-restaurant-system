@@ -16,12 +16,12 @@ const logger = require('../utils/logger');
  * Accepts either explicit constraints in the body, or falls back to the
  * logged-in user's saved preferences for any field not supplied.
  */
-const getRecommendations = asyncHandler(async (req, res) => {
+async function buildRecommendations(req, { preview = false } = {}) {
   const body = req.body || {};
   const localFilters = aiPreferenceInterpreter.interpretQuery(body.query);
   let preferences = {};
 
-  if (req.user) {
+  if (req.user && !preview) {
     preferences = (await userModel.getPreferences(req.user.id)) || {};
   }
 
@@ -41,33 +41,39 @@ const getRecommendations = asyncHandler(async (req, res) => {
   }
 
   const mergeUnique = (...groups) => [...new Set(groups.flatMap((group) => Array.isArray(group) ? group : []))];
+  const hasSelected = (field) => Array.isArray(body[field]) && body[field].length > 0;
+  const selectedOrInferred = (field, saved, inferred) => (
+    hasSelected(field) || (Array.isArray(body[field]) && !body.query)
+      ? body[field]
+      : mergeUnique(saved, inferred)
+  );
+  // Explicit form filters win over natural-language extraction, and inferred
+  // distances obey the same bounds as values supplied through the form.
+  const aiDistanceKm = Number.isFinite(aiFilters.maxDistanceKm) &&
+    aiFilters.maxDistanceKm >= 0.1 && aiFilters.maxDistanceKm <= 50
+    ? aiFilters.maxDistanceKm
+    : null;
   const params = {
+    keyword: body.query?.trim() || null,
     userLat: body.lat ?? preferences.home_latitude,
     userLng: body.lng ?? preferences.home_longitude,
-    preferredCuisines: mergeUnique(
-      body.preferredCuisines ?? preferences.preferred_cuisines ?? [],
-      aiFilters.preferredCuisines
-    ),
-    filterCuisines: aiFilters.filterCuisines,
-    filterServices: aiFilters.filterServices,
-    budgetRange: aiFilters.budgetRange ?? body.budgetRange ?? preferences.budget_range,
-    dietaryRestrictions: mergeUnique(
-      body.dietaryRestrictions ?? preferences.dietary_restrictions ?? [],
-      aiFilters.dietaryRestrictions
-    ),
-    requiredServices: mergeUnique(
-      body.requiredServices ?? preferences.preferred_services ?? [],
-      aiFilters.requiredServices
-    ),
-    maxDistanceKm: aiFilters.maxDistanceKm ?? body.maxDistanceKm ?? preferences.max_distance_km ?? 5,
-    onlyOpenNow: aiFilters.onlyOpenNow || body.onlyOpenNow || false,
+    preferredCuisines: selectedOrInferred('preferredCuisines', preferences.preferred_cuisines ?? [], aiFilters.preferredCuisines),
+    filterCuisines: hasSelected('preferredCuisines') ? body.preferredCuisines : aiFilters.filterCuisines,
+    filterServices: hasSelected('requiredServices') ? body.requiredServices : aiFilters.filterServices,
+    budgetRange: body.budgetRange ?? aiFilters.budgetRange ?? preferences.budget_range,
+    dietaryRestrictions: selectedOrInferred('dietaryRestrictions', preferences.dietary_restrictions ?? [], aiFilters.dietaryRestrictions),
+    requiredServices: selectedOrInferred('requiredServices', preferences.preferred_services ?? [], aiFilters.requiredServices),
+    maxDistanceKm: body.maxDistanceKm ?? aiDistanceKm ?? preferences.max_distance_km ?? 5,
+    onlyOpenNow: body.onlyOpenNow ?? aiFilters.onlyOpenNow ?? false,
     limit: body.limit ?? 10,
   };
 
-  const output = await recommendationService.getRecommendationsAndLog(params, {
-    userId: req.user?.id,
-    sessionId: req.headers['x-session-id'],
-  });
+  const output = preview
+    ? await recommendationService.getRecommendations(params, null)
+    : await recommendationService.getRecommendationsAndLog(params, {
+      userId: req.user?.id,
+      sessionId: req.headers['x-session-id'],
+    });
 
   const hasPreferenceInput = Boolean(
     body.query ||
@@ -91,21 +97,22 @@ const getRecommendations = asyncHandler(async (req, res) => {
         },
         candidates: output.results,
       });
-      externalAiUsed = true;
+      externalAiUsed = externalAiUsed || suggestions.length > 0;
     } catch (error) {
       openaiRecommendationService.logProviderFailure('restaurant suggestions', error);
     }
   }
 
-  const suggestionsById = new Map(suggestions.map((item) => [item.restaurantId, item.reason]));
+  const suggestionIds = new Set(suggestions.map((item) => item.restaurantId));
   const results = output.results.map((result) => {
-    const aiReason = suggestionsById.get(String(result.restaurant.id));
-    return aiReason
-      ? { ...result, reason: aiReason, aiSuggested: true }
+    // Model output selects an existing result; explanations remain grounded in
+    // the local scorer and cannot contain unverified model-authored claims.
+    return suggestionIds.has(String(result.restaurant.id))
+      ? { ...result, aiSuggested: true }
       : result;
   });
 
-  res.json({
+  return {
     success: true,
     data: results,
     meta: {
@@ -115,6 +122,15 @@ const getRecommendations = asyncHandler(async (req, res) => {
       personalization: output.personalization,
       aiProvider: externalAiUsed ? 'openai' : 'local',
       aiSuggestionCount: suggestions.length,
+      preferenceSnapshot: {
+        preferredCuisines: params.preferredCuisines,
+        budgetRange: params.budgetRange || null,
+        dietaryRestrictions: params.dietaryRestrictions,
+        requiredServices: params.requiredServices,
+        maxDistanceKm: Number(params.maxDistanceKm),
+        lat: params.userLat == null ? null : Number(params.userLat),
+        lng: params.userLng == null ? null : Number(params.userLng),
+      },
       aiFilters: body.query
         ? {
             summary: aiFilters.summary,
@@ -129,7 +145,17 @@ const getRecommendations = asyncHandler(async (req, res) => {
           }
         : null,
     },
-  });
+  };
+}
+
+const getRecommendations = asyncHandler(async (req, res) => {
+  res.json(await buildRecommendations(req));
+});
+
+// Preview the shared model without logging an admin request as customer
+// history or fitting a personal model from the administrator's activity.
+const previewRecommendations = asyncHandler(async (req, res) => {
+  res.json(await buildRecommendations(req, { preview: true }));
 });
 
 const saveFeedback = asyncHandler(async (req, res) => {
@@ -217,6 +243,7 @@ const deleteHistoryItem = asyncHandler(async (req, res) => {
 
 module.exports = {
   getRecommendations,
+  previewRecommendations,
   saveFeedback,
   getWeights,
   updateWeights,

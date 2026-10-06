@@ -63,7 +63,6 @@ function satisfiesDietary(userDiet, offeredList) {
   const normUser = normalizeDietary(userDiet);
   const normOffered = (offeredList || []).map(normalizeDietary);
   if (normOffered.includes(normUser)) return true;
-  if (normOffered.some((opt) => opt.includes(normUser) || normUser.includes(opt))) return true;
   if (normUser === 'nopork' || normUser === 'porkfree') {
     return normOffered.some((o) => ['nopork', 'porkfree', 'halal', 'vegan', 'vegetarian'].includes(o));
   }
@@ -482,6 +481,7 @@ async function getRecommendationsAndLog(params, { userId, sessionId }) {
     userId,
     sessionId,
     queryParams: {
+      keyword: params.keyword || null,
       cuisines: params.preferredCuisines || [],
       budgetRange: params.budgetRange || null,
       dietaryRestrictions: params.dietaryRestrictions || [],
@@ -505,7 +505,7 @@ async function getRecommendationsAndLog(params, { userId, sessionId }) {
 function buildReasonText(
   restaurant,
   factors,
-  { preferredCuisines, budgetRange, dietaryRestrictions, requiredServices, matchedPreferences }
+  { preferredCuisines, budgetRange, dietaryRestrictions, matchedPreferences }
 ) {
   const reasons = [];
 
@@ -523,7 +523,7 @@ function buildReasonText(
   }
 
   if (dietaryRestrictions?.length && factors.dietary >= 99) {
-    reasons.push(`meets your ${dietaryRestrictions.join('/')} needs`);
+    reasons.push(`lists ${dietaryRestrictions.join('/')} options`);
   }
   if (restaurant.distance_km != null && factors.proximity >= 60) {
     reasons.push(`only ${restaurant.distance_km.toFixed(1)} km away`);

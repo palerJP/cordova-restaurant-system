@@ -3,7 +3,12 @@
  * Every other module reads config from here instead of process.env directly,
  * so we fail fast at boot with a clear error instead of a cryptic runtime bug.
  */
-require('dotenv').config();
+const path = require('node:path');
+const dotenv = require('dotenv');
+
+// Local admin settings are ignored by Git. Existing process variables win.
+dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const REQUIRED_IN_PRODUCTION = [
   'DATABASE_URL',
@@ -78,6 +83,7 @@ const env = {
     apiKey: process.env.OPENAI_API_KEY || null,
     model: process.env.OPENAI_MODEL || 'gpt-4.1-mini',
     timeoutMs: Math.max(1000, parseInt(process.env.OPENAI_TIMEOUT_MS || '10000', 10) || 10000),
+    maxRequestsPerWindow: Math.max(1, parseInt(process.env.OPENAI_MAX_REQUESTS_PER_15_MIN || '60', 10) || 60),
   },
 
   auth: {
