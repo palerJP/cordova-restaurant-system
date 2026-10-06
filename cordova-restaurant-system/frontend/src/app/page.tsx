@@ -55,13 +55,21 @@ export default function HomePage() {
   }, []);
 
   // Recommended For You Carousel State & Ref
-  const [recommendations, setRecommendations] = useState<{
+  const [recommendationState, setRecommendationState] = useState<{ requestKey: string; items: {
     restaurant: Restaurant;
     score: number;
     matchedPreferences?: MatchedPreferences;
     reason?: string;
-  }[]>([]);
+  }[] }>({ requestKey: '', items: [] });
   const [recLoading, setRecLoading] = useState(true);
+  const [recommendationPrompt, setRecommendationPrompt] = useState('');
+  const [activeRecommendationQuery, setActiveRecommendationQuery] = useState('');
+  const [recommendationVersion, setRecommendationVersion] = useState(0);
+  const recommendationRequestId = useRef(0);
+  const accountKey = user?.id || 'guest';
+  const requestKey = `${accountKey}|${activeRecommendationQuery}|${recommendationVersion}`;
+  const recommendations = recommendationState.requestKey === requestKey ? recommendationState.items : [];
+  const showingRecLoading = recLoading || recommendationState.requestKey !== requestKey;
   const recScrollRef = useRef<HTMLDivElement>(null);
   const establishmentsRef = useRef<HTMLDivElement>(null);
 
@@ -173,7 +181,7 @@ export default function HomePage() {
     }
   }, [debouncedQuery, activeCategory, page]);
 
-  const fetchRecommendations = useCallback(async () => {
+  const fetchRecommendations = useCallback(async (requestId: number) => {
     setRecLoading(true);
     try {
       let recList: {
@@ -190,6 +198,7 @@ export default function HomePage() {
           dietaryRestrictions: guestPreferences?.dietaryRestrictions || [],
           requiredServices: guestPreferences?.preferredServices || [],
           budgetRange: guestPreferences?.budgetRange || undefined,
+          query: activeRecommendationQuery || undefined,
           limit: 10,
         }, { auth: !!user });
         recommendationsApiResponded = true;
@@ -208,7 +217,7 @@ export default function HomePage() {
       }
 
       // Use generic offline fallback only for guests; never bypass a user's saved constraints.
-      if (recList.length === 0 && !recommendationsApiResponded && !user) {
+      if (recList.length === 0 && !recommendationsApiResponded && !user && !activeRecommendationQuery) {
         const staticList = getAllStaticRestaurants().filter(isRestaurantVisible);
         recList = staticList.slice(0, 8).map((r, i) => ({
           restaurant: r,
@@ -216,20 +225,27 @@ export default function HomePage() {
         }));
       }
 
-      setRecommendations(recList);
+      if (requestId === recommendationRequestId.current) {
+        setRecommendationState({ requestKey: `${user?.id || 'guest'}|${activeRecommendationQuery}|${recommendationVersion}`, items: recList });
+      }
     } catch {
-      setRecommendations([]);
+      if (requestId === recommendationRequestId.current) {
+        setRecommendationState({ requestKey: `${user?.id || 'guest'}|${activeRecommendationQuery}|${recommendationVersion}`, items: [] });
+      }
     } finally {
-      setRecLoading(false);
+      if (requestId === recommendationRequestId.current) setRecLoading(false);
     }
-  }, [user]);
+  }, [user, activeRecommendationQuery, recommendationVersion]);
 
   useEffect(() => {
     fetchRestaurants();
   }, [fetchRestaurants]);
 
   useEffect(() => {
-    fetchRecommendations();
+    const requestId = ++recommendationRequestId.current;
+    setRecLoading(true);
+    void fetchRecommendations(requestId);
+    return () => { recommendationRequestId.current += 1; };
   }, [fetchRecommendations]);
 
   const scrollRec = (direction: 'left' | 'right') => {
@@ -248,6 +264,15 @@ export default function HomePage() {
       });
     }
     router.push('/history?tab=searches');
+  };
+
+  const handleRecommendationSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const query = recommendationPrompt.trim();
+    if (!query) return;
+    saveSearchHistory({ query, source: 'recommendation' });
+    setActiveRecommendationQuery(query);
+    setRecommendationVersion((version) => version + 1);
   };
 
   const handleCategoryClick = (categorySlug: string) => {
@@ -467,7 +492,7 @@ export default function HomePage() {
       </section>
 
       {/* RECOMMENDED FOR YOU SWIPEABLE CAROUSEL SECTION */}
-      <section className="max-w-6xl mx-auto px-4 mt-20 relative z-10">
+      <section id="recommendations" className="max-w-6xl mx-auto px-4 mt-20 relative z-10 scroll-mt-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
           <div>
             <div className="flex items-center gap-2">
@@ -479,7 +504,7 @@ export default function HomePage() {
             <p className="text-xs sm:text-sm text-stone-500 dark:text-stone-400 mt-1">
               {user
                 ? 'Ranked for your saved preferences and personalized by your feedback.'
-                : 'Top-rated culinary hotspots and local favorites in Cordova.'}
+                : 'Local restaurant matches. Add your tastes to make them more personal.'}
             </p>
             <div className="h-0.5 w-16 bg-cordova-gold mt-3 rounded-full" />
           </div>
@@ -494,7 +519,7 @@ export default function HomePage() {
               </button>
             ) : (
               <button
-                onClick={() => router.push('/login')}
+                onClick={() => router.push('/preferences?returnTo=%2F%23recommendations')}
                 className="text-xs font-semibold text-cordova-gold hover:text-amber-500 transition-colors px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 backdrop-blur-sm shadow-spatial-sm hover:scale-105 active:scale-95"
               >
                 Personalize Tastes
@@ -523,7 +548,19 @@ export default function HomePage() {
           </div>
         </div>
 
-        {recLoading ? (
+        <form onSubmit={handleRecommendationSubmit} className="mb-6 flex flex-col sm:flex-row gap-2 rounded-2xl border border-stone-200 dark:border-stone-800 bg-white/85 dark:bg-[#1a211c] p-3 shadow-sm">
+          <label htmlFor="recommendation-prompt" className="sr-only">Describe the food or restaurant you want</label>
+          <input id="recommendation-prompt" value={recommendationPrompt} maxLength={500}
+            onChange={(event) => setRecommendationPrompt(event.target.value)}
+            placeholder="Try “affordable seafood with takeout”"
+            className="input flex-1" />
+          <button type="submit" disabled={!recommendationPrompt.trim()}
+            className="btn-primary disabled:opacity-50">Find matches</button>
+          {activeRecommendationQuery && <button type="button" onClick={() => { setRecommendationPrompt(''); setActiveRecommendationQuery(''); setRecommendationVersion((version) => version + 1); }}
+            className="btn-secondary">Clear request</button>}
+        </form>
+
+        {showingRecLoading ? (
           <RestaurantGridSkeleton count={3} />
         ) : recommendations.length > 0 ? (
           /* Horizontal Swipeable Container */
@@ -558,7 +595,7 @@ export default function HomePage() {
               Set your food preferences to get personalized restaurant recommendations.
             </p>
             <button
-              onClick={() => router.push(user ? '/profile#taste-preferences' : '/login')}
+              onClick={() => router.push(user ? '/profile#taste-preferences' : '/preferences?returnTo=%2F%23recommendations')}
               className="bg-cordova-green hover:bg-cordova-greenHover text-white text-xs font-semibold px-5 py-2.5 rounded-xl shadow-spatial-sm active:scale-95"
             >
               Set Preferences

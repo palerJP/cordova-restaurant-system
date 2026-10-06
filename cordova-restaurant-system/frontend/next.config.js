@@ -17,7 +17,7 @@ const nextConfig = {
       },
       {
         source: '/recommendations',
-        destination: '/',
+        destination: '/#recommendations',
         permanent: true,
       },
     ];

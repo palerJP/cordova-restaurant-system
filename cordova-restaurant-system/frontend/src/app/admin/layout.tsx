@@ -14,7 +14,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: '/admin/reviews', label: 'Review Moderation', icon: MessageSquare },
     { href: '/admin/users', label: 'Users', icon: Users },
     { href: '/admin/promotions', label: 'Promotions', icon: Tag },
-    { href: '/admin/ai-model', label: 'AI Model Tuning', icon: Sliders },
+    { href: '/admin/ai-model', label: 'AI Recommendations', icon: Sliders },
   ];
 
   const isSubPage = pathname !== '/admin';

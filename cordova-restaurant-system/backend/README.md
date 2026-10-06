@@ -13,18 +13,29 @@ negative examples. Apply new database migrations with `npm run db:migrate`.
 ## External AI suggestions
 
 The recommendations endpoint can use OpenAI to interpret free-text food
-requests and write grounded reasons for suggested establishments. The model
-does not set match scores: the existing preference/rating ranker and the
-feedback-trained per-user ML model continue to score and order results.
+requests and select establishments from a short list of known candidates.
+CordovaEats generates the displayed reasons and match scores from its own
+restaurant data and recommender.
 
-To enable it, set `OPENAI_API_KEY` in `backend/.env` (never in the frontend),
-then restart the backend. `OPENAI_MODEL` defaults to `gpt-4.1-mini` and
-`OPENAI_TIMEOUT_MS` defaults to 10000. Without a key, the local preference
-interpreter remains active. If the provider times out or rejects a request,
-the endpoint logs a warning and returns local recommendations.
+In local development, an administrator can save the key on the AI
+Recommendations page. This writes to ignored `backend/.env.local`; the key is
+never returned to the browser. The page can also test the saved connection.
+Local browser access is required to edit these settings. For hosted systems,
+set `OPENAI_API_KEY` as a server environment variable. Server environment
+variables take precedence over local files. Do not put a key in the frontend.
+
+`OPENAI_MODEL` defaults to `gpt-4.1-mini`, `OPENAI_TIMEOUT_MS` to 10000,
+and `OPENAI_MAX_REQUESTS_PER_15_MIN` to 60 per backend process. This cap
+includes connection tests, resets on restart, and is not shared across
+multiple server instances. Without a key, or if the provider times out,
+rejects a request, or the local cap is reached, recommendations use the
+local interpreter and ranker. The OpenAI request uses `store: false`.
 
 When enabled, the backend sends the user's search text and a compact set of
 public establishment details to OpenAI. The API key remains server-side.
+If `backend/.env` was ever committed, remove it from Git tracking and rotate
+the database and signing secrets it contained; ignoring it now does not erase
+past Git history.
 
 ## Prerequisites
 

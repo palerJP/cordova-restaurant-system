@@ -29,6 +29,7 @@ const COLUMNS: FooterColumn[] = [
     title: 'Explore',
     links: [
       { label: 'Browse Restaurants', href: '/' },
+      { label: 'Recommended Restaurants', href: '/#recommendations' },
     ],
   },
   {

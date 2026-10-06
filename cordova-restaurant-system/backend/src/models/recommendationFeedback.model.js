@@ -68,7 +68,7 @@ async function getTrainingExamples(userId) {
            WHERE fav.user_id = rv.user_id AND fav.restaurant_id = rv.restaurant_id
          )
      )
-     SELECT f.restaurant_id, f.sentiment, f.preference_snapshot,
+     SELECT f.restaurant_id, f.sentiment, f.preference_snapshot, f.source,
             r.*,
             COALESCE(
               (SELECT array_agg(c.name) FROM restaurant_cuisines rc

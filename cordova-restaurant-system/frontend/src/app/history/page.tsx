@@ -87,6 +87,7 @@ function HistoryContent() {
   // Server state for logged-in users
   const [serverSearches, setServerSearches] = useState<ServerHistoryEntry[]>([]);
   const [serverMeta, setServerMeta] = useState<PageMeta | null>(null);
+  const [serverOwnerId, setServerOwnerId] = useState<string | null>(null);
   const [serverPage, setServerPage] = useState(1);
   const [loadingServer, setLoadingServer] = useState(false);
 
@@ -97,17 +98,26 @@ function HistoryContent() {
   }, []);
 
   // Load server searches if logged in
-  const loadServerSearches = useCallback(async () => {
+  const visibleServerSearches = serverOwnerId === user?.id ? serverSearches : [];
+  const visibleServerMeta = serverOwnerId === user?.id ? serverMeta : null;
+
+  const loadServerSearches = useCallback(async (signal: AbortSignal) => {
     if (!user) return;
     setLoadingServer(true);
     try {
-      const res = await api.get(`/api/recommendations/history?page=${serverPage}&limit=10`);
+      const res = await api.get(`/api/recommendations/history?page=${serverPage}&limit=10`, { signal });
+      if (signal.aborted) return;
       setServerSearches(res.data || []);
       setServerMeta(res.meta || null);
+      setServerOwnerId(user.id);
     } catch {
-      setServerSearches([]);
+      if (!signal.aborted) {
+        setServerSearches([]);
+        setServerMeta(null);
+        setServerOwnerId(user.id);
+      }
     } finally {
-      setLoadingServer(false);
+      if (!signal.aborted) setLoadingServer(false);
     }
   }, [user, serverPage]);
 
@@ -120,9 +130,11 @@ function HistoryContent() {
   }, [refreshLocalActivity]);
 
   useEffect(() => {
+    const controller = new AbortController();
     if (user && activeTab === 'searches') {
-      loadServerSearches();
+      void loadServerSearches(controller.signal);
     }
+    return () => controller.abort();
   }, [user, activeTab, loadServerSearches]);
 
   // Handlers for Views
@@ -218,7 +230,7 @@ function HistoryContent() {
               </button>
             )}
 
-            {activeTab === 'searches' && (localSearches.length > 0 || serverSearches.length > 0) && (
+            {activeTab === 'searches' && (localSearches.length > 0 || visibleServerSearches.length > 0) && (
               <button
                 type="button"
                 onClick={handleClearAllSearches}
@@ -262,9 +274,9 @@ function HistoryContent() {
           >
             <Search size={14} />
             <span>Search History</span>
-            {(localSearches.length > 0 || serverSearches.length > 0) && (
+            {(localSearches.length > 0 || visibleServerSearches.length > 0) && (
               <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 font-semibold">
-                {user && serverSearches.length > 0 ? serverSearches.length : localSearches.length}
+                {user && visibleServerSearches.length > 0 ? visibleServerSearches.length : localSearches.length}
               </span>
             )}
           </button>
@@ -395,9 +407,9 @@ function HistoryContent() {
         {activeTab === 'searches' && (
           <div>
             {/* If user is logged in and has server recommendation searches, render server history; otherwise show local queries */}
-            {user && serverSearches.length > 0 ? (
+            {user && visibleServerSearches.length > 0 ? (
               <div className="space-y-3">
-                {serverSearches.map((entry) => (
+                {visibleServerSearches.map((entry) => (
                   <div
                     key={entry.id}
                     className="p-4 rounded-2xl bg-white/80 dark:bg-[#181f1a]/80 border border-stone-200/80 dark:border-white/10 shadow-spatial-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all"
@@ -479,7 +491,7 @@ function HistoryContent() {
                   </div>
                 ))}
 
-                {serverMeta && <Pagination meta={serverMeta} onPageChange={setServerPage} />}
+                {visibleServerMeta && <Pagination meta={visibleServerMeta} onPageChange={setServerPage} />}
               </div>
             ) : localSearches.length > 0 ? (
               <div className="space-y-2.5">

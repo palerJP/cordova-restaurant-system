@@ -9,6 +9,9 @@ const {
   updateWeightsValidator,
 } = require('../validators/misc.validator');
 
+// Admin preview does not create customer history or training feedback.
+router.post('/preview', requireAuth, requireRole('admin'), validate(recommendationValidator), controller.previewRecommendations);
+
 // Guests AND logged-in users can request recommendations (guests must
 // supply constraints in the body since they have no saved preferences).
 router.post('/', optionalAuth, validate(recommendationValidator), controller.getRecommendations);

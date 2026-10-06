@@ -41,6 +41,17 @@ const PRICE_RANGES: { value: PriceRange; label: string }[] = [
   { value: 'premium', label: 'Premium' },
 ];
 
+function safeReturnTo(value: string | null, fallback: string): string {
+  if (!value || !value.startsWith('/') || value.startsWith('//') || value.includes('\\')) return fallback;
+  try {
+    const target = new URL(value, 'http://localhost');
+    if (target.origin !== 'http://localhost') return fallback;
+    return `${target.pathname}${target.search}${target.hash}`;
+  } catch {
+    return fallback;
+  }
+}
+
 export default function PreferencesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -117,13 +128,7 @@ export default function PreferencesPage() {
     );
   };
 
-  const requestedReturnTo = searchParams.get('returnTo');
-  const returnTo =
-    requestedReturnTo?.startsWith('/') &&
-    !requestedReturnTo.startsWith('//') &&
-    !requestedReturnTo.startsWith('/recommendations')
-      ? requestedReturnTo
-      : '/';
+  const returnTo = safeReturnTo(searchParams.get('returnTo'), isFirstTime ? '/#recommendations' : '/');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
