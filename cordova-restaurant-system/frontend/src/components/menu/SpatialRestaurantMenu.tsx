@@ -10,11 +10,18 @@ import {
   Utensils,
 } from 'lucide-react';
 import type { Restaurant, MenuItem, MenuCategory } from '@/lib/types';
+import { BURANDAT_PRICE_UNITS } from '@/data/burandatMenu';
 
 interface SpatialRestaurantMenuProps {
   restaurant: Restaurant;
   items: MenuItem[];
   categories: MenuCategory[];
+}
+
+function getBurandatPriceUnit(item: MenuItem): string {
+  return BURANDAT_PRICE_UNITS.get(item.name)
+    || item.description?.match(/^Price per (.+)\.$/)?.[1]
+    || '';
 }
 
 // Curated signature dishes & fallback category menus tailored for Cordova restaurants
@@ -338,6 +345,8 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
   const categoryKey = restaurant.category || 'Restaurant';
   const defaultData = CATEGORY_DEFAULT_MENUS[categoryKey] || CATEGORY_DEFAULT_MENUS.Restaurant;
   const isRca = restaurant.slug === 'rca-bilao-food-station';
+  const isBurandat = restaurant.slug === 'burandat-seafood-bucket';
+  const isSuppliedMenu = isRca || isBurandat;
 
   // Selected Category filter
   const [activeCategory, setActiveCategory] = useState<string>('All');
@@ -352,9 +361,10 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
         category: categories.find((c) => c.id === it.category_id)?.name || (it as any).category_name || 'Main Dishes',
         price: Number(it.price),
         startingPrice: it.description?.startsWith('Starting price') || false,
-        description: it.description || (isRca ? '' : 'Crafted fresh with traditional Cordova flavors.'),
+        priceUnit: isBurandat ? getBurandatPriceUnit(it) : '',
+        description: isBurandat ? '' : it.description || (isRca ? '' : 'Crafted fresh with traditional Cordova flavors.'),
         image: it.image_url || defaultData.heroDish.image,
-        tag: isRca ? '' : '✨ Chef Special',
+        tag: isSuppliedMenu ? '' : '✨ Chef Special',
         popular: true,
       }));
     }
@@ -363,6 +373,7 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
     const defaults = defaultData.menuItems.map((it, idx) => ({
       id: `curated-${idx}`,
       startingPrice: false,
+      priceUnit: '',
       ...it,
     }));
 
@@ -373,16 +384,17 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
         category: categories.find((c) => c.id === it.category_id)?.name || 'House Specialties',
         price: Number(it.price),
         startingPrice: it.description?.startsWith('Starting price') || false,
-        description: it.description || (isRca ? '' : 'Special house recipe prepared daily.'),
+        priceUnit: isBurandat ? getBurandatPriceUnit(it) : '',
+        description: isBurandat ? '' : it.description || (isRca ? '' : 'Special house recipe prepared daily.'),
         image: it.image_url || defaultData.heroDish.image,
-        tag: isRca ? '' : '⭐ Signature',
+        tag: isSuppliedMenu ? '' : '⭐ Signature',
         popular: true,
       }));
       return [...customOnes, ...defaults];
     }
 
     return defaults;
-  }, [items, categories, defaultData, isRca]);
+  }, [items, categories, defaultData, isRca, isBurandat, isSuppliedMenu]);
 
   // List of unique categories for tabs
   const categoryTabs = useMemo(() => {
@@ -451,6 +463,8 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
                 ? 'All dishes below are included in the ₱299 Eat-All-You-Can buffet.'
                 : isRca
                   ? <>Prices and photos follow the <a href="https://www.foodpanda.ph/restaurant/dt0y/r-c-a-food-station-cordova" target="_blank" rel="noopener noreferrer" className="underline">Foodpanda listing</a> checked October 6, 2026. Confirm current prices with RCA before ordering.</>
+                : isBurandat
+                  ? 'Browse Burandat’s seafood, soups, vegetables, noodles, fish, chicken, and pork dishes.'
                 : 'Freshly crafted delicacies and island favorites ready for your order.'}
             </p>
           </div>
@@ -547,7 +561,7 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
                       </div>
                     ) : (
                       <div className="absolute bottom-3 right-3 px-3 py-1 rounded-xl bg-amber-500/95 backdrop-blur-md text-white font-bold text-sm shadow-md border border-amber-300/40">
-                        {item.startingPrice ? 'From ' : ''}₱{item.price.toLocaleString('en-PH')}
+                        {item.startingPrice ? 'From ' : ''}₱{item.price.toLocaleString('en-PH')}{item.priceUnit ? `/${item.priceUnit}` : ''}
                       </div>
                     )}
                   </div>

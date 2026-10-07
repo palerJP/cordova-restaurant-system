@@ -1,0 +1,36 @@
+{
+  "categories": [
+    { "name": "Seafoods", "sortOrder": 1 },
+    { "name": "Soups", "sortOrder": 2 },
+    { "name": "Vegetables", "sortOrder": 3 },
+    { "name": "Noodles", "sortOrder": 4 },
+    { "name": "Fish", "sortOrder": 5 },
+    { "name": "Chicken", "sortOrder": 6 },
+    { "name": "Pork", "sortOrder": 7 }
+  ],
+  "items": [
+    { "category": "Seafoods", "name": "Crispy Crab", "price": 399, "unit": "300g", "image_url": "/images/burandat/crispy-crab.png" },
+    { "category": "Seafoods", "name": "Crispy Shrimp", "price": 80, "unit": "100g", "image_url": "/images/burandat/crispy-shrimp.png" },
+    { "category": "Seafoods", "name": "Crispy Lambay", "price": 399, "unit": "400g", "image_url": "/images/burandat/crispy-lambay.png" },
+    { "category": "Seafoods", "name": "Seafoods Bucket", "price": 399, "unit": "bucket", "image_url": "/images/burandat/seafoods-bucket.png" },
+    { "category": "Seafoods", "name": "Steam Scallops", "price": 100, "unit": "100g", "image_url": "/images/burandat/steam-scallops.png" },
+    { "category": "Seafoods", "name": "Shrimp w/ Signature Sauce", "price": 100, "unit": "100g", "image_url": "/images/burandat/shrimp-signature-sauce.png" },
+    { "category": "Seafoods", "name": "Lobster w/ White Sauce", "price": 2100, "unit": "kg", "image_url": "/images/burandat/lobster-white-sauce.png" },
+    { "category": "Soups", "name": "Shrimp Sinigang", "price": 250, "image_url": "/images/burandat/shrimp-sinigang.png" },
+    { "category": "Soups", "name": "Pork Sinigang", "price": 280, "image_url": "/images/burandat/pork-sinigang.png" },
+    { "category": "Soups", "name": "Pork Nilat-an", "price": 280, "image_url": "/images/burandat/pork-nilat-an.png" },
+    { "category": "Soups", "name": "Fish Tinola", "price": 200, "image_url": "/images/burandat/fish-tinola.png" },
+    { "category": "Vegetables", "name": "Chopsuey Guisado", "price": 250, "unit": "serve", "image_url": "/images/burandat/chopsuey-guisado.png" },
+    { "category": "Vegetables", "name": "Ginisang Kangkong", "price": 95, "unit": "serve", "image_url": "/images/burandat/ginisang-kangkong.png" },
+    { "category": "Noodles", "name": "Bam-I Special", "price": 140, "image_url": "/images/burandat/bam-i-special.png" },
+    { "category": "Noodles", "name": "Pancit Guisado", "price": 120, "image_url": "/images/burandat/pancit-guisado-120.png" },
+    { "category": "Noodles", "name": "Pancit Guisado (other variant)", "price": 220, "image_url": "/images/burandat/pancit-guisado-220.png" },
+    { "category": "Fish", "name": "Inihaw Boneless Bangus", "price": 60, "unit": "pc", "image_url": "/images/burandat/inihaw-boneless-bangus.png" },
+    { "category": "Fish", "name": "Fried Daing Bangus", "price": 60, "unit": "pc", "image_url": "/images/burandat/fried-daing-bangus.png" },
+    { "category": "Chicken", "name": "Crispy Chicken Fillet", "price": 220, "unit": "kilo", "image_url": "/images/burandat/crispy-chicken-fillet.png" },
+    { "category": "Chicken", "name": "Fried Chicken Whole", "price": 450, "image_url": "/images/burandat/fried-chicken-whole.png" },
+    { "category": "Chicken", "name": "Fried Chicken Half", "price": 230, "image_url": "/images/burandat/fried-chicken-half.png" },
+    { "category": "Pork", "name": "Bicol Express", "price": 300, "unit": "serve", "image_url": "/images/burandat/bicol-express.png" },
+    { "category": "Pork", "name": "Ribs/Spicy", "price": 199, "image_url": "/images/burandat/ribs-spicy.png" }
+  ]
+}

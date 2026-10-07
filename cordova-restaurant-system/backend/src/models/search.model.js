@@ -65,6 +65,7 @@ async function getMenuItemsForRestaurants(restaurantIds = []) {
       dietary_tags
     FROM menu_items
     WHERE restaurant_id = ANY($1::uuid[])
+      AND is_available = true
   `;
 
   const { rows } = await query(sql, [restaurantIds]);

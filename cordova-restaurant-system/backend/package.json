@@ -10,6 +10,7 @@
     "db:migrate": "node src/scripts/migrate.js",
     "db:seed": "node src/scripts/seed.js",
     "db:seed-rca-menu": "node src/scripts/seed_rca_menu.js",
+    "db:seed-burandat-menu": "node src/scripts/seed_burandat_menu.js",
     "db:verify-users": "node src/scripts/verify_all_users.js",
     "test": "jest --runInBand",
     "test:watch": "jest --watch --runInBand",

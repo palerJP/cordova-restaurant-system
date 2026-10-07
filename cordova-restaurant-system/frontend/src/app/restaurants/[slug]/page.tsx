@@ -70,6 +70,7 @@ import { CSALT_CATEGORIES, CSALT_MENU_ITEMS } from '@/data/csaltMenu';
 import { SIP_N_STREET_CATEGORIES, SIP_N_STREET_MENU_ITEMS } from '@/data/sipNStreetMenu';
 import { BARRACKS_CATEGORIES, BARRACKS_MENU_ITEMS } from '@/data/barracksMenu';
 import { RCA_CATEGORIES, RCA_MENU_ITEMS } from '@/data/rcaMenu';
+import { BURANDAT_CATEGORIES, BURANDAT_MENU_ITEMS } from '@/data/burandatMenu';
 import { SpatialRestaurantMenu } from '@/components/menu/SpatialRestaurantMenu';
 
 const SPATIAL_EMOJIS = [
@@ -268,9 +269,18 @@ export default function RestaurantDetailPage() {
           || found.slug === 'rca-bilao-food-station'
           || customFound.name.toLowerCase() === 'rca bilao food station';
 
-        if (menu.data?.items?.length) {
+        const isBurandat = slug === 'burandat-seafood-bucket'
+          || found.slug === 'burandat-seafood-bucket'
+          || customFound.name.toLowerCase() === 'burandat seafood bucket';
+        const liveMenuItems: MenuItem[] = Array.isArray(menu.data?.items) ? menu.data.items : [];
+        // The owner can still recover unavailable rows in the admin menu editor.
+        const publicMenuItems = isBurandat
+          ? liveMenuItems.filter((item) => item.is_available !== false)
+          : liveMenuItems;
+
+        if (publicMenuItems.length) {
           setCategories(menu.data.categories || []);
-          setItems(menu.data.items);
+          setItems(publicMenuItems);
         } else if (isMcDo) {
           setCategories(MCDONALDS_CATEGORIES.map(c => ({ ...c, restaurant_id: found.id })));
           setItems(MCDONALDS_MENU_ITEMS.map(i => ({ ...i, restaurant_id: found.id })));
@@ -322,6 +332,9 @@ export default function RestaurantDetailPage() {
         } else if (isRca) {
           setCategories(RCA_CATEGORIES.map(c => ({ ...c, restaurant_id: found.id })));
           setItems(RCA_MENU_ITEMS.map(i => ({ ...i, restaurant_id: found.id })));
+        } else if (isBurandat) {
+          setCategories(BURANDAT_CATEGORIES.map(c => ({ ...c, restaurant_id: found.id })));
+          setItems(BURANDAT_MENU_ITEMS.map(i => ({ ...i, restaurant_id: found.id })));
         } else {
           setCategories(menu.data?.categories?.length ? menu.data.categories : [
             { id: 'cat-1', restaurant_id: found.id, name: 'House Specialties', sort_order: 1 },
