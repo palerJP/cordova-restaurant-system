@@ -71,6 +71,8 @@ import { SIP_N_STREET_CATEGORIES, SIP_N_STREET_MENU_ITEMS } from '@/data/sipNStr
 import { BARRACKS_CATEGORIES, BARRACKS_MENU_ITEMS } from '@/data/barracksMenu';
 import { RCA_CATEGORIES, RCA_MENU_ITEMS } from '@/data/rcaMenu';
 import { BURANDAT_CATEGORIES, BURANDAT_MENU_ITEMS } from '@/data/burandatMenu';
+import { CASCADJA_CATEGORIES, CASCADJA_MENU_ITEMS } from '@/data/cascadjaMenu';
+import { SUNGKA_CATEGORIES, SUNGKA_MENU_ITEMS } from '@/data/sungkaMenu';
 import { SpatialRestaurantMenu } from '@/components/menu/SpatialRestaurantMenu';
 
 const SPATIAL_EMOJIS = [
@@ -272,6 +274,16 @@ export default function RestaurantDetailPage() {
         const isBurandat = slug === 'burandat-seafood-bucket'
           || found.slug === 'burandat-seafood-bucket'
           || customFound.name.toLowerCase() === 'burandat seafood bucket';
+        const isCascadja = slug === 'cascaja-cafe'
+          || slug === 'cascadja-cafe'
+          || found.slug === 'cascaja-cafe'
+          || found.slug === 'cascadja-cafe'
+          || /cascadja|cascaja/i.test(customFound.name);
+        const isSungka = slug === 'sungka-native-restaurant'
+          || slug === 'sungka-native'
+          || slug === 'sungka'
+          || found.slug?.includes('sungka')
+          || customFound.name.toLowerCase().includes('sungka');
         const liveMenuItems: MenuItem[] = Array.isArray(menu.data?.items) ? menu.data.items : [];
         // The owner can still recover unavailable rows in the admin menu editor.
         const publicMenuItems = isBurandat
@@ -335,6 +347,12 @@ export default function RestaurantDetailPage() {
         } else if (isBurandat) {
           setCategories(BURANDAT_CATEGORIES.map(c => ({ ...c, restaurant_id: found.id })));
           setItems(BURANDAT_MENU_ITEMS.map(i => ({ ...i, restaurant_id: found.id })));
+        } else if (isCascadja) {
+          setCategories(CASCADJA_CATEGORIES.map(c => ({ ...c, restaurant_id: found.id })));
+          setItems(CASCADJA_MENU_ITEMS.map(i => ({ ...i, restaurant_id: found.id })));
+        } else if (isSungka) {
+          setCategories(SUNGKA_CATEGORIES.map(c => ({ ...c, restaurant_id: found.id })));
+          setItems(SUNGKA_MENU_ITEMS.map(i => ({ ...i, restaurant_id: found.id })));
         } else {
           setCategories(menu.data?.categories?.length ? menu.data.categories : [
             { id: 'cat-1', restaurant_id: found.id, name: 'House Specialties', sort_order: 1 },

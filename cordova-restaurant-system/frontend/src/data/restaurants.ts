@@ -103,7 +103,7 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
   'barracks-grill-and-resto-bar': {
     name: 'Barracks Grill and Resto Bar',
     category: 'Resto Bar',
-    coverImage: 'https://lh3.googleusercontent.com/grass-cs/ACvplmP1_ZIZux8LEYKASSCkThb2Q5Xfp8toCwBgS6gR0yYblz4-nHIdDYzdpQMjKUn7jXu5G9wYNFod4dWcCTSvjT9sCay87OKunPdMMUupTd3j7StpHg43j3LIzG2a_KFUd1xr1AFL=s294-w294-h220-n-k-no',
+    coverImage: '/images/barracks/barracks-logo.jpg',
     barangay: 'Gabi',
     description: 'casual nightspot and dining place.',
     address: 'Ajoya Subdivision, Mactan Island, Cordova, Cebu',
@@ -115,7 +115,7 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
   'rca-bilao-food-station': {
     name: 'RCA Bilao Food Station',
     category: 'Restaurant',
-    coverImage: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&auto=format&fit=crop&q=80',
+    coverImage: '/images/rca/rca-lechon-belly-bilao.png',
     barangay: 'Gabi',
     description: 'Pansit stir-fry, boneless lechon belly, kakanin sa bilao, ug lain-laing food trays.',
     address: 'Sitio Mahayahay, Gabi, Cordova, Cebu',

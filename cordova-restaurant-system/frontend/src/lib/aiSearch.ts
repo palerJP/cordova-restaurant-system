@@ -16,6 +16,7 @@ import { TEN_THOUSAND_ROSES_MENU_ITEMS } from '@/data/tenThousandRosesMenu';
 import { ABY_ROAD_MENU_ITEMS } from '@/data/abyRoadMenu';
 import { TITA_KIMS_MENU_ITEMS } from '@/data/titaKimsMenu';
 import { CSALT_MENU_ITEMS } from '@/data/csaltMenu';
+import { SUNGKA_MENU_ITEMS } from '@/data/sungkaMenu';
 
 /**
  * Curated signature dishes for Cordova establishments without dedicated TS menu files
@@ -85,6 +86,7 @@ const ALL_MENU_ITEMS: Record<string, MenuItem[]> = {
   'csalt-cafe-cordova': CSALT_MENU_ITEMS,
   'csalt-cafe': CSALT_MENU_ITEMS,
   'rca-bilao-food-station': RCA_SIGNATURE_ITEMS,
+  'sungka-native-restaurant': SUNGKA_MENU_ITEMS,
 };
 
 /**

@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import type { Restaurant, MenuItem, MenuCategory } from '@/lib/types';
 import { BURANDAT_PRICE_UNITS } from '@/data/burandatMenu';
+import { CASCADJA_IMAGE_ATTRIBUTIONS, CASCADJA_REPRESENTATIVE_IMAGES } from '@/data/cascadjaMenu';
 
 interface SpatialRestaurantMenuProps {
   restaurant: Restaurant;
@@ -346,7 +347,8 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
   const defaultData = CATEGORY_DEFAULT_MENUS[categoryKey] || CATEGORY_DEFAULT_MENUS.Restaurant;
   const isRca = restaurant.slug === 'rca-bilao-food-station';
   const isBurandat = restaurant.slug === 'burandat-seafood-bucket';
-  const isSuppliedMenu = isRca || isBurandat;
+  const isCascadja = restaurant.slug === 'cascaja-cafe' || restaurant.slug === 'cascadja-cafe';
+  const isSuppliedMenu = isRca || isBurandat || isCascadja;
 
   // Selected Category filter
   const [activeCategory, setActiveCategory] = useState<string>('All');
@@ -354,7 +356,7 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
 
   // Merge API items with curated default items if API items are sparse
   const allMenuItems = useMemo(() => {
-    if (items.length >= 4) {
+    if (items.length >= 4 || (isSuppliedMenu && items.length > 0)) {
       return items.map((it) => ({
         id: it.id,
         name: it.name,
@@ -362,9 +364,14 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
         price: Number(it.price),
         startingPrice: it.description?.startsWith('Starting price') || false,
         priceUnit: isBurandat ? getBurandatPriceUnit(it) : '',
-        description: isBurandat ? '' : it.description || (isRca ? '' : 'Crafted fresh with traditional Cordova flavors.'),
+        description: isBurandat || isCascadja ? '' : it.description || (isRca ? '' : 'Crafted fresh with traditional Cordova flavors.'),
         image: it.image_url || defaultData.heroDish.image,
-        tag: isSuppliedMenu ? '' : '✨ Chef Special',
+        tag: isCascadja && CASCADJA_REPRESENTATIVE_IMAGES.get(it.name) === it.image_url
+          ? 'Representative photo'
+          : isSuppliedMenu ? '' : '✨ Chef Special',
+        photoAttribution: isCascadja && CASCADJA_IMAGE_ATTRIBUTIONS.get(it.name)?.imageUrl === it.image_url
+          ? CASCADJA_IMAGE_ATTRIBUTIONS.get(it.name)
+          : undefined,
         popular: true,
       }));
     }
@@ -374,6 +381,7 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
       id: `curated-${idx}`,
       startingPrice: false,
       priceUnit: '',
+      photoAttribution: undefined,
       ...it,
     }));
 
@@ -385,16 +393,21 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
         price: Number(it.price),
         startingPrice: it.description?.startsWith('Starting price') || false,
         priceUnit: isBurandat ? getBurandatPriceUnit(it) : '',
-        description: isBurandat ? '' : it.description || (isRca ? '' : 'Special house recipe prepared daily.'),
+        description: isBurandat || isCascadja ? '' : it.description || (isRca ? '' : 'Special house recipe prepared daily.'),
         image: it.image_url || defaultData.heroDish.image,
-        tag: isSuppliedMenu ? '' : '⭐ Signature',
+        tag: isCascadja && CASCADJA_REPRESENTATIVE_IMAGES.get(it.name) === it.image_url
+          ? 'Representative photo'
+          : isSuppliedMenu ? '' : '⭐ Signature',
+        photoAttribution: isCascadja && CASCADJA_IMAGE_ATTRIBUTIONS.get(it.name)?.imageUrl === it.image_url
+          ? CASCADJA_IMAGE_ATTRIBUTIONS.get(it.name)
+          : undefined,
         popular: true,
       }));
       return [...customOnes, ...defaults];
     }
 
     return defaults;
-  }, [items, categories, defaultData, isRca, isBurandat, isSuppliedMenu]);
+  }, [items, categories, defaultData, isRca, isBurandat, isCascadja, isSuppliedMenu]);
 
   // List of unique categories for tabs
   const categoryTabs = useMemo(() => {
@@ -465,6 +478,8 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
                   ? <>Prices and photos follow the <a href="https://www.foodpanda.ph/restaurant/dt0y/r-c-a-food-station-cordova" target="_blank" rel="noopener noreferrer" className="underline">Foodpanda listing</a> checked October 6, 2026. Confirm current prices with RCA before ordering.</>
                 : isBurandat
                   ? 'Browse Burandat’s seafood, soups, vegetables, noodles, fish, chicken, and pork dishes.'
+                : isCascadja
+                  ? <>Prices and Cascadja photos follow its <a href="https://www.foodpanda.ph/restaurant/laiy/cascadja-food-and-beverage-house-calan-cordova-laiy" target="_blank" rel="noopener noreferrer" className="underline">Foodpanda menu</a> checked October 7, 2026. Other photos are representative.</>
                 : 'Freshly crafted delicacies and island favorites ready for your order.'}
             </p>
           </div>
@@ -577,6 +592,12 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
                     {item.description && <p className="text-xs text-stone-500 dark:text-stone-400 mt-1.5 line-clamp-2 leading-relaxed">
                       {item.description}
                     </p>}
+                    {item.photoAttribution && (
+                      <p className="text-[10px] text-stone-500 dark:text-stone-400 mt-2">
+                        Photo: <a href={item.photoAttribution.sourcePage} target="_blank" rel="noopener noreferrer" className="underline">{item.photoAttribution.credit}</a>
+                        {' · '}<a href={item.photoAttribution.licenseUrl} target="_blank" rel="noopener noreferrer" className="underline">{item.photoAttribution.license}</a>
+                      </p>
+                    )}
                   </div>
                 </div>
               </motion.div>
