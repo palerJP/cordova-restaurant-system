@@ -71,6 +71,12 @@ npm run dev   # starts on http://localhost:4000 with nodemon
 Health check: `GET http://localhost:4000/health`
 Interactive API docs (Swagger UI): `http://localhost:4000/api/docs`
 
+To import the 14 RCA Bilao Food Station items from its Foodpanda listing after
+the restaurant exists in the database, run `npm run db:seed-rca-menu`. The
+script looks up RCA by slug, updates matching prices and photo URLs, and leaves
+unrelated menu items intact. The two variable-price products use the lowest
+listed price and are labeled as starting prices on the restaurant page.
+
 ## Demo accounts (after `npm run db:seed`)
 
 All demo accounts use the password `Password123!`.

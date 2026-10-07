@@ -69,6 +69,7 @@ import { ABY_ROAD_CATEGORIES, ABY_ROAD_MENU_ITEMS } from '@/data/abyRoadMenu';
 import { CSALT_CATEGORIES, CSALT_MENU_ITEMS } from '@/data/csaltMenu';
 import { SIP_N_STREET_CATEGORIES, SIP_N_STREET_MENU_ITEMS } from '@/data/sipNStreetMenu';
 import { BARRACKS_CATEGORIES, BARRACKS_MENU_ITEMS } from '@/data/barracksMenu';
+import { RCA_CATEGORIES, RCA_MENU_ITEMS } from '@/data/rcaMenu';
 import { SpatialRestaurantMenu } from '@/components/menu/SpatialRestaurantMenu';
 
 const SPATIAL_EMOJIS = [
@@ -263,6 +264,10 @@ export default function RestaurantDetailPage() {
           found.slug?.includes('barrack') ||
           customFound.name.toLowerCase().includes('barrack');
 
+        const isRca = slug === 'rca-bilao-food-station'
+          || found.slug === 'rca-bilao-food-station'
+          || customFound.name.toLowerCase() === 'rca bilao food station';
+
         if (menu.data?.items?.length) {
           setCategories(menu.data.categories || []);
           setItems(menu.data.items);
@@ -314,6 +319,9 @@ export default function RestaurantDetailPage() {
         } else if (isBarracks) {
           setCategories(BARRACKS_CATEGORIES.map(c => ({ ...c, restaurant_id: found.id })));
           setItems(BARRACKS_MENU_ITEMS.map(i => ({ ...i, restaurant_id: found.id })));
+        } else if (isRca) {
+          setCategories(RCA_CATEGORIES.map(c => ({ ...c, restaurant_id: found.id })));
+          setItems(RCA_MENU_ITEMS.map(i => ({ ...i, restaurant_id: found.id })));
         } else {
           setCategories(menu.data?.categories?.length ? menu.data.categories : [
             { id: 'cat-1', restaurant_id: found.id, name: 'House Specialties', sort_order: 1 },

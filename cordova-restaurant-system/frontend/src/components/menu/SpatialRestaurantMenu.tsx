@@ -337,6 +337,7 @@ const CATEGORY_DEFAULT_MENUS: Record<
 export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] }: SpatialRestaurantMenuProps) {
   const categoryKey = restaurant.category || 'Restaurant';
   const defaultData = CATEGORY_DEFAULT_MENUS[categoryKey] || CATEGORY_DEFAULT_MENUS.Restaurant;
+  const isRca = restaurant.slug === 'rca-bilao-food-station';
 
   // Selected Category filter
   const [activeCategory, setActiveCategory] = useState<string>('All');
@@ -350,9 +351,10 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
         name: it.name,
         category: categories.find((c) => c.id === it.category_id)?.name || (it as any).category_name || 'Main Dishes',
         price: Number(it.price),
-        description: it.description || 'Crafted fresh with traditional Cordova flavors.',
+        startingPrice: it.description?.startsWith('Starting price') || false,
+        description: it.description || (isRca ? '' : 'Crafted fresh with traditional Cordova flavors.'),
         image: it.image_url || defaultData.heroDish.image,
-        tag: '✨ Chef Special',
+        tag: isRca ? '' : '✨ Chef Special',
         popular: true,
       }));
     }
@@ -360,6 +362,7 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
     // Combine any existing with default items
     const defaults = defaultData.menuItems.map((it, idx) => ({
       id: `curated-${idx}`,
+      startingPrice: false,
       ...it,
     }));
 
@@ -369,16 +372,17 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
         name: it.name,
         category: categories.find((c) => c.id === it.category_id)?.name || 'House Specialties',
         price: Number(it.price),
-        description: it.description || 'Special house recipe prepared daily.',
+        startingPrice: it.description?.startsWith('Starting price') || false,
+        description: it.description || (isRca ? '' : 'Special house recipe prepared daily.'),
         image: it.image_url || defaultData.heroDish.image,
-        tag: '⭐ Signature',
+        tag: isRca ? '' : '⭐ Signature',
         popular: true,
       }));
       return [...customOnes, ...defaults];
     }
 
     return defaults;
-  }, [items, categories, defaultData]);
+  }, [items, categories, defaultData, isRca]);
 
   // List of unique categories for tabs
   const categoryTabs = useMemo(() => {
@@ -445,6 +449,8 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
             <p className="text-xs sm:text-sm text-stone-500 dark:text-stone-400 mt-1">
               {isTitaKims
                 ? 'All dishes below are included in the ₱299 Eat-All-You-Can buffet.'
+                : isRca
+                  ? <>Prices and photos follow the <a href="https://www.foodpanda.ph/restaurant/dt0y/r-c-a-food-station-cordova" target="_blank" rel="noopener noreferrer" className="underline">Foodpanda listing</a> checked October 6, 2026. Confirm current prices with RCA before ordering.</>
                 : 'Freshly crafted delicacies and island favorites ready for your order.'}
             </p>
           </div>
@@ -541,7 +547,7 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
                       </div>
                     ) : (
                       <div className="absolute bottom-3 right-3 px-3 py-1 rounded-xl bg-amber-500/95 backdrop-blur-md text-white font-bold text-sm shadow-md border border-amber-300/40">
-                        ₱{item.price}
+                        {item.startingPrice ? 'From ' : ''}₱{item.price.toLocaleString('en-PH')}
                       </div>
                     )}
                   </div>
@@ -554,9 +560,9 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
                     <h4 className="font-serif text-base font-bold text-stone-900 dark:text-white group-hover:text-cordova-green dark:group-hover:text-emerald-400 transition-colors mt-0.5">
                       {item.name}
                     </h4>
-                    <p className="text-xs text-stone-500 dark:text-stone-400 mt-1.5 line-clamp-2 leading-relaxed">
+                    {item.description && <p className="text-xs text-stone-500 dark:text-stone-400 mt-1.5 line-clamp-2 leading-relaxed">
                       {item.description}
-                    </p>
+                    </p>}
                   </div>
                 </div>
               </motion.div>
