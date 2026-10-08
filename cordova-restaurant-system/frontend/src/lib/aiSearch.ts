@@ -17,6 +17,8 @@ import { ABY_ROAD_MENU_ITEMS } from '@/data/abyRoadMenu';
 import { TITA_KIMS_MENU_ITEMS } from '@/data/titaKimsMenu';
 import { CSALT_MENU_ITEMS } from '@/data/csaltMenu';
 import { SUNGKA_MENU_ITEMS } from '@/data/sungkaMenu';
+import { LANTAW_MENU_ITEMS } from '@/data/lantawMenu';
+import { MAVERICKS_MENU_ITEMS } from '@/data/mavericksMenu';
 
 /**
  * Curated signature dishes for Cordova establishments without dedicated TS menu files
@@ -79,7 +81,7 @@ const ALL_MENU_ITEMS: Record<string, MenuItem[]> = {
   'aby-road-resto-bar': ABY_ROAD_MENU_ITEMS,
   'tita-kims': TITA_KIMS_MENU_ITEMS,
   'entoys-bakasihan': ENTOYS_SIGNATURE_ITEMS,
-  'lantaw-floating-native-restaurant': LANTAW_SIGNATURE_ITEMS,
+  'lantaw-floating-native-restaurant': LANTAW_MENU_ITEMS,
   'burandat-seafood-bucket': BURANDAT_SIGNATURE_ITEMS,
   'barracks-grill-and-resto-bar': BARRACKS_SIGNATURE_ITEMS,
   'the-latte-cafe-mtvn5h2j': LATTE_CAFE_SIGNATURE_ITEMS,
@@ -87,6 +89,7 @@ const ALL_MENU_ITEMS: Record<string, MenuItem[]> = {
   'csalt-cafe': CSALT_MENU_ITEMS,
   'rca-bilao-food-station': RCA_SIGNATURE_ITEMS,
   'sungka-native-restaurant': SUNGKA_MENU_ITEMS,
+  'mavericks-by-the-baker-street': MAVERICKS_MENU_ITEMS,
 };
 
 /**
@@ -134,7 +137,7 @@ const BEST_OF_THE_BEST_MAP: Record<string, AuthorityChampion[]> = {
     { slug: 'horizon-bean-cafe', boost: 95, reason: '👑 #1 Artisan Specialty Coffee & Late-Night Vibe' },
     { slug: 'the-latte-cafe-mtvn5h2j', boost: 94, reason: '✨ Aesthetic Artisan Espresso & Spanish Lattes' },
     { slug: 'cafe-mafia', boost: 75, reason: '✨ Handcrafted Mafia Artisan Espresso & Cold Drinks' },
-    { slug: 'eat-n-repeat', boost: 45, reason: '✨ Aesthetic Cafe, Lattes & Cordova Cold Brew' },
+    { slug: 'eat-n-repeat', boost: 45, reason: '✨ Spanish Latte, Milktea & Shakes' },
     { slug: 'mavericks-by-the-baker-street', boost: 35, reason: '✨ Creative Specialty Coffee Catch-Up' },
     { slug: 'don-macchiatos-cordova', boost: 30, reason: '✨ Famous ₱39 Iced Caramel Macchiato' },
     { slug: 'cascaja-cafe', boost: 28, reason: '✨ Cozy Neighborhood Coffee & Pastries' },
@@ -176,7 +179,6 @@ const BEST_OF_THE_BEST_MAP: Record<string, AuthorityChampion[]> = {
   ],
   inasal: [
     { slug: 'papsys-bbq', boost: 90, reason: '👑 #1 Flame-Grilled Chicken Inasal' },
-    { slug: 'eat-n-repeat', boost: 60, reason: '✨ Signature Chicken Inasal Rice Bowl' },
   ],
   burger: [
     { slug: 'cafe-mafia', boost: 90, reason: '👑 Handcrafted Mafia Premium Burgers' },

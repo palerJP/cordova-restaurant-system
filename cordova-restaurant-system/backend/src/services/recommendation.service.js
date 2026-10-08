@@ -74,10 +74,15 @@ function satisfiesDietary(userDiet, offeredList) {
 
 const SERVICE_FILTER_TERMS = {
   'seaside / sunset view': ['seaside', 'seaview', 'sunset', 'waterfront', 'ocean view', 'overwater', 'floating'],
+  seaside_view: ['seaside', 'seaview', 'sunset', 'waterfront', 'ocean view', 'overwater', 'floating'],
   'outdoor / al fresco': ['outdoor', 'al fresco', 'alfresco', 'open air'],
+  al_fresco: ['outdoor', 'al fresco', 'alfresco', 'open air'],
   'live music': ['live music', 'live band', 'band'],
+  live_music: ['live music', 'live band', 'band'],
   'air conditioned': ['air conditioned', 'airconditioned', 'aircon'],
+  air_conditioned: ['air conditioned', 'airconditioned', 'aircon'],
   'dine-in': ['dine_in', 'dine in', 'dine-in', 'eat in', 'sit down'],
+  dine_in: ['dine_in', 'dine in', 'dine-in', 'eat in', 'sit down'],
   takeout: ['takeout', 'take out', 'take-away', 'takeaway'],
   delivery: ['delivery', 'deliver'],
 };
@@ -86,12 +91,26 @@ function normalizeService(str) {
   return String(str || '').toLowerCase().replace(/[-_\s/]/g, '');
 }
 
+// PostgreSQL returns arrays of the custom service_type enum as array-literal
+// strings (for example, "{dine_in,takeout}") rather than JavaScript arrays.
+function serviceList(value) {
+  if (Array.isArray(value)) return value;
+  if (typeof value !== 'string') return [];
+  const text = value.trim();
+  if (!text) return [];
+  if (text.startsWith('{') && text.endsWith('}')) {
+    const entries = text.slice(1, -1);
+    return entries ? entries.split(',').map((entry) => entry.trim()).filter(Boolean) : [];
+  }
+  return [text];
+}
+
 function matchesServicePreference(restaurant, preference) {
   const label = String(preference || '').toLowerCase().trim();
   const terms = SERVICE_FILTER_TERMS[label] || [label];
   const structuredServices = [
-    ...(restaurant.services_offered || []),
-    ...(restaurant.amenities || []),
+    ...serviceList(restaurant.services_offered),
+    ...serviceList(restaurant.amenities),
   ];
   const descriptiveText = [restaurant.name, restaurant.description]
     .filter(Boolean)
@@ -250,7 +269,7 @@ function passesHardFilters(restaurant, params) {
       .filter((s) => ['dine_in', 'takeout', 'delivery'].includes(s));
 
     if (coreServices.length > 0) {
-      const offers = (restaurant.services_offered || []).map((s) => String(s).toLowerCase());
+      const offers = serviceList(restaurant.services_offered).map((s) => String(s).toLowerCase());
       const meetsAny = coreServices.some((s) => offers.includes(s.toLowerCase()));
       if (!meetsAny) return false;
     }
@@ -293,7 +312,11 @@ async function getRecommendations(params, userId = null) {
     rating: Number(activeWeights.rating_weight),
   };
 
-  const candidates = await restaurantModel.findAllForRecommendation({ userLat, userLng });
+  const candidates = (await restaurantModel.findAllForRecommendation({ userLat, userLng }))
+    .map((restaurant) => ({
+      ...restaurant,
+      services_offered: serviceList(restaurant.services_offered),
+    }));
 
   const trainingExamples = userId
     ? await recommendationFeedbackModel.getTrainingExamples(userId)
@@ -332,6 +355,21 @@ async function getRecommendations(params, userId = null) {
         filterCuisines,
         filterServices,
         maxDistanceKm: userLat != null && userLng != null ? maxDistanceKm : null,
+      })
+    );
+  }
+
+  // A saved distance can be too small for every restaurant. Keep the user's
+  // location and distance in the scoring factors while allowing farther
+  // restaurants to appear instead of leaving the recommendations empty.
+  if (filtered.length === 0 && candidates.length > 0 && userLat != null && userLng != null) {
+    filtered = candidates.filter((r) =>
+      passesHardFilters(r, {
+        dietaryRestrictions: [],
+        requiredServices: [],
+        filterCuisines,
+        filterServices,
+        maxDistanceKm: null,
       })
     );
   }
@@ -398,8 +436,8 @@ async function getRecommendations(params, userId = null) {
       (dietaryRestrictions || []).some((ud) => satisfiesDietary(ud, [rd]))
     );
     const matchedServices = [
-      ...(restaurant.services_offered || []),
-      ...(restaurant.amenities || []),
+      ...serviceList(restaurant.services_offered),
+      ...serviceList(restaurant.amenities),
     ].filter((rs) => {
       const nrs = String(rs).toLowerCase().replace(/[-_\s/]/g, '');
       return (requiredServices || []).some((us) => {
@@ -553,5 +591,6 @@ module.exports = {
     scoreRating,
     scorePreferenceFeatures,
     passesHardFilters,
+    serviceList,
   },
 };

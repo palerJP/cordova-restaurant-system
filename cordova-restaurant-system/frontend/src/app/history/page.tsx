@@ -429,7 +429,7 @@ function HistoryContent() {
                         <div className="flex flex-wrap items-center gap-1.5 mb-1">
                           {entry.queryParams.keyword && (
                             <span className="font-bold text-sm text-stone-900 dark:text-white mr-1">
-                              "{entry.queryParams.keyword}"
+                              &quot;{entry.queryParams.keyword}&quot;
                             </span>
                           )}
                           {entry.queryParams.cuisines?.map((c) => (
@@ -507,7 +507,7 @@ function HistoryContent() {
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-bold text-sm text-stone-900 dark:text-white truncate">
-                            "{item.query}"
+                            &quot;{item.query}&quot;
                           </span>
                           {item.cuisine && (
                             <span className="text-[10px] font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 px-2 py-0.5 rounded-md">

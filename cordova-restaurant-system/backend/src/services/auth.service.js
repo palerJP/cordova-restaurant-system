@@ -220,7 +220,9 @@ async function googleOAuth({ idToken, credential, accessToken, token: clientToke
             name = decoded.name;
             picture = decoded.picture;
           }
-        } catch (jwtErr) {}
+        } catch (jwtErr) {
+          // Leave email unset so the request receives the validation error below.
+        }
       }
     }
   }

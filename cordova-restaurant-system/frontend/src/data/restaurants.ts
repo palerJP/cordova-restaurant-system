@@ -526,6 +526,7 @@ export function applyRestaurantCustomization(restaurant: Restaurant): Restaurant
     phone: custom.phone || restaurant.phone,
     email: custom.email || restaurant.email,
     hours: custom.hours || (restaurant as any)?.hours,
+    is_open: /permanently closed/i.test(custom.hours || '') ? false : restaurant.is_open,
     review_count: stats.count,
     avg_rating: stats.rating,
   };

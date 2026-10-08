@@ -23,6 +23,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { getTastePreferences } from '@/lib/taste-preferences';
 import { RestaurantCard } from '@/components/RestaurantCard';
+import { TastePreferencesDialog } from '@/components/TastePreferencesDialog';
 import { RestaurantGridSkeleton } from '@/components/ui/Skeleton';
 import { Pagination } from '@/components/ui/Pagination';
 import type { Restaurant, PageMeta, MatchedPreferences } from '@/lib/types';
@@ -62,12 +63,12 @@ export default function HomePage() {
     reason?: string;
   }[] }>({ requestKey: '', items: [] });
   const [recLoading, setRecLoading] = useState(true);
-  const [recommendationPrompt, setRecommendationPrompt] = useState('');
-  const [activeRecommendationQuery, setActiveRecommendationQuery] = useState('');
-  const [recommendationVersion, setRecommendationVersion] = useState(0);
+  const [recommendationIssue, setRecommendationIssue] = useState<'error' | 'empty' | null>(null);
+  const [preferencesOpen, setPreferencesOpen] = useState(false);
+  const [preferencesRevision, setPreferencesRevision] = useState(0);
   const recommendationRequestId = useRef(0);
   const accountKey = user?.id || 'guest';
-  const requestKey = `${accountKey}|${activeRecommendationQuery}|${recommendationVersion}`;
+  const requestKey = `${accountKey}:${preferencesRevision}`;
   const recommendations = recommendationState.requestKey === requestKey ? recommendationState.items : [];
   const showingRecLoading = recLoading || recommendationState.requestKey !== requestKey;
   const recScrollRef = useRef<HTMLDivElement>(null);
@@ -183,6 +184,7 @@ export default function HomePage() {
 
   const fetchRecommendations = useCallback(async (requestId: number) => {
     setRecLoading(true);
+    setRecommendationIssue(null);
     try {
       let recList: {
         restaurant: Restaurant;
@@ -191,16 +193,19 @@ export default function HomePage() {
         reason?: string;
       }[] = [];
       let recommendationsApiResponded = false;
+      let recommendationRequestFailed = false;
       try {
         const guestPreferences = user ? null : getTastePreferences();
-        const res = await api.post('/api/recommendations', {
-          preferredCuisines: guestPreferences?.preferredCuisines || [],
-          dietaryRestrictions: guestPreferences?.dietaryRestrictions || [],
-          requiredServices: guestPreferences?.preferredServices || [],
-          budgetRange: guestPreferences?.budgetRange || undefined,
-          query: activeRecommendationQuery || undefined,
-          limit: 10,
-        }, { auth: !!user });
+        const requestBody = user
+          ? { limit: 10 }
+          : {
+              preferredCuisines: guestPreferences?.preferredCuisines || [],
+              dietaryRestrictions: guestPreferences?.dietaryRestrictions || [],
+              requiredServices: guestPreferences?.preferredServices || [],
+              budgetRange: guestPreferences?.budgetRange || undefined,
+              limit: 10,
+            };
+        const res = await api.post('/api/recommendations', requestBody, { auth: !!user });
         recommendationsApiResponded = true;
         if (res.data && Array.isArray(res.data)) {
           recList = res.data
@@ -214,10 +219,11 @@ export default function HomePage() {
         }
       } catch {
         recList = [];
+        recommendationRequestFailed = true;
       }
 
       // Use generic offline fallback only for guests; never bypass a user's saved constraints.
-      if (recList.length === 0 && !recommendationsApiResponded && !user && !activeRecommendationQuery) {
+      if (recList.length === 0 && !recommendationsApiResponded && !user) {
         const staticList = getAllStaticRestaurants().filter(isRestaurantVisible);
         recList = staticList.slice(0, 8).map((r, i) => ({
           restaurant: r,
@@ -226,16 +232,18 @@ export default function HomePage() {
       }
 
       if (requestId === recommendationRequestId.current) {
-        setRecommendationState({ requestKey: `${user?.id || 'guest'}|${activeRecommendationQuery}|${recommendationVersion}`, items: recList });
+        setRecommendationState({ requestKey, items: recList });
+        setRecommendationIssue(recList.length ? null : recommendationRequestFailed ? 'error' : 'empty');
       }
     } catch {
       if (requestId === recommendationRequestId.current) {
-        setRecommendationState({ requestKey: `${user?.id || 'guest'}|${activeRecommendationQuery}|${recommendationVersion}`, items: [] });
+        setRecommendationState({ requestKey, items: [] });
+        setRecommendationIssue('error');
       }
     } finally {
       if (requestId === recommendationRequestId.current) setRecLoading(false);
     }
-  }, [user, activeRecommendationQuery, recommendationVersion]);
+  }, [user, requestKey]);
 
   useEffect(() => {
     fetchRestaurants();
@@ -264,15 +272,6 @@ export default function HomePage() {
       });
     }
     router.push('/history?tab=searches');
-  };
-
-  const handleRecommendationSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const query = recommendationPrompt.trim();
-    if (!query) return;
-    saveSearchHistory({ query, source: 'recommendation' });
-    setActiveRecommendationQuery(query);
-    setRecommendationVersion((version) => version + 1);
   };
 
   const handleCategoryClick = (categorySlug: string) => {
@@ -512,7 +511,7 @@ export default function HomePage() {
           <div className="flex items-center gap-3 self-end sm:self-center">
             {user ? (
               <button
-                onClick={() => router.push('/profile#taste-preferences')}
+                onClick={() => setPreferencesOpen(true)}
                 className="text-xs font-semibold text-cordova-green dark:text-emerald-400 hover:text-emerald-600 transition-colors px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 backdrop-blur-sm shadow-spatial-sm hover:scale-105 active:scale-95"
               >
                 Adjust Preferences
@@ -548,18 +547,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        <form onSubmit={handleRecommendationSubmit} className="mb-6 flex flex-col sm:flex-row gap-2 rounded-2xl border border-stone-200 dark:border-stone-800 bg-white/85 dark:bg-[#1a211c] p-3 shadow-sm">
-          <label htmlFor="recommendation-prompt" className="sr-only">Describe the food or restaurant you want</label>
-          <input id="recommendation-prompt" value={recommendationPrompt} maxLength={500}
-            onChange={(event) => setRecommendationPrompt(event.target.value)}
-            placeholder="Try “affordable seafood with takeout”"
-            className="input flex-1" />
-          <button type="submit" disabled={!recommendationPrompt.trim()}
-            className="btn-primary disabled:opacity-50">Find matches</button>
-          {activeRecommendationQuery && <button type="button" onClick={() => { setRecommendationPrompt(''); setActiveRecommendationQuery(''); setRecommendationVersion((version) => version + 1); }}
-            className="btn-secondary">Clear request</button>}
-        </form>
-
         {showingRecLoading ? (
           <RestaurantGridSkeleton count={3} />
         ) : recommendations.length > 0 ? (
@@ -586,23 +573,28 @@ export default function HomePage() {
             ))}
           </div>
         ) : (
-          <div className="spatial-card p-8 text-center text-stone-500 max-w-md mx-auto">
-            <p className="text-2xl mb-2">✨</p>
-            <p className="font-serif font-medium text-stone-800 dark:text-stone-200 mb-1">
-              Personalize Your Experience
-            </p>
-            <p className="text-xs text-stone-500 mb-4">
-              Set your food preferences to get personalized restaurant recommendations.
-            </p>
+          <div className="py-5 text-center text-sm text-stone-500 dark:text-stone-400" role="status">
+            <p>{recommendationIssue === 'error'
+              ? 'Recommendations could not be loaded right now.'
+              : 'No matching establishments are available right now.'}</p>
             <button
-              onClick={() => router.push(user ? '/profile#taste-preferences' : '/preferences?returnTo=%2F%23recommendations')}
-              className="bg-cordova-green hover:bg-cordova-greenHover text-white text-xs font-semibold px-5 py-2.5 rounded-xl shadow-spatial-sm active:scale-95"
+              type="button"
+              onClick={() => void fetchRecommendations(++recommendationRequestId.current)}
+              className="mt-2 text-xs font-semibold text-cordova-green underline underline-offset-2 dark:text-emerald-400"
             >
-              Set Preferences
+              Try again
             </button>
           </div>
         )}
       </section>
+
+      {preferencesOpen && (
+        <TastePreferencesDialog
+          open={preferencesOpen}
+          onClose={() => setPreferencesOpen(false)}
+          onSaved={() => setPreferencesRevision((revision) => revision + 1)}
+        />
+      )}
 
       {/* ALL ESTABLISHMENTS SECTION */}
       <section ref={establishmentsRef} className="max-w-6xl mx-auto px-4 mt-24 scroll-mt-6 relative z-10">

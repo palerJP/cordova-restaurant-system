@@ -66,7 +66,7 @@ export function Footer() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
           <div className="col-span-2 sm:col-span-4 mb-2">
             <Link href="/" className="flex items-center gap-3.5 w-fit group">
-              <div className="relative h-16 w-16 shrink-0 transition-transform group-hover:scale-105 filter drop-shadow-sm">
+              <div className="relative h-16 w-16 shrink-0 aspect-square transition-transform group-hover:scale-105 filter drop-shadow-sm">
                 <Image
                   src="/cordova_eats_logo.png"
                   alt="CordovaEats Logo"

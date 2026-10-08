@@ -1,6 +1,10 @@
-const { _internal } = require('../../src/services/recommendation.service');
+const recommendationService = require('../../src/services/recommendation.service');
+const restaurantModel = require('../../src/models/restaurant.model');
+const weightsModel = require('../../src/models/recommendationWeights.model');
+const recommendationTrainingModel = require('../../src/models/recommendationTraining.model');
+const { _internal } = recommendationService;
 const {
-  scoreCuisineMatch, scoreBudgetFit, scoreProximity, scoreDietaryMatch, scoreRating, passesHardFilters,
+  scoreCuisineMatch, scoreBudgetFit, scoreProximity, scoreDietaryMatch, scoreServicesMatch, scoreRating, passesHardFilters, serviceList,
 } = _internal;
 
 describe('Recommendation Engine — scoring factors', () => {
@@ -110,6 +114,18 @@ describe('Recommendation Engine — scoring factors', () => {
       expect(passesHardFilters(baseRestaurant, { requiredServices: ['dine_in', 'delivery'] })).toBe(true);
     });
 
+    it('handles PostgreSQL enum array strings when checking saved services', () => {
+      const restaurant = { ...baseRestaurant, services_offered: '{dine_in,takeout}' };
+      expect(serviceList(restaurant.services_offered)).toEqual(['dine_in', 'takeout']);
+      expect(passesHardFilters(restaurant, { requiredServices: ['dine_in'] })).toBe(true);
+      expect(scoreServicesMatch(restaurant, ['takeout'])).toBe(100);
+    });
+
+    it('handles an array-literal amenity without splitting it into characters', () => {
+      const restaurant = { ...baseRestaurant, amenities: '{Al Fresco}' };
+      expect(scoreServicesMatch(restaurant, ['al_fresco'])).toBe(100);
+    });
+
     it('rejects a restaurant beyond the max distance', () => {
       expect(passesHardFilters(baseRestaurant, { maxDistanceKm: 1 })).toBe(false);
     });
@@ -138,8 +154,55 @@ describe('Recommendation Engine — scoring factors', () => {
       expect(passesHardFilters(cafe, { filterServices: ['Seaside / Sunset View'] })).toBe(false);
     });
 
+    it('recognizes the service IDs saved by the taste preferences form', () => {
+      const seasideRestaurant = {
+        ...baseRestaurant,
+        name: 'Parola Seaview Restaurant',
+        amenities: ['Al Fresco'],
+      };
+
+      expect(scoreServicesMatch(seasideRestaurant, ['seaside_view'])).toBe(100);
+      expect(scoreServicesMatch(seasideRestaurant, ['al_fresco'])).toBe(100);
+      expect(scoreServicesMatch(baseRestaurant, ['live_music'])).toBe(0);
+    });
+
     it('accepts when no constraints are given at all', () => {
       expect(passesHardFilters(baseRestaurant, {})).toBe(true);
     });
+  });
+});
+
+describe('Recommendation Engine — saved location fallback', () => {
+  afterEach(() => jest.restoreAllMocks());
+
+  it('returns scored restaurants when none fit the saved distance', async () => {
+    jest.spyOn(restaurantModel, 'findAllForRecommendation').mockResolvedValue([{
+      id: 'restaurant-1',
+      name: 'Faraway Cafe',
+      cuisines: ['Cafe & Desserts'],
+      dietary_options: [],
+      services_offered: '{dine_in,takeout}',
+      amenities: [],
+      price_range: 'moderate',
+      distance_km: 12,
+      avg_rating: 4,
+    }]);
+    jest.spyOn(weightsModel, 'getActive').mockResolvedValue(null);
+    jest.spyOn(recommendationTrainingModel, 'getActiveModel').mockResolvedValue(null);
+
+    const result = await recommendationService.getRecommendations({
+      userLat: 10,
+      userLng: 123,
+      maxDistanceKm: 5,
+      requiredServices: ['dine_in'],
+    });
+
+    expect(result.totalCandidatesConsidered).toBe(1);
+    expect(result.totalAfterFilters).toBe(1);
+    expect(result.results).toHaveLength(1);
+    expect(result.results[0].restaurant.services_offered).toEqual(['dine_in', 'takeout']);
+    expect(result.results[0].scoreBreakdown.proximity).toBe(0);
+    expect(result.results[0].scoreBreakdown.servicesMatch).toBe(100);
+    expect(result.results[0].matchPercentage).toBeGreaterThan(0);
   });
 });

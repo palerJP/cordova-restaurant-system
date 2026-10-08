@@ -73,6 +73,8 @@ import { RCA_CATEGORIES, RCA_MENU_ITEMS } from '@/data/rcaMenu';
 import { BURANDAT_CATEGORIES, BURANDAT_MENU_ITEMS } from '@/data/burandatMenu';
 import { CASCADJA_CATEGORIES, CASCADJA_MENU_ITEMS } from '@/data/cascadjaMenu';
 import { SUNGKA_CATEGORIES, SUNGKA_MENU_ITEMS } from '@/data/sungkaMenu';
+import { LANTAW_CATEGORIES, LANTAW_MENU_ITEMS } from '@/data/lantawMenu';
+import { MAVERICKS_CATEGORIES, MAVERICKS_MENU_ITEMS } from '@/data/mavericksMenu';
 import { SpatialRestaurantMenu } from '@/components/menu/SpatialRestaurantMenu';
 
 const SPATIAL_EMOJIS = [
@@ -82,6 +84,81 @@ const SPATIAL_EMOJIS = [
   { emoji: '👏', label: 'Bravo' },
   { emoji: '🦞', label: 'Bakasi/Fresh' },
 ];
+
+const EAT_N_REPEAT_LEGACY_SAMPLE_NAMES = new Set([
+  'House Special Latte',
+  'Cordova Cold Brew',
+  'Uji Matcha Milktea',
+  'Brown Sugar Boba Milk',
+  'Signature Chicken Inasal Rice Bowl',
+  'Spam & Egg Comfort Bowl',
+  'French Butter Croissant',
+  'Garlic Parmesan Truffle Fries',
+].map((name) => name.trim().toLowerCase()));
+
+const LANTAW_MENU_NAME_ALIASES = new Map([
+  ['tinolang manok', 'tinola manok'],
+]);
+
+function mergeSuppliedMenu(
+  restaurantId: string,
+  liveCategories: MenuCategory[],
+  liveItems: MenuItem[],
+  suppliedCategories: MenuCategory[],
+  suppliedItems: MenuItem[],
+  matchByCategory = false,
+  legacySampleNames?: ReadonlySet<string>,
+  nameAliases?: ReadonlyMap<string, string>,
+): { categories: MenuCategory[]; items: MenuItem[] } {
+  const categories = [...liveCategories];
+  const categoryByName = new Map(
+    liveCategories.map((category) => [category.name.trim().toLowerCase(), category]),
+  );
+  const staticCategoryIds = new Map<string, string>();
+
+  for (const category of suppliedCategories) {
+    const key = category.name.trim().toLowerCase();
+    let matchingCategory = categoryByName.get(key);
+    if (!matchingCategory) {
+      matchingCategory = { ...category, restaurant_id: restaurantId };
+      categories.push(matchingCategory);
+      categoryByName.set(key, matchingCategory);
+    }
+    staticCategoryIds.set(category.id, matchingCategory.id);
+  }
+
+  const liveCategoryNames = new Map(liveCategories.map((category) => [category.id, category.name]));
+  const suppliedCategoryNames = new Map(suppliedCategories.map((category) => [category.id, category.name]));
+  const itemKey = (item: MenuItem, categoryNames: Map<string, string>) => {
+    const normalizedName = item.name.trim().toLowerCase();
+    const name = nameAliases?.get(normalizedName) || normalizedName;
+    if (!matchByCategory) return name;
+    const categoryName = categoryNames.get(item.category_id || '') || item.category_name || '';
+    return `${categoryName.trim().toLowerCase()}\u0000${name}`;
+  };
+
+  const suppliedNames = new Set(suppliedItems.map((item) => item.name.trim().toLowerCase()));
+  const retainedLiveItems = liveItems.filter((item) =>
+    !legacySampleNames?.has(item.name.trim().toLowerCase())
+      || suppliedNames.has(item.name.trim().toLowerCase()),
+  );
+
+  // A live row takes precedence even when its owner has marked it unavailable.
+  const liveKeys = new Set(retainedLiveItems.map((item) => itemKey(item, liveCategoryNames)));
+  const newStaticItems = suppliedItems
+    .filter((item) => !liveKeys.has(itemKey(item, suppliedCategoryNames)))
+    .filter((item) => !matchByCategory || item.is_available !== false)
+    .map((item) => ({
+      ...item,
+      restaurant_id: restaurantId,
+      category_id: staticCategoryIds.get(item.category_id || '') || item.category_id,
+    }));
+
+  return {
+    categories,
+    items: [...retainedLiveItems.filter((item) => item.is_available !== false), ...newStaticItems],
+  };
+}
 
 export default function RestaurantDetailPage() {
   const params = useParams();
@@ -284,13 +361,58 @@ export default function RestaurantDetailPage() {
           || slug === 'sungka'
           || found.slug?.includes('sungka')
           || customFound.name.toLowerCase().includes('sungka');
+        const isLantaw = slug === 'lantaw-floating-native-restaurant'
+          || slug === 'lantaw-floating-native'
+          || slug === 'lantaw'
+          || found.slug?.includes('lantaw')
+          || customFound.name.toLowerCase().includes('lantaw');
+        const isMavericks = slug === 'mavericks-by-the-baker-street'
+          || slug === 'mavericks'
+          || slug === 'mavericks-cafe'
+          || found.slug?.includes('mavericks')
+          || customFound.name.toLowerCase().includes('maverick');
         const liveMenuItems: MenuItem[] = Array.isArray(menu.data?.items) ? menu.data.items : [];
         // The owner can still recover unavailable rows in the admin menu editor.
         const publicMenuItems = isBurandat
           ? liveMenuItems.filter((item) => item.is_available !== false)
           : liveMenuItems;
 
-        if (publicMenuItems.length) {
+        if (isMavericks) {
+          const mergedMenu = mergeSuppliedMenu(
+            found.id,
+            Array.isArray(menu.data?.categories) ? menu.data.categories : [],
+            liveMenuItems,
+            MAVERICKS_CATEGORIES,
+            MAVERICKS_MENU_ITEMS,
+          );
+          setCategories(mergedMenu.categories);
+          setItems(mergedMenu.items);
+        } else if (isEatNRepeat) {
+          const mergedMenu = mergeSuppliedMenu(
+            found.id,
+            Array.isArray(menu.data?.categories) ? menu.data.categories : [],
+            liveMenuItems,
+            EAT_N_REPEAT_CATEGORIES,
+            EAT_N_REPEAT_MENU_ITEMS,
+            true,
+            EAT_N_REPEAT_LEGACY_SAMPLE_NAMES,
+          );
+          setCategories(mergedMenu.categories);
+          setItems(mergedMenu.items);
+        } else if (isLantaw) {
+          const mergedMenu = mergeSuppliedMenu(
+            found.id,
+            Array.isArray(menu.data?.categories) ? menu.data.categories : [],
+            liveMenuItems,
+            LANTAW_CATEGORIES,
+            LANTAW_MENU_ITEMS,
+            false,
+            undefined,
+            LANTAW_MENU_NAME_ALIASES,
+          );
+          setCategories(mergedMenu.categories);
+          setItems(mergedMenu.items);
+        } else if (publicMenuItems.length) {
           setCategories(menu.data.categories || []);
           setItems(publicMenuItems);
         } else if (isMcDo) {
@@ -305,9 +427,6 @@ export default function RestaurantDetailPage() {
         } else if (isHorizon) {
           setCategories(HORIZON_CATEGORIES.map(c => ({ ...c, restaurant_id: found.id })));
           setItems(HORIZON_MENU_ITEMS.map(i => ({ ...i, restaurant_id: found.id })));
-        } else if (isEatNRepeat) {
-          setCategories(EAT_N_REPEAT_CATEGORIES.map(c => ({ ...c, restaurant_id: found.id })));
-          setItems(EAT_N_REPEAT_MENU_ITEMS.map(i => ({ ...i, restaurant_id: found.id })));
         } else if (isStuffedNFried) {
           setCategories(STUFFED_N_FRIED_CATEGORIES.map(c => ({ ...c, restaurant_id: found.id })));
           setItems(STUFFED_N_FRIED_MENU_ITEMS.map(i => ({ ...i, restaurant_id: found.id })));
