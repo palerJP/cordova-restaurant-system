@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import {
   GoogleMap,
   useJsApiLoader,
@@ -8,7 +8,7 @@ import {
   InfoWindowF,
 } from '@react-google-maps/api';
 import Link from 'next/link';
-import { MapPin, Navigation, ExternalLink, Info, Star } from 'lucide-react';
+import { MapPin, Navigation, ExternalLink, Star } from 'lucide-react';
 import type { Restaurant } from '@/lib/types';
 import { Skeleton } from './ui/Skeleton';
 
@@ -46,32 +46,46 @@ export interface MapViewProps {
   showDirectionsButton?: boolean;
 }
 
-export function MapView({
+type MapViewContentProps = MapViewProps & {
+  isLoaded: boolean;
+  loadError?: Error;
+  useEmbedFallback: boolean;
+};
+
+function getPlaceQuery(restaurant?: Restaurant): string {
+  if (!restaurant) return 'Cordova, Cebu, Philippines';
+  const address = restaurant.address?.trim() || restaurant.barangay?.trim() || '';
+  const locationSuffix = /philippines/i.test(address)
+    ? ''
+    : /cebu/i.test(address)
+      ? 'Philippines'
+      : /cordova/i.test(address)
+        ? 'Cebu, Philippines'
+        : 'Cordova, Cebu, Philippines';
+  return [
+    restaurant.name?.trim(),
+    address,
+    locationSuffix,
+  ].filter(Boolean).join(', ');
+}
+
+function MapViewContent({
   restaurants = [],
   height = '450px',
   userLocation,
   className = '',
   showDirectionsButton = true,
-}: MapViewProps) {
+  isLoaded,
+  loadError,
+  useEmbedFallback,
+}: MapViewContentProps) {
   const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
 
-  const apiKey = (process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '').trim();
-  const hasValidApiKey = Boolean(
-    apiKey &&
-    apiKey !== '' &&
-    !apiKey.startsWith('YOUR_') &&
-    !apiKey.startsWith('your_')
-  );
-
-  const { isLoaded, loadError } = useJsApiLoader({
-    id: 'google-maps-loader',
-    googleMapsApiKey: hasValidApiKey ? apiKey : '',
-  });
-
-  const validRestaurants = restaurants.filter(
-    (r) => typeof r.latitude === 'number' && typeof r.longitude === 'number' && !isNaN(r.latitude) && !isNaN(r.longitude)
-  );
+  const validRestaurants = useMemo(() => restaurants.filter(
+    (r) => Number.isFinite(r.latitude) && Number.isFinite(r.longitude) &&
+      r.latitude >= -90 && r.latitude <= 90 && r.longitude >= -180 && r.longitude <= 180
+  ), [restaurants]);
 
   // Auto-center / fit bounds
   const onMapLoad = useCallback(
@@ -109,19 +123,14 @@ export function MapView({
   }, [validRestaurants]);
 
   const targetRestaurant = validRestaurants[0] || restaurants[0];
-  const directionsDestination = targetRestaurant
-    ? `${targetRestaurant.latitude},${targetRestaurant.longitude}`
-    : 'Cordova, Cebu, Philippines';
-  const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(directionsDestination)}`;
+  const query = getPlaceQuery(targetRestaurant);
+  const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(query)}`;
 
   // =========================================================================
   // FALLBACK MODE (When API Key is missing or failed to load)
-  // Renders a high-accuracy Google Maps Embed iframe with direct navigation
+  // Search for the restaurant by name and address when no JavaScript Maps key is available.
   // =========================================================================
-  if (!hasValidApiKey || loadError) {
-    const query = targetRestaurant
-      ? `${targetRestaurant.name}, ${targetRestaurant.address || targetRestaurant.barangay || 'Cordova, Cebu'}`
-      : 'Cordova, Cebu, Philippines';
+  if (useEmbedFallback || loadError) {
     const embedSrc = `https://maps.google.com/maps?q=${encodeURIComponent(query)}&t=&z=${targetRestaurant ? 16 : 14}&ie=UTF8&iwloc=&output=embed`;
 
     return (
@@ -177,18 +186,6 @@ export function MapView({
           </div>
         </div>
 
-        {/* Gentle Notice for developers */}
-        {!hasValidApiKey && (
-          <div className="px-3.5 py-1.5 bg-stone-100 dark:bg-stone-800/60 border-t border-stone-200/60 dark:border-stone-800 text-[11px] text-stone-500 dark:text-stone-400 flex items-center justify-between">
-            <span className="flex items-center gap-1.5">
-              <Info size={12} className="text-stone-400" />
-              Powered by Google Maps (Embed Mode).
-            </span>
-            <span className="hidden md:inline text-stone-400">
-              Add <code className="bg-stone-200 dark:bg-stone-700 px-1 py-0.5 rounded text-[10px]">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code> for custom interactive markers.
-            </span>
-          </div>
-        )}
       </div>
     );
   }
@@ -286,7 +283,7 @@ export function MapView({
                     View Details →
                   </Link>
                   <a
-                    href={`https://www.google.com/maps/dir/?api=1&destination=${selectedRestaurant.latitude},${selectedRestaurant.longitude}`}
+                    href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(getPlaceQuery(selectedRestaurant))}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-xs px-2 py-1 bg-emerald-600 text-white rounded font-medium hover:bg-emerald-700 transition"
@@ -326,7 +323,7 @@ export function MapView({
             </a>
           )}
           <a
-            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(targetRestaurant ? `${targetRestaurant.name}, Cordova, Cebu` : 'Cordova, Cebu')}`}
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-stone-200 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-200 font-medium transition-colors"
@@ -338,6 +335,24 @@ export function MapView({
       </div>
     </div>
   );
+}
+
+function GoogleMapLoader({ apiKey, ...props }: MapViewProps & { apiKey: string }) {
+  const { isLoaded, loadError } = useJsApiLoader({
+    id: 'google-maps-loader',
+    googleMapsApiKey: apiKey,
+  });
+
+  return <MapViewContent {...props} isLoaded={isLoaded} loadError={loadError} useEmbedFallback={false} />;
+}
+
+export function MapView(props: MapViewProps) {
+  const apiKey = (process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '').trim();
+  const hasValidApiKey = Boolean(apiKey && !/^your_/i.test(apiKey));
+
+  return hasValidApiKey
+    ? <GoogleMapLoader {...props} apiKey={apiKey} />
+    : <MapViewContent {...props} isLoaded={false} useEmbedFallback />;
 }
 
 export default MapView;

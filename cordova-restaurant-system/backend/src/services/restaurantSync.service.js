@@ -88,8 +88,15 @@ function syncToRestaurantTs(restaurant) {
     }
 
     const useKey = foundKey || rawSlug;
-    const latField = restaurant.latitude ? `\n    latitude: ${Number(restaurant.latitude)},` : '';
-    const lngField = restaurant.longitude ? `\n    longitude: ${Number(restaurant.longitude)},` : '';
+    const latitude = Number(restaurant.latitude);
+    const longitude = Number(restaurant.longitude);
+    const hasCoordinates =
+      restaurant.latitude !== null && restaurant.latitude !== undefined && restaurant.latitude !== '' &&
+      restaurant.longitude !== null && restaurant.longitude !== undefined && restaurant.longitude !== '' &&
+      Number.isFinite(latitude) && Number.isFinite(longitude) &&
+      latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180;
+    const latField = hasCoordinates ? `\n    latitude: ${latitude},` : '';
+    const lngField = hasCoordinates ? `\n    longitude: ${longitude},` : '';
     const replacementEntry = `  '${useKey}': {\n    name: '${name.replace(/'/g, "\\'")}',\n    category: '${category}',\n    coverImage: '${coverImage}',\n    barangay: '${barangay.replace(/'/g, "\\'")}',\n    description: '${description}',\n    address: '${address}',\n    phone: '${phone}',${latField}${lngField}\n  },`;
 
     if (foundKey && fullMatchedBlock) {

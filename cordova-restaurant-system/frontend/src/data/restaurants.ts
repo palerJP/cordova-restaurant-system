@@ -362,8 +362,8 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
     description: 'an aesthetic, pet-friendly neighborhood coffee shop',
     address: 'Gabi, Cordova, Cebu',
     phone: '0910 618 1758',
-    latitude: 10.2482,
-    longitude: 123.9518,
+    latitude: 10.26556,
+    longitude: 123.96443,
   },
 
   // Sip ‘n Street Brew and Refreshments
