@@ -2,56 +2,46 @@ const env = require('../config/env');
 const logger = require('../utils/logger');
 const { intentOptions } = require('./aiPreferenceInterpreter');
 
-const API_URLS = {
-  openai: 'https://api.openai.com/v1/responses',
-  groq: 'https://api.groq.com/openai/v1/responses',
-};
+const API_URL = 'https://api.groq.com/openai/v1/responses';
 const BUDGET_RANGES = ['budget', 'moderate', 'expensive', 'premium'];
-const requestTimes = { openai: [], groq: [] };
+const requestTimes = [];
 
-function activeProvider() {
-  return env.aiRecommendationProvider === 'groq' ? 'groq' : 'openai';
-}
-
-function reserveRequest(provider = activeProvider()) {
-  const times = requestTimes[provider];
+function reserveRequest() {
   const now = Date.now();
-  while (times.length && times[0] <= now - 15 * 60 * 1000) times.shift();
-  if (times.length >= env[provider].maxRequestsPerWindow) return false;
-  if (provider === 'groq' && times.filter((time) => time > now - 60 * 1000).length >= env.groq.maxRequestsPerMinute) return false;
-  times.push(now);
+  while (requestTimes.length && requestTimes[0] <= now - 15 * 60 * 1000) requestTimes.shift();
+  if (requestTimes.length >= env.groq.maxRequestsPerWindow) return false;
+  if (requestTimes.filter((time) => time > now - 60 * 1000).length >= env.groq.maxRequestsPerMinute) return false;
+  requestTimes.push(now);
   return true;
 }
 
-function providerError(reason, provider = activeProvider()) {
-  return Object.assign(new Error('AI provider request failed'), { providerReason: reason, provider });
+function providerError(reason) {
+  return Object.assign(new Error('Groq request failed'), { providerReason: reason });
 }
 
-function describeProviderFailure(error, providerHint = activeProvider()) {
-  const provider = ['openai', 'groq'].includes(error?.provider) ? error.provider : providerHint;
-  const label = provider === 'groq' ? 'Groq' : 'OpenAI';
+function describeProviderFailure(error) {
   const reason = error?.providerReason || (
     error?.name === 'AbortError' ? 'timeout' :
       error instanceof TypeError ? 'network' : 'invalid_response'
   );
   const messages = {
-    not_configured: `Add a ${label} API key before testing the connection.`,
-    timeout: `${label} did not respond before the timeout. Try again later.`,
-    network: `The server could not reach ${label}. Check its internet connection and try again.`,
-    authentication: `${label} rejected this API key. Check the key and its project permissions.`,
-    quota: `${label} has no available quota or has reached a spending limit.`,
-    rate_limit: `${label} is limiting requests for this project. Try again later.`,
-    local_rate_cap: `The local ${label} request limit has been reached. Try again shortly.`,
-    invalid_request: `${label} rejected the model request. Check the model name and project access.`,
-    invalid_response: `${label} responded, but the response could not be used. Try again later.`,
-    unavailable: `${label} is temporarily unavailable. Try again later.`,
+    not_configured: 'Add a Groq API key before testing the connection.',
+    timeout: 'Groq did not respond before the timeout. Try again later.',
+    network: 'The server could not reach Groq. Check its internet connection and try again.',
+    authentication: 'Groq rejected this API key. Check the key and its project permissions.',
+    quota: 'Groq has no available quota or has reached a spending limit.',
+    rate_limit: 'Groq is limiting requests for this project. Try again later.',
+    local_rate_cap: 'The local Groq request limit has been reached. Try again shortly.',
+    invalid_request: 'Groq rejected the model request. Check the model name and project access.',
+    invalid_response: 'Groq responded, but the response could not be used. Try again later.',
+    unavailable: 'Groq is temporarily unavailable. Try again later.',
   };
   return { reason: Object.hasOwn(messages, reason) ? reason : 'unavailable',
     message: messages[reason] || messages.unavailable };
 }
 
-function isEnabled(provider = activeProvider()) {
-  return Boolean(env[provider].apiKey);
+function isEnabled() {
+  return Boolean(env.groq.apiKey);
 }
 
 function extractOutputText(response) {
@@ -63,16 +53,16 @@ function extractOutputText(response) {
   return '';
 }
 
-async function createStructuredResponse({ name, schema, instructions, input, maxOutputTokens, provider = activeProvider() }) {
-  const config = env[provider];
+async function createStructuredResponse({ name, schema, instructions, input, maxOutputTokens }) {
+  const config = env.groq;
   if (!config.apiKey) return null;
-  if (!reserveRequest(provider)) throw providerError('local_rate_cap', provider);
+  if (!reserveRequest()) throw providerError('local_rate_cap');
 
   const abortController = new AbortController();
   const timeout = setTimeout(() => abortController.abort(), config.timeoutMs);
 
   try {
-    const response = await fetch(API_URLS[provider], {
+    const response = await fetch(API_URL, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${config.apiKey}`,
@@ -81,9 +71,8 @@ async function createStructuredResponse({ name, schema, instructions, input, max
       signal: abortController.signal,
       body: JSON.stringify({
         model: config.model,
-        // Groq's Responses API does not accept the OpenAI store option.
-        ...(provider === 'openai' ? { store: false } : { reasoning: { effort: 'low' } }),
-        max_output_tokens: provider === 'groq' ? Math.max(maxOutputTokens, 1200) : maxOutputTokens,
+        reasoning: { effort: 'low' },
+        max_output_tokens: Math.max(maxOutputTokens, 1200),
         input: [
           { role: 'system', content: instructions },
           { role: 'user', content: JSON.stringify(input) },
@@ -102,19 +91,19 @@ async function createStructuredResponse({ name, schema, instructions, input, max
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
       const code = payload?.error?.code;
-      if (response.status === 401 || response.status === 403) throw providerError('authentication', provider);
-      if (['insufficient_quota', 'credit_balance_exhausted', 'project_spend_limit_exceeded', 'billing_hard_limit_reached', 'blocked_api_access'].includes(code)) {
-        throw providerError('quota', provider);
+      if (response.status === 401 || response.status === 403) throw providerError('authentication');
+      if (['insufficient_quota', 'blocked_api_access'].includes(code)) {
+        throw providerError('quota');
       }
-      if (response.status === 429) throw providerError('rate_limit', provider);
-      if (response.status === 400 || response.status === 404) throw providerError('invalid_request', provider);
-      throw providerError('unavailable', provider);
+      if (response.status === 429) throw providerError('rate_limit');
+      if (response.status === 400 || response.status === 404) throw providerError('invalid_request');
+      throw providerError('unavailable');
     }
 
     const outputText = extractOutputText(payload);
-    if (!outputText) throw providerError('invalid_response', provider);
+    if (!outputText) throw providerError('invalid_response');
     try { return JSON.parse(outputText); }
-    catch { throw providerError('invalid_response', provider); }
+    catch { throw providerError('invalid_response'); }
   } finally {
     clearTimeout(timeout);
   }
@@ -156,8 +145,8 @@ function buildFilterSummary(filters) {
   ];
 }
 
-async function interpretQuery(query, currentCuisines = [], { provider = activeProvider() } = {}) {
-  if (!isEnabled(provider) || !query) return null;
+async function interpretQuery(query, currentCuisines = []) {
+  if (!isEnabled() || !query) return null;
 
   const cuisineOptions = [...new Set([
     ...intentOptions.cuisines,
@@ -185,7 +174,6 @@ async function interpretQuery(query, currentCuisines = [], { provider = activePr
       allowedServices: intentOptions.requiredServices,
       allowedBudgetRanges: BUDGET_RANGES,
     },
-    provider,
   });
 
   if (!parsed || !Array.isArray(parsed.preferredCuisines)) return null;
@@ -229,8 +217,8 @@ const suggestionSchema = {
   additionalProperties: false,
 };
 
-async function generateSuggestions({ query, preferences, candidates, provider = activeProvider() }) {
-  if (!isEnabled(provider) || !Array.isArray(candidates) || candidates.length === 0) return [];
+async function generateSuggestions({ query, preferences, candidates }) {
+  if (!isEnabled() || !Array.isArray(candidates) || candidates.length === 0) return [];
 
   const suggestibleCandidates = candidates.slice(0, 20);
   const candidateById = new Map(suggestibleCandidates.map((candidate) => [String(candidate.restaurant.id), candidate]));
@@ -263,7 +251,6 @@ async function generateSuggestions({ query, preferences, candidates, provider = 
       preferences,
       candidates: compactCandidates,
     },
-    provider,
   });
 
   const suggestions = Array.isArray(parsed?.suggestions) ? parsed.suggestions : [];
@@ -279,16 +266,13 @@ async function generateSuggestions({ query, preferences, candidates, provider = 
     .map((item) => ({ restaurantId: String(item.restaurantId) }));
 }
 
-function logProviderFailure(operation, error, providerHint = activeProvider()) {
-  const provider = ['openai', 'groq'].includes(error?.provider) ? error.provider : providerHint;
-  const label = provider === 'groq' ? 'Groq' : 'OpenAI';
-  logger.warn(`${label} ${operation} failed; using local recommendation behavior`, {
-    reason: describeProviderFailure(error, provider).reason,
+function logProviderFailure(operation, error) {
+  logger.warn(`Groq ${operation} failed; using local recommendation behavior`, {
+    reason: describeProviderFailure(error).reason,
   });
 }
 
 module.exports = {
-  activeProvider,
   isEnabled,
   interpretQuery,
   generateSuggestions,

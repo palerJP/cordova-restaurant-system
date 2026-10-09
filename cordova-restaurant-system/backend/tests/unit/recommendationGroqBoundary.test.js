@@ -1,9 +1,8 @@
 jest.mock('../../src/services/recommendation.service', () => ({
   getRecommendationsAndLog: jest.fn(), getRecommendations: jest.fn(),
 }));
-jest.mock('../../src/services/openaiRecommendation.service', () => ({
+jest.mock('../../src/services/groqRecommendation.service', () => ({
   isEnabled: jest.fn(() => true),
-  activeProvider: jest.fn(() => 'openai'),
   interpretQuery: jest.fn(),
   generateSuggestions: jest.fn(),
   logProviderFailure: jest.fn(),
@@ -12,7 +11,7 @@ jest.mock('../../src/models/cuisine.model', () => ({ listAll: jest.fn() }));
 
 const controller = require('../../src/controllers/recommendation.controller');
 const recommendationService = require('../../src/services/recommendation.service');
-const provider = require('../../src/services/openaiRecommendation.service');
+const provider = require('../../src/services/groqRecommendation.service');
 const cuisineModel = require('../../src/models/cuisine.model');
 
 const localResult = {
@@ -31,10 +30,9 @@ async function request(body) {
   });
 }
 
-describe('OpenAI recommendation integration', () => {
+describe('Groq recommendation integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    provider.activeProvider.mockReturnValue('openai');
     cuisineModel.listAll.mockResolvedValue([]);
     recommendationService.getRecommendationsAndLog.mockResolvedValue(localOutput);
     provider.interpretQuery.mockResolvedValue(null);
@@ -57,20 +55,10 @@ describe('OpenAI recommendation integration', () => {
   });
 
   test('reports Groq only when it selected a known restaurant', async () => {
-    provider.activeProvider.mockReturnValue('groq');
     provider.generateSuggestions.mockResolvedValue([{ restaurantId: 'known' }]);
     const response = await request({ query: 'food' });
     expect(response.meta).toMatchObject({ aiProvider: 'groq', aiSuggestionCount: 1 });
     expect(response.data[0]).toMatchObject({ matchPercentage: 77, aiSuggested: true });
-  });
-
-  test('keeps the original provider throughout a recommendation when settings switch', async () => {
-    provider.activeProvider.mockReturnValueOnce('openai').mockReturnValue('groq');
-    provider.generateSuggestions.mockResolvedValue([{ restaurantId: 'known' }]);
-    const response = await request({ query: 'food' });
-    expect(response.meta.aiProvider).toBe('openai');
-    expect(provider.interpretQuery).toHaveBeenCalledWith('food', [], { provider: 'openai' });
-    expect(provider.generateSuggestions).toHaveBeenCalledWith(expect.objectContaining({ provider: 'openai' }));
   });
 
   test('admin preview does not write customer recommendation history', async () => {

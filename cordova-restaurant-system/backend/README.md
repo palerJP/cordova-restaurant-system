@@ -12,44 +12,39 @@ negative examples. Apply new database migrations with `npm run db:migrate`.
 
 ## External AI suggestions
 
-The recommendations endpoint can use Groq or OpenAI to interpret free-text food
+The recommendations endpoint can use Groq to interpret free-text food
 requests and select establishments from a short list of known candidates.
 CordovaEats generates the displayed reasons and match scores from its own
 restaurant data and recommender.
 
-In local development, an administrator can select Groq or OpenAI, save the
-selected provider's key, and test its connection on the AI Recommendations
-page. This writes to ignored `backend/.env.local`; keys are never returned to
-the browser. Switching providers preserves each provider's saved key.
+In local development, an administrator can save a Groq key and test its
+connection on the AI Recommendations page. This writes to ignored
+`backend/.env.local`; the key is never returned to the browser.
 Local browser access is required to edit these settings. For hosted systems,
-set `AI_RECOMMENDATION_PROVIDER=groq` (or `openai`) and `GROQ_API_KEY` (or
-`OPENAI_API_KEY`) as server environment variables. Server environment variables
-take precedence over local files. Do not put a key in the frontend. If a key
-has a scheduled expiration, set `GROQ_API_KEY_EXPIRES_AT` or
-`OPENAI_API_KEY_EXPIRES_AT` to its date or enter it on the admin page. These
-dates are reminder metadata; keys do not renew themselves. Training the shared
-recommendation model does not use either external provider.
+set `GROQ_API_KEY` as a server environment variable. Server environment
+variables take precedence over local files. Do not put a key in the frontend.
+If a key has a scheduled expiration, set `GROQ_API_KEY_EXPIRES_AT` to its date
+or enter it on the admin page. This date is reminder metadata; the key does
+not renew itself. Training the shared recommendation model does not use Groq.
 
 `GROQ_MODEL` defaults to `openai/gpt-oss-20b`, `GROQ_TIMEOUT_MS` to 20000,
 `GROQ_MAX_REQUESTS_PER_15_MIN` to 60, and `GROQ_MAX_REQUESTS_PER_MIN` to 20.
-`OPENAI_MODEL` defaults to
-`gpt-4.1-mini`, `OPENAI_TIMEOUT_MS` to 10000, and
-`OPENAI_MAX_REQUESTS_PER_15_MIN` to 60. Each local cap is per backend process,
-includes connection tests, resets on restart, and is not shared across server
-instances. Groq's published free plan for GPT-OSS 20B lists 30 requests per
+Each local cap is per backend process, includes connection tests, resets on
+restart, and is not shared across server instances. Groq's published free plan for GPT-OSS 20B lists 30 requests per
 minute and 1,000 per day, with token limits; the [Groq rate-limit page](https://console.groq.com/docs/rate-limits)
-has current limits and account-specific details. Without a key, or if a
-provider times out, rejects a request, or reaches a limit, recommendations use
-the local interpreter and ranker. The OpenAI request uses `store: false`;
-Groq's Responses API does not support a `store` request field.
+has current limits and account-specific details. Without a key, or if Groq
+times out, rejects a request, or reaches a limit, recommendations use
+the local interpreter and ranker. Groq's Responses API does not support a
+`store` request field.
 
 When enabled, the backend sends the user's search text (up to 500 characters),
 selected preference filters, and a compact set of public establishment details
-to the selected provider. It does not send account identifiers, emails, auth
-tokens, or exact user coordinates. Users should avoid entering personal data in
-free-text search. The API key remains server-side. The response reports `groq`,
-`openai`, or `local` as `meta.aiProvider` according to what actually produced AI
+to Groq. It does not send account identifiers, emails, auth tokens, or exact
+user coordinates. Users should avoid entering personal data in
+free-text search. The API key remains server-side. The response reports `groq`
+or `local` as `meta.aiProvider` according to what actually produced AI
 suggestions or preference filters.
+
 If `backend/.env` was ever committed, remove it from Git tracking and rotate
 the database and signing secrets it contained; ignoring it now does not erase
 past Git history.

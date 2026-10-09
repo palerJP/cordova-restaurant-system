@@ -154,7 +154,7 @@ export default function AiModelPage() {
           AI Recommendations
         </h1>
         <p className="text-stone-500 text-sm max-w-2xl">
-          Connect Groq or OpenAI for request understanding and restaurant suggestions. Train CordovaEats’ shared recommendation model with customer feedback to improve matching.
+          Connect Groq for request understanding and restaurant suggestions. Train CordovaEats’ shared recommendation model with customer feedback to improve matching.
         </p>
       </div>
 
@@ -207,7 +207,7 @@ export default function AiModelPage() {
         <div>
           <h2 className="font-bold text-stone-900 dark:text-white">Train the shared recommendation model</h2>
           <p className="text-xs text-stone-500 mt-1">
-            Learn from helpful or not-helpful feedback, favorites, and visible restaurant reviews. A new version takes effect immediately for customers who do not yet have a personal model. Training updates CordovaEats’ model; it does not retrain Groq or OpenAI.
+            Learn from helpful or not-helpful feedback, favorites, and visible restaurant reviews. A new version takes effect immediately for customers who do not yet have a personal model. Training updates CordovaEats’ model; it does not retrain Groq.
           </p>
         </div>
 

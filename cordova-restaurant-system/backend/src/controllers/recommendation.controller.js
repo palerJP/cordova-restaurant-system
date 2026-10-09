@@ -6,7 +6,7 @@ const cuisineModel = require('../models/cuisine.model');
 const recommendationFeedbackModel = require('../models/recommendationFeedback.model');
 const recommendationTrainingService = require('../services/recommendationTraining.service');
 const aiPreferenceInterpreter = require('../services/aiPreferenceInterpreter');
-const openaiRecommendationService = require('../services/openaiRecommendation.service');
+const groqRecommendationService = require('../services/groqRecommendation.service');
 const asyncHandler = require('../utils/asyncHandler');
 const { parsePagination, buildPageMeta } = require('../utils/pagination');
 const logger = require('../utils/logger');
@@ -18,7 +18,6 @@ const logger = require('../utils/logger');
  */
 async function buildRecommendations(req, { preview = false } = {}) {
   const body = req.body || {};
-  const selectedAiProvider = openaiRecommendationService.activeProvider();
   const localFilters = aiPreferenceInterpreter.interpretQuery(body.query);
   let preferences = {};
 
@@ -28,17 +27,16 @@ async function buildRecommendations(req, { preview = false } = {}) {
 
   let aiFilters = localFilters;
   let externalAiUsed = false;
-  if (body.query && openaiRecommendationService.isEnabled(selectedAiProvider)) {
+  if (body.query && groqRecommendationService.isEnabled()) {
     try {
       const availableCuisines = (await cuisineModel.listAll()).map((cuisine) => cuisine.name);
-      const interpreted = await openaiRecommendationService.interpretQuery(body.query, availableCuisines,
-        { provider: selectedAiProvider });
+      const interpreted = await groqRecommendationService.interpretQuery(body.query, availableCuisines);
       if (interpreted) {
         aiFilters = interpreted;
         externalAiUsed = true;
       }
     } catch (error) {
-      openaiRecommendationService.logProviderFailure('preference analysis', error, selectedAiProvider);
+      groqRecommendationService.logProviderFailure('preference analysis', error);
     }
   }
 
@@ -85,10 +83,9 @@ async function buildRecommendations(req, { preview = false } = {}) {
     params.budgetRange
   );
   let suggestions = [];
-  if (hasPreferenceInput && output.results.length && openaiRecommendationService.isEnabled(selectedAiProvider)) {
+  if (hasPreferenceInput && output.results.length && groqRecommendationService.isEnabled()) {
     try {
-      suggestions = await openaiRecommendationService.generateSuggestions({
-        provider: selectedAiProvider,
+      suggestions = await groqRecommendationService.generateSuggestions({
         query: body.query,
         preferences: {
           cuisines: params.preferredCuisines,
@@ -102,7 +99,7 @@ async function buildRecommendations(req, { preview = false } = {}) {
       });
       externalAiUsed = externalAiUsed || suggestions.length > 0;
     } catch (error) {
-      openaiRecommendationService.logProviderFailure('restaurant suggestions', error, selectedAiProvider);
+      groqRecommendationService.logProviderFailure('restaurant suggestions', error);
     }
   }
 
@@ -123,7 +120,7 @@ async function buildRecommendations(req, { preview = false } = {}) {
       totalAfterFilters: output.totalAfterFilters,
       weightsUsed: output.weightsUsed,
       personalization: output.personalization,
-      aiProvider: externalAiUsed ? selectedAiProvider : 'local',
+      aiProvider: externalAiUsed ? 'groq' : 'local',
       aiSuggestionCount: suggestions.length,
       preferenceSnapshot: {
         preferredCuisines: params.preferredCuisines,

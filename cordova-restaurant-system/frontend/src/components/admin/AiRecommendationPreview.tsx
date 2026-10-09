@@ -4,11 +4,11 @@ import { FormEvent, useState } from 'react';
 import { api, ApiClientError } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 import type { RecommendationResult } from '@/lib/types';
-import type { AiProvider, AiProviderStatus } from '@/components/admin/AiProviderSettings';
+import type { AiProviderStatus } from '@/components/admin/AiProviderSettings';
 
 interface PreviewResponse {
   data: RecommendationResult[];
-  meta?: { aiProvider?: AiProvider | 'local'; aiSuggestionCount?: number };
+  meta?: { aiProvider?: 'groq' | 'local'; aiSuggestionCount?: number };
 }
 
 export function AiRecommendationPreview({ providerStatus }: { providerStatus: AiProviderStatus | null }) {
@@ -16,7 +16,7 @@ export function AiRecommendationPreview({ providerStatus }: { providerStatus: Ai
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<RecommendationResult[] | null>(null);
-  const [provider, setProvider] = useState<AiProvider | 'local' | null>(null);
+  const [provider, setProvider] = useState<'groq' | 'local' | null>(null);
   const [copied, setCopied] = useState(false);
 
   async function preview(event: FormEvent<HTMLFormElement>) {
@@ -54,7 +54,7 @@ export function AiRecommendationPreview({ providerStatus }: { providerStatus: Ai
     <section className="bg-white dark:bg-[#1a211c] border border-stone-200 dark:border-stone-800 rounded-lg p-6 space-y-5 shadow-sm">
       <div>
         <h2 className="font-bold text-stone-900 dark:text-white">Try a recommendation</h2>
-        <p className="text-sm text-stone-500 mt-1">Preview up to five matches using the current shared model and selected AI provider. This preview does not add customer history or training feedback.</p>
+        <p className="text-sm text-stone-500 mt-1">Preview up to five matches using the current shared model and Groq when connected. This preview does not add customer history or training feedback.</p>
       </div>
       <form onSubmit={preview} className="space-y-3">
         <label htmlFor="ai-preview-query" className="label">Sample customer request</label>
@@ -69,19 +69,18 @@ export function AiRecommendationPreview({ providerStatus }: { providerStatus: Ai
         <p className="text-xs text-stone-500">{!providerStatus
           ? 'Checking the AI connection. Local matching remains available.'
           : providerStatus.configured
-            ? `When available, this request uses ${providerStatus.provider === 'groq' ? 'Groq' : 'OpenAI'}. Local matching remains available if it cannot respond.`
-            : `This preview currently uses local matching. Add a ${providerStatus.provider === 'groq' ? 'Groq' : 'OpenAI'} key above to include AI suggestions.`}</p>
+            ? 'When available, this request uses Groq. Local matching remains available if it cannot respond.'
+            : 'This preview currently uses local matching. Add a Groq key above to include AI suggestions.'}</p>
       </form>
       {error && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       {results && <div aria-live="polite" className="space-y-3">
         <p className="text-sm text-stone-500">{results.length === 0 ? 'No matching restaurants found.'
-          : provider === 'openai' || provider === 'groq' ? `${provider === 'groq' ? 'Groq' : 'OpenAI'} helped process this request; CordovaEats supplied the scores and explanations.`
+          : provider === 'groq' ? 'Groq helped process this request; CordovaEats supplied the scores and explanations.'
             : 'These matches use local restaurant data and scoring.'}</p>
         {results.map((result) => <div key={result.restaurant.id}
           className="rounded-lg border border-stone-200 dark:border-stone-800 p-3 text-sm">
           <div className="flex justify-between gap-3 font-semibold text-stone-900 dark:text-white">
-            <span>{result.restaurant.name}{result.aiSuggested && provider !== 'local'
-              ? ` · ${provider === 'groq' ? 'Groq' : 'OpenAI'} selected` : ''}</span>
+            <span>{result.restaurant.name}{result.aiSuggested && provider === 'groq' ? ' · Groq selected' : ''}</span>
             <span>{Math.round(result.matchPercentage ?? result.score)}% match</span>
           </div>
           <p className="mt-1 text-stone-600 dark:text-stone-300">{result.reason}</p>
