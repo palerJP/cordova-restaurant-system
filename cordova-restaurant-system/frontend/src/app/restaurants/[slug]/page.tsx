@@ -430,6 +430,9 @@ export default function RestaurantDetailPage() {
           const suppliedByName = new Map(
             ENTOYS_MENU_ITEMS.map((item) => [item.name.trim().toLowerCase(), item]),
           );
+          const suppliedOrder = new Map(
+            ENTOYS_MENU_ITEMS.map((item, index) => [item.name.trim().toLowerCase(), index]),
+          );
           setCategories(mergedMenu.categories);
           setItems(mergedMenu.items.map((item) => {
             const supplied = suppliedByName.get(item.name.trim().toLowerCase());
@@ -437,9 +440,15 @@ export default function RestaurantDetailPage() {
             return {
               ...item,
               image_url: item.image_url || supplied.image_url,
-              price_label: Number(item.price) === supplied.price ? supplied.price_label : undefined,
+              price_label: Number(item.price) === supplied.price
+                && (item.description || '') === (supplied.description || '')
+                ? supplied.price_label
+                : undefined,
             };
-          }));
+          }).sort((a, b) => (
+            (suppliedOrder.get(a.name.trim().toLowerCase()) ?? Number.MAX_SAFE_INTEGER)
+            - (suppliedOrder.get(b.name.trim().toLowerCase()) ?? Number.MAX_SAFE_INTEGER)
+          )));
         } else if (isLantaw) {
           const mergedMenu = mergeSuppliedMenu(
             found.id,
