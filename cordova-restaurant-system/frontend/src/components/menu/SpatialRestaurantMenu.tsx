@@ -367,7 +367,9 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
     || (restaurant.name || '').toLowerCase().includes('maverick');
   const isEatNRepeat = restaurant.slug === 'eat-n-repeat'
     || /\beat\s*(?:n'?|&)\s*repeat\b/i.test(restaurant.name || '');
-  const isSuppliedMenu = isRca || isBurandat || isCascadja || isMavericks || isEatNRepeat;
+  const isEntoys = restaurant.slug === 'entoys-bakasihan'
+    || /entoy'?s?\s+bakasihan/i.test(restaurant.name || '');
+  const isSuppliedMenu = isRca || isBurandat || isCascadja || isMavericks || isEatNRepeat || isEntoys;
 
   // Selected Category filter
   const [activeCategory, setActiveCategory] = useState<string>('All');
@@ -381,10 +383,11 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
         name: it.name,
         category: categories.find((c) => c.id === it.category_id)?.name || (it as any).category_name || 'Main Dishes',
         price: Number(it.price),
+        priceLabel: it.price_label || '',
         startingPrice: it.description?.startsWith('Starting price') || false,
         priceUnit: isBurandat ? getBurandatPriceUnit(it) : '',
-        description: isBurandat || isCascadja ? '' : it.description || (isRca || isMavericks || isEatNRepeat ? '' : 'Crafted fresh with traditional Cordova flavors.'),
-        image: it.image_url || (isEatNRepeat ? '' : defaultData.heroDish.image),
+        description: isBurandat || isCascadja ? '' : it.description || (isRca || isMavericks || isEatNRepeat || isEntoys ? '' : 'Crafted fresh with traditional Cordova flavors.'),
+        image: it.image_url || (isEatNRepeat || isEntoys ? '' : defaultData.heroDish.image),
         tag: isMavericks && hasMavericksFoundationCoffeePhoto(it, categories)
           ? 'Representative photo'
           : isCascadja && CASCADJA_REPRESENTATIVE_IMAGES.get(it.name) === it.image_url
@@ -400,6 +403,7 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
     // Combine any existing with default items
     const defaults = defaultData.menuItems.map((it, idx) => ({
       id: `curated-${idx}`,
+      priceLabel: '',
       startingPrice: false,
       priceUnit: '',
       photoAttribution: undefined,
@@ -412,10 +416,11 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
         name: it.name,
         category: categories.find((c) => c.id === it.category_id)?.name || 'House Specialties',
         price: Number(it.price),
+        priceLabel: it.price_label || '',
         startingPrice: it.description?.startsWith('Starting price') || false,
         priceUnit: isBurandat ? getBurandatPriceUnit(it) : '',
-        description: isBurandat || isCascadja ? '' : it.description || (isRca || isMavericks || isEatNRepeat ? '' : 'Special house recipe prepared daily.'),
-        image: it.image_url || (isEatNRepeat ? '' : defaultData.heroDish.image),
+        description: isBurandat || isCascadja ? '' : it.description || (isRca || isMavericks || isEatNRepeat || isEntoys ? '' : 'Special house recipe prepared daily.'),
+        image: it.image_url || (isEatNRepeat || isEntoys ? '' : defaultData.heroDish.image),
         tag: isMavericks && hasMavericksFoundationCoffeePhoto(it, categories)
           ? 'Representative photo'
           : isCascadja && CASCADJA_REPRESENTATIVE_IMAGES.get(it.name) === it.image_url
@@ -430,7 +435,7 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
     }
 
     return defaults;
-  }, [items, categories, defaultData, isRca, isBurandat, isCascadja, isMavericks, isEatNRepeat, isSuppliedMenu]);
+  }, [items, categories, defaultData, isRca, isBurandat, isCascadja, isMavericks, isEatNRepeat, isEntoys, isSuppliedMenu]);
 
   // List of unique categories for tabs
   const categoryTabs = useMemo(() => {
@@ -619,7 +624,7 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
                       </div>
                     ) : (
                       <div className="absolute bottom-3 right-3 px-3 py-1 rounded-xl bg-amber-500/95 backdrop-blur-md text-white font-bold text-sm shadow-md border border-amber-300/40">
-                        {item.startingPrice ? 'From ' : ''}₱{item.price.toLocaleString('en-PH')}{item.priceUnit ? `/${item.priceUnit}` : ''}
+                        {item.priceLabel || `${item.startingPrice ? 'From ' : ''}₱${item.price.toLocaleString('en-PH')}${item.priceUnit ? `/${item.priceUnit}` : ''}`}
                       </div>
                     )}
                   </div>

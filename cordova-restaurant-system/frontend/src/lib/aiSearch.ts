@@ -8,6 +8,7 @@ import { HORIZON_MENU_ITEMS } from '@/data/horizonMenu';
 import { PAPSY_MENU_ITEMS } from '@/data/papsyMenu';
 import { MCDONALDS_MENU_ITEMS } from '@/data/mcdonaldsMenu';
 import { EAT_N_REPEAT_MENU_ITEMS } from '@/data/eatNRepeatMenu';
+import { ENTOYS_MENU_ITEMS } from '@/data/entoysMenu';
 import { STUFFED_N_FRIED_MENU_ITEMS } from '@/data/stuffedNFriedMenu';
 import { CAFE_MAFIA_MENU_ITEMS } from '@/data/cafeMafiaMenu';
 import { DON_MACCHIATOS_MENU_ITEMS } from '@/data/donMacchiatosMenu';
@@ -23,13 +24,6 @@ import { MAVERICKS_MENU_ITEMS } from '@/data/mavericksMenu';
 /**
  * Curated signature dishes for Cordova establishments without dedicated TS menu files
  */
-const ENTOYS_SIGNATURE_ITEMS: MenuItem[] = [
-  { id: 'entoy-1', restaurant_id: 'entoys-bakasihan', name: 'Nilarang na Bakasi (Signature Reef Eel Soup)', description: 'World-famous Netflix featured sour-spicy herbal broth with tender reef eel.', price: 120, is_available: true, dietary_tags: ['seafood'] },
-  { id: 'entoy-2', restaurant_id: 'entoys-bakasihan', name: 'Tinolang Bakasi (Coastal Ginger Broth)', description: 'Freshly caught reef eel simmered with native ginger, lemongrass, and chili leaves.', price: 130, is_available: true, dietary_tags: ['seafood'] },
-  { id: 'entoy-3', restaurant_id: 'entoys-bakasihan', name: 'Crispy Deep-Fried Bakasi', description: 'Crunchy battered baby reef eels seasoned with sea salt and spiced native vinegar.', price: 150, is_available: true, dietary_tags: ['seafood'] },
-  { id: 'entoy-4', restaurant_id: 'entoys-bakasihan', name: 'Puso (Cordova Hanging Rice)', description: 'Traditional Cebuano boiled woven diamond coconut leaf rice.', price: 10, is_available: true, dietary_tags: ['vegetarian'] },
-];
-
 const LANTAW_SIGNATURE_ITEMS: MenuItem[] = [
   { id: 'lantaw-1', restaurant_id: 'lantaw-floating-native-restaurant', name: 'Lantaw Floating Seafood Platter', description: 'Generous overwater platter of charcoal-grilled pompano, garlic butter prawns, and calamari.', price: 680, is_available: true, dietary_tags: ['seafood'] },
   { id: 'lantaw-2', restaurant_id: 'lantaw-floating-native-restaurant', name: 'Baked Scallops with Garlic Butter & Cheese', description: 'Local Cordova sea scallops broiled with golden cheddar and roasted garlic.', price: 260, is_available: true, dietary_tags: ['seafood'] },
@@ -80,7 +74,7 @@ const ALL_MENU_ITEMS: Record<string, MenuItem[]> = {
   '10000-roses-cafe-and-more': TEN_THOUSAND_ROSES_MENU_ITEMS,
   'aby-road-resto-bar': ABY_ROAD_MENU_ITEMS,
   'tita-kims': TITA_KIMS_MENU_ITEMS,
-  'entoys-bakasihan': ENTOYS_SIGNATURE_ITEMS,
+  'entoys-bakasihan': ENTOYS_MENU_ITEMS,
   'lantaw-floating-native-restaurant': LANTAW_MENU_ITEMS,
   'burandat-seafood-bucket': BURANDAT_SIGNATURE_ITEMS,
   'barracks-grill-and-resto-bar': BARRACKS_SIGNATURE_ITEMS,

@@ -107,6 +107,7 @@ export interface MenuItem {
   name: string;
   description?: string;
   price: number;
+  price_label?: string;
   image_url?: string;
   is_available: boolean;
   dietary_tags?: string[];

@@ -1,0 +1,31 @@
+{
+  "categories": [
+    { "name": "LOCAL SEAFOOD SPECIALTIES", "sortOrder": 1 },
+    { "name": "LOCAL SEAFOOD & FAVORITES MENU", "sortOrder": 2 }
+  ],
+  "items": [
+    { "category": "LOCAL SEAFOOD SPECIALTIES", "name": "Tinulang Bakasi w/ Ponaw Clam Shell (2–3 pax)", "description": "2–3 pax", "price": 150, "priceLabel": "₱150", "imageUrl": "/images/entoys-bakasihan/tinulang-bakasi-ponaw-clam-shell.jpg" },
+    { "category": "LOCAL SEAFOOD SPECIALTIES", "name": "Tinulang Bakasi w/ Ponaw Clam Shell (5–6 pax)", "description": "5–6 pax", "price": 300, "priceLabel": "₱300", "imageUrl": "/images/entoys-bakasihan/tinulang-bakasi-ponaw-clam-shell.jpg" },
+    { "category": "LOCAL SEAFOOD SPECIALTIES", "name": "Clam Shell Soup (Ponaw)", "description": "", "price": 150, "priceLabel": "₱150", "imageUrl": "/images/entoys-bakasihan/clam-shell-soup-ponaw.jpg" },
+    { "category": "LOCAL SEAFOOD SPECIALTIES", "name": "Nilarang na Bakasi", "description": "Eel stew / bowl. ₱40–₱70.", "price": 40, "priceLabel": "₱40–₱70", "imageUrl": "/images/entoys-bakasihan/nilarang-na-bakasi.jpg" },
+    { "category": "LOCAL SEAFOOD SPECIALTIES", "name": "Kinhason", "description": "Per serving. ₱30–₱100+.", "price": 30, "priceLabel": "₱30–₱100+", "imageUrl": "/images/entoys-bakasihan/kinhason.jpg" },
+    { "category": "LOCAL SEAFOOD SPECIALTIES", "name": "Saang", "description": "Per serving. ₱30–₱100+.", "price": 30, "priceLabel": "₱30–₱100+", "imageUrl": "/images/entoys-bakasihan/saang.jpg" },
+    { "category": "LOCAL SEAFOOD SPECIALTIES", "name": "Adobong Nokos", "description": "Per serving. ₱30–₱100+.", "price": 30, "priceLabel": "₱30–₱100+", "imageUrl": "/images/entoys-bakasihan/adobong-nokos.jpg" },
+    { "category": "LOCAL SEAFOOD SPECIALTIES", "name": "Guso", "description": "Per serving. ₱30–₱100+.", "price": 30, "priceLabel": "₱30–₱100+", "imageUrl": "/images/entoys-bakasihan/guso.jpg" },
+    { "category": "LOCAL SEAFOOD SPECIALTIES", "name": "Ginamos", "description": "Per serving. ₱30–₱100+.", "price": 30, "priceLabel": "₱30–₱100+", "imageUrl": "/images/entoys-bakasihan/ginamos.jpg" },
+    { "category": "LOCAL SEAFOOD SPECIALTIES", "name": "Suwaki", "description": "Per serving. ₱30–₱100+.", "price": 30, "priceLabel": "₱30–₱100+", "imageUrl": "/images/entoys-bakasihan/suwaki.jpg" },
+    { "category": "LOCAL SEAFOOD & FAVORITES MENU", "name": "Fried Bakasi", "description": "₱40–₱70.", "price": 40, "priceLabel": "₱40–₱70", "imageUrl": "/images/entoys-bakasihan/fried-bakasi.png" },
+    { "category": "LOCAL SEAFOOD & FAVORITES MENU", "name": "Pancit", "description": "", "price": 30, "priceLabel": "₱30", "imageUrl": "/images/entoys-bakasihan/pancit.png" },
+    { "category": "LOCAL SEAFOOD & FAVORITES MENU", "name": "Kinilaw", "description": "₱40–₱100.", "price": 40, "priceLabel": "₱40–₱100", "imageUrl": "/images/entoys-bakasihan/kinilaw.png" },
+    { "category": "LOCAL SEAFOOD & FAVORITES MENU", "name": "Shrimp", "description": "₱40–₱100.", "price": 40, "priceLabel": "₱40–₱100", "imageUrl": "/images/entoys-bakasihan/shrimp.png" },
+    { "category": "LOCAL SEAFOOD & FAVORITES MENU", "name": "Sinugbang Pusit", "description": "₱80–₱150.", "price": 80, "priceLabel": "₱80–₱150", "imageUrl": "/images/entoys-bakasihan/sinugbang-pusit.png" },
+    { "category": "LOCAL SEAFOOD & FAVORITES MENU", "name": "Lambay", "description": "₱150–₱300.", "price": 150, "priceLabel": "₱150–₱300", "imageUrl": "/images/entoys-bakasihan/lambay.png" },
+    { "category": "LOCAL SEAFOOD & FAVORITES MENU", "name": "Sinugbang Bangus", "description": "", "price": 250, "priceLabel": "₱250", "imageUrl": "/images/entoys-bakasihan/sinugbang-bangus.png" },
+    { "category": "LOCAL SEAFOOD & FAVORITES MENU", "name": "Sinugbang Kitang", "description": "₱80–₱150.", "price": 80, "priceLabel": "₱80–₱150", "imageUrl": "/images/entoys-bakasihan/sinugbang-kitang.png" },
+    { "category": "LOCAL SEAFOOD & FAVORITES MENU", "name": "Ginisang Saang", "description": "₱50–₱100.", "price": 50, "priceLabel": "₱50–₱100", "imageUrl": "/images/entoys-bakasihan/ginisang-saang.png" },
+    { "category": "LOCAL SEAFOOD & FAVORITES MENU", "name": "Bakasi Sisig", "description": "", "price": 120, "priceLabel": "₱120.00", "imageUrl": "/images/entoys-bakasihan/bakasi-sisig.png" },
+    { "category": "LOCAL SEAFOOD & FAVORITES MENU", "name": "Lato", "description": "", "price": 30, "priceLabel": "₱30", "imageUrl": "/images/entoys-bakasihan/lato.png" },
+    { "category": "LOCAL SEAFOOD & FAVORITES MENU", "name": "Plain Rice", "description": "₱15.00–₱20.00 per cup.", "price": 15, "priceLabel": "₱15–₱20/cup", "imageUrl": "/images/entoys-bakasihan/plain-rice.png" },
+    { "category": "LOCAL SEAFOOD & FAVORITES MENU", "name": "Corn Rice", "description": "₱15.00–₱20.00 per cup.", "price": 15, "priceLabel": "₱15–₱20/cup", "imageUrl": "/images/entoys-bakasihan/corn-rice.png" }
+  ]
+}

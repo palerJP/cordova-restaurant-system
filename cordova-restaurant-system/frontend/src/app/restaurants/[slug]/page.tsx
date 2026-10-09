@@ -58,6 +58,7 @@ import { PAPSY_CATEGORIES, PAPSY_MENU_ITEMS } from '@/data/papsyMenu';
 import { PAROLA_CATEGORIES, PAROLA_MENU_ITEMS } from '@/data/parolaMenu';
 import { HORIZON_CATEGORIES, HORIZON_MENU_ITEMS } from '@/data/horizonMenu';
 import { EAT_N_REPEAT_CATEGORIES, EAT_N_REPEAT_MENU_ITEMS } from '@/data/eatNRepeatMenu';
+import { ENTOYS_CATEGORIES, ENTOYS_MENU_ITEMS } from '@/data/entoysMenu';
 import { STUFFED_N_FRIED_CATEGORIES, STUFFED_N_FRIED_MENU_ITEMS } from '@/data/stuffedNFriedMenu';
 import { TAYTAYAN_CATEGORIES, TAYTAYAN_MENU_ITEMS } from '@/data/taytayanMenu';
 import { TITA_KIMS_CATEGORIES, TITA_KIMS_MENU_ITEMS } from '@/data/titaKimsMenu';
@@ -94,6 +95,18 @@ const EAT_N_REPEAT_LEGACY_SAMPLE_NAMES = new Set([
   'Spam & Egg Comfort Bowl',
   'French Butter Croissant',
   'Garlic Parmesan Truffle Fries',
+].map((name) => name.trim().toLowerCase()));
+
+const ENTOYS_LEGACY_SAMPLE_NAMES = new Set([
+  'Linarang Bakasi',
+  'Crispy Fried Bakasi',
+  'Nilapwaan Kinsahon',
+  'Garlic Butter Shrimp',
+  'Lambay (Steamed Crab)',
+  'Nilarang na Bakasi (Signature Reef Eel Soup)',
+  'Tinolang Bakasi (Coastal Ginger Broth)',
+  'Crispy Deep-Fried Bakasi',
+  'Puso (Cordova Hanging Rice)',
 ].map((name) => name.trim().toLowerCase()));
 
 const LANTAW_MENU_NAME_ALIASES = new Map([
@@ -267,6 +280,11 @@ export default function RestaurantDetailPage() {
           customFound.name.toLowerCase().includes("eat n' repeat") ||
           customFound.name.toLowerCase().includes('eat & repeat');
 
+        const isEntoys = slug === 'entoys-bakasihan'
+          || found.slug === 'entoys-bakasihan'
+          || customFound.name.toLowerCase().includes('entoys bakasihan')
+          || customFound.name.toLowerCase().includes("entoy's bakasihan");
+
         const isStuffedNFried =
           slug === 'stuffed-n-fried-cordova' ||
           found.slug === 'stuffed-n-fried-cordova' ||
@@ -399,6 +417,29 @@ export default function RestaurantDetailPage() {
           );
           setCategories(mergedMenu.categories);
           setItems(mergedMenu.items);
+        } else if (isEntoys) {
+          const mergedMenu = mergeSuppliedMenu(
+            found.id,
+            Array.isArray(menu.data?.categories) ? menu.data.categories : [],
+            liveMenuItems,
+            ENTOYS_CATEGORIES,
+            ENTOYS_MENU_ITEMS,
+            false,
+            ENTOYS_LEGACY_SAMPLE_NAMES,
+          );
+          const suppliedByName = new Map(
+            ENTOYS_MENU_ITEMS.map((item) => [item.name.trim().toLowerCase(), item]),
+          );
+          setCategories(mergedMenu.categories);
+          setItems(mergedMenu.items.map((item) => {
+            const supplied = suppliedByName.get(item.name.trim().toLowerCase());
+            if (!supplied) return item;
+            return {
+              ...item,
+              image_url: item.image_url || supplied.image_url,
+              price_label: Number(item.price) === supplied.price ? supplied.price_label : undefined,
+            };
+          }));
         } else if (isLantaw) {
           const mergedMenu = mergeSuppliedMenu(
             found.id,
