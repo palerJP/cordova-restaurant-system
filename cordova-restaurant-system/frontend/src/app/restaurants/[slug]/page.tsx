@@ -1110,16 +1110,8 @@ export default function RestaurantDetailPage() {
 
             {/* MAP TAB */}
             {activeTab === 'map' && (
-              <div className="space-y-6">
-                <div className="rounded-2xl overflow-hidden shadow-spatial-md border border-stone-200 dark:border-stone-800">
-                  <MapViewClient restaurants={[restaurant]} height="450px" />
-                </div>
-                <div className="text-center">
-                  <p className="font-serif text-base font-semibold text-stone-800 dark:text-white">
-                    {restaurant.name}
-                  </p>
-                  <p className="text-xs text-stone-500 mt-1">{restaurant.address}</p>
-                </div>
+              <div className="space-y-4">
+                <MapViewClient restaurants={[restaurant]} height="480px" />
               </div>
             )}
 

@@ -88,7 +88,9 @@ function syncToRestaurantTs(restaurant) {
     }
 
     const useKey = foundKey || rawSlug;
-    const replacementEntry = `  '${useKey}': {\n    name: '${name.replace(/'/g, "\\'")}',\n    category: '${category}',\n    coverImage: '${coverImage}',\n    barangay: '${barangay.replace(/'/g, "\\'")}',\n    description: '${description}',\n    address: '${address}',\n    phone: '${phone}',\n  },`;
+    const latField = restaurant.latitude ? `\n    latitude: ${Number(restaurant.latitude)},` : '';
+    const lngField = restaurant.longitude ? `\n    longitude: ${Number(restaurant.longitude)},` : '';
+    const replacementEntry = `  '${useKey}': {\n    name: '${name.replace(/'/g, "\\'")}',\n    category: '${category}',\n    coverImage: '${coverImage}',\n    barangay: '${barangay.replace(/'/g, "\\'")}',\n    description: '${description}',\n    address: '${address}',\n    phone: '${phone}',${latField}${lngField}\n  },`;
 
     if (foundKey && fullMatchedBlock) {
       content = content.replace(fullMatchedBlock, replacementEntry);

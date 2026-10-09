@@ -4,8 +4,8 @@ import dynamic from 'next/dynamic';
 import { Skeleton } from './ui/Skeleton';
 
 /**
- * Leaflet touches `window` at import time, which breaks Next.js SSR.
- * Import this wrapper anywhere you need the map instead of MapView directly.
+ * MapViewClient wraps MapView dynamically to prevent SSR hydration mismatches
+ * while loading client-side Google Maps SDK and DOM objects.
  */
 export const MapViewClient = dynamic(
   () => import('./MapView').then((m) => m.MapView || m.default),

@@ -23,6 +23,8 @@ export interface RestaurantCustomConfig {
   address?: string;
   hours?: string;
   hidden?: boolean;
+  latitude?: number;
+  longitude?: number;
 }
 
 export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> = {
@@ -37,6 +39,8 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
     address: 'Unit 3, JMP Building, Purok 1 San Miguel Road, Cordova',
     phone: '0975 174 5866',
     hours: '10:00 AM - 12:00 AM (Daily)',
+    latitude: 10.2550,
+    longitude: 123.9480,
   },
 
   // 4. ABY ROAD Resto Bar
@@ -49,6 +53,8 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
     address: '7W3W+MXG, Bang-Bang - Day-As, Cordova, Cebu',
     phone: '0922 944 3882 / (032) 238 5718',
     hours: '10:00 AM - 2:00 AM (Sun-Thu), 10:00 AM - 3:30 AM (Fri-Sat)',
+    latitude: 10.2510,
+    longitude: 123.9460,
   },
 
   // 5. Eat n' Repeat
@@ -61,6 +67,8 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
     address: 'Crossroad, Back of Gaisano, Cordova',
     phone: '0915 151 6595',
     hours: '9:00 AM - 12:00 AM (Mon, Tue, Thu, Fri), 9:00 AM - 12:30 AM (Wed), Open 24 hours (Sat), 9:00 AM - 2:30 PM (Sun)',
+    latitude: 10.2520,
+    longitude: 123.9470,
   },
 
   // 6. Taytayan Pinoy Restaurant
@@ -73,6 +81,8 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
     address: '7WCW+C77, Babag II Rd, Cordova',
     phone: '(032) 412 3783',
     hours: '10:00 AM - 2:00 PM & 4:00 PM - 10:00 PM (Mon-Thu), 10:00 AM - 10:00 PM (Fri-Sun)',
+    latitude: 10.2540,
+    longitude: 123.9440,
   },
 
   // 7. STUFFED N' FRIED Cordova Branch 
@@ -85,6 +95,8 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
     address: '1911 M.L. Quezon National Highway, Cordova',
     phone: '0975 985 6145',
     hours: '10:00 AM - 9:00 PM (Daily)',
+    latitude: 10.2485,
+    longitude: 123.9510,
   },
 
   // 8. McDonald's Cordova 
@@ -97,6 +109,8 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
     address: 'Bangbang II Road, San Miguel, Cordova',
     phone: '0968 851 0931',
     hours: 'Open 24 hours (Daily)',
+    latitude: 10.2550,
+    longitude: 123.9490,
   },
 
   // 9. Barracks Grill and Resto Bar 
@@ -109,6 +123,8 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
     address: 'Ajoya Subdivision, Mactan Island, Cordova, Cebu',
     phone: '0977 328 7689',
     hours: '5:00 PM – 4:00 AM (Daily)',
+    latitude: 10.2470,
+    longitude: 123.9530,
   },
 
   // 11. RCA Bilao Food Station
@@ -121,6 +137,8 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
     address: 'Sitio Mahayahay, Gabi, Cordova, Cebu',
     phone: '(032) 326 8766',
     hours: '8:00 AM – 4:00 PM (Daily)',
+    latitude: 10.2490,
+    longitude: 123.9525,
   },
 
   // 12. MAVERICKS by The Baker Street 
@@ -133,6 +151,8 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
     address: 'Gabi Rd, Cordova, Cebu',
     phone: '0920 527 6233',
     hours: 'Closed Mon; 2:00 PM – 10:00 PM (Tue–Thu); 3:00 PM – 11:00 PM (Fri); 3:00 PM – 12:00 AM (Sat); 12:00 AM – 12:00 PM & 3:00 PM – 11:00 PM (Sun)',
+    latitude: 10.2488,
+    longitude: 123.9515,
   },
  
   // 13. Entoys Bakasihan
@@ -145,6 +165,8 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
     address: 'Buagsong Barangay Road, Buagsong, Cordova, Cebu',
     phone: '0966 931 7531',
     hours: '6:00 AM – 6:00 PM (Daily)',
+    latitude: 10.2505,
+    longitude: 123.9420,
   },
 
   // 14. Tita Kim's
@@ -157,6 +179,8 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
     address: 'Purok 5, Lot 747 National Highway, Cordova, Cebu',
     phone: '0998 868 8573',
     hours: 'Closed Mon; 5:00 PM – 10:00 PM (Tue–Fri); 11:30 AM – 10:00 PM (Sat–Sun)',
+    latitude: 10.2475,
+    longitude: 123.9540,
   },
 
   // 15. Burandat Seafood Bucket
@@ -169,6 +193,8 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
     address: 'Purok 2, Barangay Gabi, Cordova, Cebu',
     phone: '0916 473 3656',
     hours: 'Hours currently unlisted',
+    latitude: 10.2465,
+    longitude: 123.9500,
   },
 
   // 16. Csalt Cafe Cordova
@@ -181,6 +207,8 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
     address: 'Sitio Ubos, Poblacion, Cordova, Cebu',
     phone: 'N/A',
     hours: 'Hours currently unlisted',
+    latitude: 10.2537,
+    longitude: 123.9481,
   },
 
   // 17. Cafe Mafia
@@ -193,6 +221,8 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
     address: 'Purok 1, Dapitan, Cordova, Cebu',
     phone: '0917 321 0453',
     hours: '1:00 PM – 10:00 PM (Daily)',
+    latitude: 10.2580,
+    longitude: 123.9475,
   },
 
   // 18. Solea Mactan Resort
@@ -206,6 +236,8 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
     phone: '(032) 517 8889',
     hours: 'Open 24 hours (Resort front desk); dining options inside operate 6:00 AM – 10:00 PM (Daily)',
     hidden: true,
+    latitude: 10.2390,
+    longitude: 123.9600,
   },    
 
   // 19. Sungka Native Restaurant
@@ -219,6 +251,8 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
     phone: 'sungkanative@gmail.com',
     email: 'sungkanative@gmail.com',
     hours: '10:00 AM – 9:00 PM (Daily)',
+    latitude: 10.2525,
+    longitude: 123.9430,
   },
 
   // 20. Lantaw Floating Native Restaurant
@@ -231,6 +265,8 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
     address: 'Day-as Wharf, Cordova, Cebu',
     phone: '0985 052 3061',
     hours: 'Permanently closed at this location (relocated to Il Corso, SRP Cebu City and Busay)',
+    latitude: 10.2515,
+    longitude: 123.9410,
   },
 
   // 21. Alberto's Pizza Cordova
@@ -243,6 +279,8 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
     address: 'Gabi, Cordova, Cebu',
     phone: '0925 871 4539',
     hours: '9:00 AM – 10:00 PM (Daily)',
+    latitude: 10.2492,
+    longitude: 123.9512,
   },
 
   // 22. Cascaja Cafe 
@@ -255,6 +293,8 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
     address: 'Calan, Cordova, Cebu',
     phone: '+63 995 755 0983',
     hours: '1:00 PM – 9:00 PM (Tue–Sun), Closed Mon',
+    latitude: 10.2570,
+    longitude: 123.9465,
   },
 
   // 23. Don Macchiatos Cordova
@@ -267,6 +307,8 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
     address: 'San Miguel, Cordova, Cebu',
     phone: '0918 596 7413',
     hours: '8:00 AM – 9:00 PM (Daily)',
+    latitude: 10.2555,
+    longitude: 123.9495,
   },
 
   // 24. Parola Seaview Restaurant
@@ -279,6 +321,8 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
     address: 'Roro Port Road, Poblacion, Cordova, Cebu',
     phone: '0947 990 8561',
     hours: '10:00 AM – 10:00 PM (Daily)',
+    latitude: 10.2530,
+    longitude: 123.9470,
   },
 
   // 25. 10,000 Roses Cafe & More
@@ -291,6 +335,8 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
     address: 'Day-as, Cordova, Cebu (adjacent to Day-as Port / Parola)',
     phone: '0956 839 9427',
     hours: '10:00 AM – 10:00 PM (Daily)',
+    latitude: 10.2510,
+    longitude: 123.9405,
   },
 
   // 26. Papsys BBQ
@@ -303,6 +349,8 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
     address: 'Barangay Bang-bang, Cordova, Cebu',
     phone: '0927 296 4811',
     hours: '9:00 AM – 9:00 PM (Daily)',
+    latitude: 10.2579,
+    longitude: 123.9485,
   },
 
   // The Latte Cafe
@@ -314,6 +362,8 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
     description: 'an aesthetic, pet-friendly neighborhood coffee shop',
     address: 'Gabi, Cordova, Cebu',
     phone: '0910 618 1758',
+    latitude: 10.2482,
+    longitude: 123.9518,
   },
 
   // Sip ‘n Street Brew and Refreshments
@@ -325,6 +375,8 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
     description: 'a local beverage spot in Dakit-dakit, Catarman, Cordova, offering iced and hot coffee, non-coffee drinks, and soda.',
     address: 'Dakit-dakit Catarman Cordova',
     phone: '09659144727',
+    latitude: 10.2520,
+    longitude: 123.9550,
   },
 };
 
@@ -400,8 +452,8 @@ export function getAllStaticRestaurants(): Restaurant[] {
       description: config.description || `Welcome to ${config.name || key} in Cordova, Cebu.`,
       address: config.address || (config.barangay ? `${config.barangay}, Cordova, Cebu` : 'Cordova, Cebu'),
       barangay: config.barangay || 'Cordova',
-      latitude: 10.2500 + (index * 0.0012) % 0.02,
-      longitude: 123.9480 + (index * 0.0015) % 0.02,
+      latitude: config.latitude ?? (10.2500 + (index * 0.0012) % 0.02),
+      longitude: config.longitude ?? (123.9480 + (index * 0.0015) % 0.02),
       phone: config.phone || '+63 917 123 4567',
       email: config.email || `${slug}@cordovaeats.local`,
       hours: config.hours,
