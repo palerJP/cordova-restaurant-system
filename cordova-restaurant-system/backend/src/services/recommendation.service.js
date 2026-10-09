@@ -567,7 +567,7 @@ function buildReasonText(
     reasons.push(`only ${restaurant.distance_km.toFixed(1)} km away`);
   }
   if (budgetRange && factors.budget >= 90) {
-    reasons.push(`fits your ${restaurant.price_range} budget`);
+    reasons.push('fits your budget');
   }
   if (factors.rating >= 80) {
     reasons.push(`highly rated (${Number(restaurant.avg_rating).toFixed(1)}★)`);

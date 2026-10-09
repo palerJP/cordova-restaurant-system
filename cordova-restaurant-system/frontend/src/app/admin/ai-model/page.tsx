@@ -5,7 +5,7 @@ import { api, ApiClientError } from '@/lib/api';
 import { useToast } from '@/lib/toast-context';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { AiProviderSettings } from '@/components/admin/AiProviderSettings';
+import { AiProviderSettings, type AiProviderStatus } from '@/components/admin/AiProviderSettings';
 import { AiRecommendationPreview } from '@/components/admin/AiRecommendationPreview';
 
 const FACTORS = [
@@ -53,7 +53,7 @@ export default function AiModelPage() {
   const [weights, setWeights] = useState<Record<string, number> | null>(null);
   const [loadingWeights, setLoadingWeights] = useState(true);
   const [weightsError, setWeightsError] = useState<string | null>(null);
-  const [openAiConfigured, setOpenAiConfigured] = useState<boolean | null>(null);
+  const [aiProviderStatus, setAiProviderStatus] = useState<AiProviderStatus | null>(null);
   const [saving, setSaving] = useState(false);
   const [training, setTraining] = useState(false);
   const [loadingTrainingStatus, setLoadingTrainingStatus] = useState(true);
@@ -154,11 +154,11 @@ export default function AiModelPage() {
           AI Recommendations
         </h1>
         <p className="text-stone-500 text-sm max-w-2xl">
-          Connect OpenAI for request understanding and restaurant suggestions. Train CordovaEats’ shared recommendation model with customer feedback to improve matching.
+          Connect Groq or OpenAI for request understanding and restaurant suggestions. Train CordovaEats’ shared recommendation model with customer feedback to improve matching.
         </p>
       </div>
 
-      <AiProviderSettings onConfiguredChange={setOpenAiConfigured} />
+      <AiProviderSettings onStatusChange={setAiProviderStatus} />
 
       {loadingWeights ? (
         <Skeleton className="h-64 w-full max-w-lg" />
@@ -207,7 +207,7 @@ export default function AiModelPage() {
         <div>
           <h2 className="font-bold text-stone-900 dark:text-white">Train the shared recommendation model</h2>
           <p className="text-xs text-stone-500 mt-1">
-            Learn from helpful or not-helpful feedback, favorites, and visible restaurant reviews. A new version takes effect immediately for customers who do not yet have a personal model. Training updates CordovaEats’ model; it does not fine-tune or retrain OpenAI.
+            Learn from helpful or not-helpful feedback, favorites, and visible restaurant reviews. A new version takes effect immediately for customers who do not yet have a personal model. Training updates CordovaEats’ model; it does not retrain Groq or OpenAI.
           </p>
         </div>
 
@@ -275,7 +275,7 @@ export default function AiModelPage() {
           </>
         ) : null}
       </section>
-      <AiRecommendationPreview openAiConfigured={openAiConfigured} />
+      <AiRecommendationPreview providerStatus={aiProviderStatus} />
     </div>
   );
 }

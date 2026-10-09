@@ -87,6 +87,18 @@ const env = {
     maxRequestsPerWindow: Math.max(1, parseInt(process.env.OPENAI_MAX_REQUESTS_PER_15_MIN || '60', 10) || 60),
   },
 
+  // Selectable external recommendation provider. Existing installations stay
+  // on OpenAI unless the administrator explicitly switches to Groq.
+  aiRecommendationProvider: process.env.AI_RECOMMENDATION_PROVIDER === 'groq' ? 'groq' : 'openai',
+  groq: {
+    apiKey: process.env.GROQ_API_KEY || null,
+    expiresAt: process.env.GROQ_API_KEY_EXPIRES_AT || null,
+    model: process.env.GROQ_MODEL || 'openai/gpt-oss-20b',
+    timeoutMs: Math.max(1000, parseInt(process.env.GROQ_TIMEOUT_MS || '20000', 10) || 20000),
+    maxRequestsPerWindow: Math.max(1, parseInt(process.env.GROQ_MAX_REQUESTS_PER_15_MIN || '60', 10) || 60),
+    maxRequestsPerMinute: Math.max(1, parseInt(process.env.GROQ_MAX_REQUESTS_PER_MIN || '20', 10) || 20),
+  },
+
   auth: {
     requireEmailVerification: process.env.REQUIRE_EMAIL_VERIFICATION !== undefined
       ? process.env.REQUIRE_EMAIL_VERIFICATION === 'true'

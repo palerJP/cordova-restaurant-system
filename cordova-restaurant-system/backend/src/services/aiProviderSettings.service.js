@@ -7,11 +7,16 @@ const openaiRecommendation = require('./openaiRecommendation.service');
 
 const ENV_PATH = path.resolve(__dirname, '../../.env.local');
 const SETTING_KEYS = {
-  apiKey: 'OPENAI_API_KEY',
-  expiresAt: 'OPENAI_API_KEY_EXPIRES_AT',
-  model: 'OPENAI_MODEL',
-  timeoutMs: 'OPENAI_TIMEOUT_MS',
+  openai: {
+    apiKey: 'OPENAI_API_KEY', expiresAt: 'OPENAI_API_KEY_EXPIRES_AT',
+    model: 'OPENAI_MODEL', timeoutMs: 'OPENAI_TIMEOUT_MS',
+  },
+  groq: {
+    apiKey: 'GROQ_API_KEY', expiresAt: 'GROQ_API_KEY_EXPIRES_AT',
+    model: 'GROQ_MODEL', timeoutMs: 'GROQ_TIMEOUT_MS',
+  },
 };
+const UPDATABLE_FIELDS = ['provider', 'apiKey', 'expiresAt', 'model', 'timeoutMs'];
 let pendingSave = Promise.resolve();
 
 function isLocalHost(value) {
@@ -42,11 +47,15 @@ function canConfigure(req) {
 }
 
 function getStatus(req) {
+  const provider = openaiRecommendation.activeProvider();
+  const config = env[provider];
   return {
-    configured: openaiRecommendation.isEnabled(),
-    expiresAt: env.openai.expiresAt || null,
-    model: env.openai.model,
-    timeoutMs: env.openai.timeoutMs,
+    provider,
+    configured: Boolean(config.apiKey),
+    providerConfigured: { openai: Boolean(env.openai.apiKey), groq: Boolean(env.groq.apiKey) },
+    expiresAt: config.expiresAt || null,
+    model: config.model,
+    timeoutMs: config.timeoutMs,
     canConfigure: canConfigure(req),
   };
 }
@@ -55,24 +64,35 @@ function validateSettings(input) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     throw ApiError.badRequest('Provide AI provider settings as an object.');
   }
-  if (Object.keys(input).some((key) => !Object.hasOwn(SETTING_KEYS, key))) {
-    throw ApiError.badRequest('Only apiKey, expiresAt, model, and timeoutMs can be updated.');
+  if (Object.keys(input).some((key) => !UPDATABLE_FIELDS.includes(key))) {
+    throw ApiError.badRequest('Only provider, apiKey, expiresAt, model, and timeoutMs can be updated.');
   }
   const updates = {};
+  if (Object.hasOwn(input, 'provider')) {
+    if (!['openai', 'groq'].includes(input.provider)) {
+      throw ApiError.badRequest('Choose OpenAI or Groq as the AI provider.');
+    }
+    updates.provider = input.provider;
+  }
+  const provider = updates.provider || openaiRecommendation.activeProvider();
   if (Object.hasOwn(input, 'apiKey')) {
     if (typeof input.apiKey !== 'string') throw ApiError.badRequest('API key must be text.');
     const apiKey = input.apiKey.trim();
     if (apiKey) {
-      if (!/^sk-[A-Za-z0-9_-]{20,512}$/.test(apiKey)
+      const prefix = provider === 'groq' ? 'gsk_' : 'sk-';
+      const format = provider === 'groq'
+        ? /^gsk_[A-Za-z0-9_-]{20,512}$/
+        : /^sk-[A-Za-z0-9_-]{20,512}$/;
+      if (!format.test(apiKey)
         || /(?:your[-_]?api[-_]?key|replace[-_]?me|placeholder|change[-_]?me|example)/i.test(apiKey)
-        || /^sk-(?:test|fake|dummy|x{10,})[-_]?/i.test(apiKey)) {
-        throw ApiError.badRequest('Enter a valid OpenAI secret API key beginning with sk-.');
+        || /^(?:sk-|gsk_)(?:test|fake|dummy|x{10,})[-_]?/i.test(apiKey)) {
+        throw ApiError.badRequest(`Enter a valid ${provider === 'groq' ? 'Groq' : 'OpenAI'} secret API key beginning with ${prefix}.`);
       }
       updates.apiKey = apiKey;
     }
   }
   if (Object.hasOwn(input, 'model')) {
-    if (typeof input.model !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$/.test(input.model.trim())) {
+    if (typeof input.model !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._:/-]{0,99}$/.test(input.model.trim())) {
       throw ApiError.badRequest('Enter a valid model name.');
     }
     updates.model = input.model.trim();
@@ -98,7 +118,10 @@ function validateSettings(input) {
 }
 
 function updateEnvText(content, updates) {
-  const values = Object.fromEntries(Object.entries(updates).map(([key, value]) => [SETTING_KEYS[key], String(value)]));
+  const provider = updates.provider || openaiRecommendation.activeProvider();
+  const values = Object.fromEntries(Object.entries(updates).map(([key, value]) => [
+    key === 'provider' ? 'AI_RECOMMENDATION_PROVIDER' : SETTING_KEYS[provider][key], String(value),
+  ]));
   const seen = new Set();
   const assignment = /^([ \t]*(?:export[ \t]+)?)([\w.-]+)[ \t]*(?:=[ \t]*|:[ \t]+)('(?:\\'|[^'])*'|"(?:\\"|[^"])*"|`(?:\\`|[^`])*`|[^#\r\n]*)([ \t]*(?:#[^\r\n]*)?)/gm;
   let updated = content.replace(assignment, (original, prefix, key, value, comment) => {
@@ -131,8 +154,13 @@ async function persistSettings(updates) {
     await fs.unlink(tempPath).catch(() => {});
     throw ApiError.internal('Unable to save the local AI settings. Check that the backend .env.local file is writable.');
   }
-  Object.assign(env.openai, updates);
-  for (const [key, value] of Object.entries(updates)) process.env[SETTING_KEYS[key]] = String(value);
+  const provider = updates.provider || openaiRecommendation.activeProvider();
+  const providerUpdates = Object.fromEntries(Object.entries(updates).filter(([key]) => key !== 'provider'));
+  Object.assign(env[provider], providerUpdates);
+  if (updates.provider) env.aiRecommendationProvider = updates.provider;
+  for (const [key, value] of Object.entries(updates)) {
+    process.env[key === 'provider' ? 'AI_RECOMMENDATION_PROVIDER' : SETTING_KEYS[provider][key]] = String(value);
+  }
 }
 
 async function saveSettings(req, input) {
@@ -140,6 +168,9 @@ async function saveSettings(req, input) {
     throw ApiError.forbidden('AI settings can only be changed from a local browser on this computer while the server is running in development.');
   }
   const updates = validateSettings(input);
+  // Capture the selected provider before entering the save queue so concurrent
+  // settings requests cannot redirect fields to a different provider.
+  if (!updates.provider) updates.provider = openaiRecommendation.activeProvider();
   const save = pendingSave.then(() => persistSettings(updates));
   pendingSave = save.catch(() => {});
   await save;
@@ -147,18 +178,20 @@ async function saveSettings(req, input) {
 }
 
 async function testConnection() {
-  const model = env.openai.model;
-  if (!openaiRecommendation.isEnabled()) {
-    return { connected: false, reason: 'not_configured', model,
-      message: 'Add an OpenAI API key before testing the connection.', checkedAt: new Date().toISOString() };
+  const provider = openaiRecommendation.activeProvider();
+  const model = env[provider].model;
+  const label = provider === 'groq' ? 'Groq' : 'OpenAI';
+  if (!openaiRecommendation.isEnabled(provider)) {
+    return { connected: false, reason: 'not_configured', provider, model,
+      message: `Add a ${label} API key before testing the connection.`, checkedAt: new Date().toISOString() };
   }
   try {
-    const filters = await openaiRecommendation.interpretQuery('Find affordable seafood within 2 km.', ['Seafood']);
+    const filters = await openaiRecommendation.interpretQuery('Find affordable seafood within 2 km.', ['Seafood'], { provider });
     if (!filters) throw Object.assign(new Error('Invalid structured response'), { providerReason: 'invalid_response' });
-    return { connected: true, model,
-      message: 'OpenAI connected successfully and returned restaurant preference filters.', checkedAt: new Date().toISOString() };
+    return { connected: true, provider, model,
+      message: `${label} connected successfully and returned restaurant preference filters.`, checkedAt: new Date().toISOString() };
   } catch (error) {
-    return { connected: false, ...openaiRecommendation.describeProviderFailure(error), model,
+    return { connected: false, ...openaiRecommendation.describeProviderFailure(error, provider), provider, model,
       checkedAt: new Date().toISOString() };
   }
 }

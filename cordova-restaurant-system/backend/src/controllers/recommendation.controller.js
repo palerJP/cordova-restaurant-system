@@ -18,6 +18,7 @@ const logger = require('../utils/logger');
  */
 async function buildRecommendations(req, { preview = false } = {}) {
   const body = req.body || {};
+  const selectedAiProvider = openaiRecommendationService.activeProvider();
   const localFilters = aiPreferenceInterpreter.interpretQuery(body.query);
   let preferences = {};
 
@@ -27,16 +28,17 @@ async function buildRecommendations(req, { preview = false } = {}) {
 
   let aiFilters = localFilters;
   let externalAiUsed = false;
-  if (body.query && openaiRecommendationService.isEnabled()) {
+  if (body.query && openaiRecommendationService.isEnabled(selectedAiProvider)) {
     try {
       const availableCuisines = (await cuisineModel.listAll()).map((cuisine) => cuisine.name);
-      const interpreted = await openaiRecommendationService.interpretQuery(body.query, availableCuisines);
+      const interpreted = await openaiRecommendationService.interpretQuery(body.query, availableCuisines,
+        { provider: selectedAiProvider });
       if (interpreted) {
         aiFilters = interpreted;
         externalAiUsed = true;
       }
     } catch (error) {
-      openaiRecommendationService.logProviderFailure('preference analysis', error);
+      openaiRecommendationService.logProviderFailure('preference analysis', error, selectedAiProvider);
     }
   }
 
@@ -83,9 +85,10 @@ async function buildRecommendations(req, { preview = false } = {}) {
     params.budgetRange
   );
   let suggestions = [];
-  if (hasPreferenceInput && output.results.length && openaiRecommendationService.isEnabled()) {
+  if (hasPreferenceInput && output.results.length && openaiRecommendationService.isEnabled(selectedAiProvider)) {
     try {
       suggestions = await openaiRecommendationService.generateSuggestions({
+        provider: selectedAiProvider,
         query: body.query,
         preferences: {
           cuisines: params.preferredCuisines,
@@ -99,7 +102,7 @@ async function buildRecommendations(req, { preview = false } = {}) {
       });
       externalAiUsed = externalAiUsed || suggestions.length > 0;
     } catch (error) {
-      openaiRecommendationService.logProviderFailure('restaurant suggestions', error);
+      openaiRecommendationService.logProviderFailure('restaurant suggestions', error, selectedAiProvider);
     }
   }
 
@@ -120,7 +123,7 @@ async function buildRecommendations(req, { preview = false } = {}) {
       totalAfterFilters: output.totalAfterFilters,
       weightsUsed: output.weightsUsed,
       personalization: output.personalization,
-      aiProvider: externalAiUsed ? 'openai' : 'local',
+      aiProvider: externalAiUsed ? selectedAiProvider : 'local',
       aiSuggestionCount: suggestions.length,
       preferenceSnapshot: {
         preferredCuisines: params.preferredCuisines,

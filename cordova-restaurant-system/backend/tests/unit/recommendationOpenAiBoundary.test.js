@@ -3,6 +3,7 @@ jest.mock('../../src/services/recommendation.service', () => ({
 }));
 jest.mock('../../src/services/openaiRecommendation.service', () => ({
   isEnabled: jest.fn(() => true),
+  activeProvider: jest.fn(() => 'openai'),
   interpretQuery: jest.fn(),
   generateSuggestions: jest.fn(),
   logProviderFailure: jest.fn(),
@@ -33,6 +34,7 @@ async function request(body) {
 describe('OpenAI recommendation integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    provider.activeProvider.mockReturnValue('openai');
     cuisineModel.listAll.mockResolvedValue([]);
     recommendationService.getRecommendationsAndLog.mockResolvedValue(localOutput);
     provider.interpretQuery.mockResolvedValue(null);
@@ -52,6 +54,23 @@ describe('OpenAI recommendation integration', () => {
     const response = await request({ query: 'food' });
     expect(response.data).toEqual([localResult]);
     expect(response.meta.aiProvider).toBe('local');
+  });
+
+  test('reports Groq only when it selected a known restaurant', async () => {
+    provider.activeProvider.mockReturnValue('groq');
+    provider.generateSuggestions.mockResolvedValue([{ restaurantId: 'known' }]);
+    const response = await request({ query: 'food' });
+    expect(response.meta).toMatchObject({ aiProvider: 'groq', aiSuggestionCount: 1 });
+    expect(response.data[0]).toMatchObject({ matchPercentage: 77, aiSuggested: true });
+  });
+
+  test('keeps the original provider throughout a recommendation when settings switch', async () => {
+    provider.activeProvider.mockReturnValueOnce('openai').mockReturnValue('groq');
+    provider.generateSuggestions.mockResolvedValue([{ restaurantId: 'known' }]);
+    const response = await request({ query: 'food' });
+    expect(response.meta.aiProvider).toBe('openai');
+    expect(provider.interpretQuery).toHaveBeenCalledWith('food', [], { provider: 'openai' });
+    expect(provider.generateSuggestions).toHaveBeenCalledWith(expect.objectContaining({ provider: 'openai' }));
   });
 
   test('admin preview does not write customer recommendation history', async () => {
