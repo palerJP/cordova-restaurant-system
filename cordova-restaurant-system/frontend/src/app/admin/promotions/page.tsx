@@ -41,6 +41,7 @@ function AdminPromotionsContent() {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [subscriptions, setSubscriptions] = useState<SubscriptionTransaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
   const [deleteTarget, setDeleteTarget] = useState<Promotion | null>(null);
@@ -63,6 +64,7 @@ function AdminPromotionsContent() {
 
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError(false);
     try {
       if (status === 'subscriptions') {
         const params = new URLSearchParams();
@@ -79,12 +81,12 @@ function AdminPromotionsContent() {
         setPromotions(res.data || []);
       }
     } catch (err) {
+      setLoadError(true);
       if (status === 'subscriptions') {
         setSubscriptions([]);
       } else {
         setPromotions([]);
       }
-      toast(err instanceof ApiClientError ? err.message : 'Failed to load records', 'error');
     } finally {
       setLoading(false);
     }
@@ -166,15 +168,15 @@ function AdminPromotionsContent() {
     <div className="space-y-6">
       <div>
         <h1 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900 dark:text-white">
-          Promotion & Billing Moderation
+          Promotions
         </h1>
         <p className="text-xs sm:text-sm text-stone-500 mt-1">
-          Verify GCash / Maya transaction receipts, active dining promotions, and ranking boost subscription upgrades submitted by restaurant owners.
+          Offers, payment verification, and subscription boosts
         </p>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-[#1a211c] p-3 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-sm">
+      <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3 bg-white dark:bg-[#1a211c] p-3 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-sm">
         {/* Status Tabs */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
           {[
@@ -216,7 +218,13 @@ function AdminPromotionsContent() {
       </div>
 
       {/* Subscription Boosts List */}
-      {status === 'subscriptions' ? (
+      {loadError ? (
+        <div role="alert" className="border-l-4 border-red-500 bg-red-50 dark:bg-red-950/30 p-4">
+          <p className="text-sm font-semibold">Records could not be loaded.</p>
+          <p className="mt-1 text-sm">The service or database needs attention. No records are shown until the request succeeds.</p>
+          <button onClick={load} className="mt-2 text-sm underline font-medium">Try again</button>
+        </div>
+      ) : status === 'subscriptions' ? (
         loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Skeleton className="h-48 w-full rounded-2xl" />

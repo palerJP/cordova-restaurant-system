@@ -11,10 +11,12 @@ export class ApiClientError extends Error {
 }
 
 let accessToken: string | null = null;
+let tokenRevision = 0;
 const sessionExpiredListeners = new Set<() => void>();
 
 /** Called by AuthProvider on login/refresh/logout to keep the in-memory token fresh. */
 export function setAccessToken(token: string | null) {
+  tokenRevision += 1;
   accessToken = token;
 }
 
@@ -38,17 +40,20 @@ let refreshPromise: Promise<boolean> | null = null;
 async function tryRefresh(): Promise<boolean> {
   if (!refreshPromise) {
     const tokenBeforeRefresh = accessToken;
+    const revisionBeforeRefresh = tokenRevision;
     refreshPromise = fetch(`${API_URL}/api/auth/refresh`, {
       method: 'POST',
       credentials: 'include',
     })
       .then(async (res) => {
+        if (tokenRevision !== revisionBeforeRefresh) return false;
         if ((res.status === 401 || res.status === 403) && accessToken === tokenBeforeRefresh) {
           setAccessToken(null);
           sessionExpiredListeners.forEach((listener) => listener());
         }
         if (!res.ok) return false;
         const json = await res.json();
+        if (tokenRevision !== revisionBeforeRefresh) return false;
         setAccessToken(json.data.accessToken);
         return true;
       })

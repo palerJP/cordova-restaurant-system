@@ -5,6 +5,7 @@ import { api, getAccessToken, setAccessToken, onSessionExpired, ApiClientError }
 import type { User } from './types';
 import { setActivityAccount } from './activity-history';
 import { clearTastePreferences, getTastePreferences } from './taste-preferences';
+import { broadcastLogout, onOtherTabLogout } from './logout-sync';
 
 function clearLocalAccountData() {
   setActivityAccount(null);
@@ -51,8 +52,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUserState(nextUser);
   }, []);
   const [loading, setLoading] = useState(true);
+  const sessionRevision = useRef(0);
+  const clearSession = useCallback(() => {
+    sessionRevision.current += 1;
+    setAccessToken(null);
+    clearLocalAccountData();
+    setUser(null);
+    setLoading(false);
+  }, [setUser]);
+
+  useEffect(() => onOtherTabLogout(clearSession), [clearSession]);
 
   const bootstrap = useCallback(async () => {
+    const revision = sessionRevision.current;
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/auth/refresh`, {
         method: 'POST',
@@ -60,6 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       if (res.ok) {
         const json = await res.json();
+        if (revision !== sessionRevision.current) return;
         setAccessToken(json.data.accessToken);
         setUser(json.data.user);
       } else if (res.status === 401 || res.status === 403) {
@@ -81,12 +94,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [bootstrap]);
 
   useEffect(() => onSessionExpired(() => {
-    clearLocalAccountData();
-    setUser(null);
-  }), []);
+    clearSession();
+    broadcastLogout();
+  }), [clearSession]);
 
   const login = useCallback(async (email: string, password: string) => {
+    const revision = sessionRevision.current;
     const res = await api.post('/api/auth/login', { email, password }, { auth: false });
+    if (revision !== sessionRevision.current) throw new Error('Sign-in cancelled because the session ended.');
     setAccessToken(res.data.accessToken);
     setUser(res.data.user);
     return res.data.user as User;
@@ -107,14 +122,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const loginWithGoogle = useCallback(async (credential: string) => {
+    const revision = sessionRevision.current;
     const res = await api.post('/api/auth/google', { credential }, { auth: false });
+    if (revision !== sessionRevision.current) throw new Error('Sign-in cancelled because the session ended.');
     setAccessToken(res.data.accessToken);
     setUser(res.data.user);
     return res.data.user as User;
   }, []);
 
   const loginWithFacebook = useCallback(async (accessToken: string) => {
+    const revision = sessionRevision.current;
     const res = await api.post('/api/auth/facebook', { accessToken }, { auth: false });
+    if (revision !== sessionRevision.current) throw new Error('Sign-in cancelled because the session ended.');
     setAccessToken(res.data.accessToken);
     setUser(res.data.user);
     return res.data.user as User;
@@ -129,8 +148,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const devVerifyEmail = useCallback(async (email?: string) => {
+    const revision = sessionRevision.current;
     const res = await api.post('/api/auth/dev-verify', { email });
-    if (res.data?.user) {
+    if (res.data?.user && revision === sessionRevision.current) {
       setUser(res.data.user);
     }
     return res.data?.user as User;
@@ -151,40 +171,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateProfile = useCallback(async (data: UpdateProfileData) => {
+    const revision = sessionRevision.current;
     const payload: Record<string, any> = {};
     if (data.fullName !== undefined) payload.fullName = data.fullName;
     if (data.phone !== undefined) payload.phone = data.phone;
     if (data.avatarUrl !== undefined) payload.avatarUrl = data.avatarUrl;
 
     const res = await api.patch('/api/auth/profile', payload);
-    if (res.data?.user) {
+    if (res.data?.user && revision === sessionRevision.current) {
       setUser(res.data.user);
     }
     return res.data?.user as User;
   }, []);
 
   const logout = useCallback(async () => {
+    const request = api.post('/api/auth/logout');
+    clearSession();
+    broadcastLogout();
     try {
-      await api.post('/api/auth/logout');
+      await request;
     } finally {
-      setAccessToken(null);
-      clearLocalAccountData();
-      setUser(null);
+      clearSession();
     }
-  }, []);
+  }, [clearSession]);
 
   const refreshUser = useCallback(async () => {
+    const revision = sessionRevision.current;
     try {
       const res = await api.get('/api/auth/me');
-      setUser(res.data.user);
+      if (revision === sessionRevision.current) setUser(res.data.user);
     } catch (err) {
       if (err instanceof ApiClientError && err.status === 401) {
-        setAccessToken(null);
-        clearLocalAccountData();
-        setUser(null);
+        clearSession();
+        broadcastLogout();
       }
     }
-  }, []);
+  }, [clearSession, setUser]);
 
   return (
     <AuthContext.Provider
