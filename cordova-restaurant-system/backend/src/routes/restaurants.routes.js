@@ -103,7 +103,7 @@ router.post(
 );
 
 // ---- Promotions (nested) ----
-router.get('/:restaurantId/promotions', promotionController.listForRestaurant);
+router.get('/:restaurantId/promotions', optionalAuth, promotionController.listForRestaurant);
 router.post(
   '/:restaurantId/promotions',
   requireAuth,

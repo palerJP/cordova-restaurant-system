@@ -59,7 +59,9 @@ async function verifyAndConsumeEmailToken(rawToken) {
   }
 
   // Mark token used and update user's email_verified status
-  await query(`UPDATE email_verification_tokens SET used_at = NOW() WHERE id = $1`, [tokenRecord.id]);
+  const consumed = await query(`UPDATE email_verification_tokens SET used_at = NOW()
+    WHERE id = $1 AND used_at IS NULL AND expires_at > NOW() RETURNING user_id`, [tokenRecord.id]);
+  if (!consumed.rows.length) return { success: false, reason: 'already_used' };
   await query(`UPDATE users SET email_verified = TRUE, email_verified_at = NOW() WHERE id = $1`, [tokenRecord.user_id]);
 
   return { success: true, userId: tokenRecord.user_id };
@@ -113,7 +115,9 @@ async function verifyAndConsumeResetToken(rawToken) {
   }
 
   // Mark token used
-  await query(`UPDATE password_reset_tokens SET used_at = NOW() WHERE id = $1`, [tokenRecord.id]);
+  const consumed = await query(`UPDATE password_reset_tokens SET used_at = NOW()
+    WHERE id = $1 AND used_at IS NULL AND expires_at > NOW() RETURNING user_id`, [tokenRecord.id]);
+  if (!consumed.rows.length) return { success: false, reason: 'already_used' };
 
   return { success: true, userId: tokenRecord.user_id };
 }

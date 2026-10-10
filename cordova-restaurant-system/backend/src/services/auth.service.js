@@ -17,6 +17,7 @@ function refreshExpiryDate() {
 }
 
 async function issueTokenPair(user, meta = {}) {
+  if (!user.is_active) throw ApiError.unauthorized('Account no longer active');
   const accessToken = signAccessToken(user);
   const refreshToken = signRefreshToken(user);
   await refreshTokenModel.store({
@@ -176,6 +177,9 @@ async function resetPassword({ token, newPassword }) {
 async function googleOAuth({ idToken, credential, accessToken, token: clientToken }, meta = {}) {
   const token = idToken || credential || accessToken || clientToken;
   if (!token) throw ApiError.badRequest('Google authentication token is required');
+  if (env.isProduction && typeof token === 'string' && token.startsWith('google_oauth_token_')) {
+    throw ApiError.unauthorized('Simulated sign-in is disabled');
+  }
   if (!env.google.clientId) throw ApiError.forbidden('Google sign-in is not configured');
 
   let email, googleId, name, picture;
@@ -211,7 +215,7 @@ async function googleOAuth({ idToken, credential, accessToken, token: clientToke
       picture = profile.picture;
     }
   } catch (_err) {
-    throw ApiError.unauthorized('Invalid or unverified Google token');
+    throw ApiError.unauthorized('Google authentication could not be verified');
   }
 
   // 4. Check if user already linked via Google ID
@@ -221,6 +225,7 @@ async function googleOAuth({ idToken, credential, accessToken, token: clientToke
   if (!user) {
     const existingUser = await userModel.findByEmail(email);
     if (existingUser) {
+      if (!existingUser.is_active) throw ApiError.unauthorized('Account no longer active');
       user = await userModel.linkGoogleAccount(existingUser.id, googleId, picture);
     } else {
       user = await userModel.createOAuthUser({
@@ -240,6 +245,7 @@ async function googleOAuth({ idToken, credential, accessToken, token: clientToke
 }
 
 async function facebookOAuth({ accessToken, token: clientToken }, meta = {}) {
+  if (env.isProduction) throw ApiError.unauthorized('Facebook sign-in is not configured for production');
   const token = accessToken || clientToken;
   if (!token) throw ApiError.badRequest('Facebook Access Token is required');
   if (!env.facebook.appId || !env.facebook.appSecret) {

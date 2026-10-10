@@ -26,8 +26,9 @@ function verifyAccessToken(token) {
 function signRefreshToken(user) {
   // Tokens issued in the same second must still be unique. Without a nonce,
   // JWTs have identical payloads and collide with the token_hash unique key.
-  return jwt.sign({ sub: user.id, jti: crypto.randomUUID() }, env.jwt.refreshSecret, {
+  return jwt.sign({ sub: user.id }, env.jwt.refreshSecret, {
     expiresIn: env.jwt.refreshExpiresIn,
+    jwtid: crypto.randomUUID(),
   });
 }
 

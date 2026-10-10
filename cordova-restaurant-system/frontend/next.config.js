@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
+  outputFileTracingRoot: __dirname,
+  distDir: process.env.NEXT_DIST_DIR || '.next',
   reactStrictMode: true,
   images: {
     unoptimized: true,
@@ -27,7 +30,7 @@ const nextConfig = {
     if (process.env.VERCEL && !process.env.BACKEND_URL) {
       throw new Error('BACKEND_URL must be set to the deployed backend URL.');
     }
-    const rawApi = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    const rawApi = process.env.BACKEND_URL || process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
     const backendBase = rawApi.replace(/\/api\/?$/, '');
     return [
       {

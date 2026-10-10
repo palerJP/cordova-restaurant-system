@@ -228,6 +228,7 @@ export default function RegisterPage() {
         <button
           type="button"
           onClick={handleGoogleSignUp}
+          style={{ display: process.env.NODE_ENV === 'production' && !process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? 'none' : undefined }}
           disabled={!!oauthLoading}
           className="w-full flex items-center justify-center gap-3 bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-200 font-semibold text-sm py-3 px-4 rounded-xl border border-stone-300 dark:border-stone-700 shadow-sm transition-colors mb-3 disabled:opacity-60"
         >

@@ -24,7 +24,9 @@ async function listActive({ limit = 12, offset = 0, restaurantId } = {}) {
     `p.status = 'active'`,
     `(p.payment_status = 'verified' OR p.payment_status IS NULL)`,
     `p.start_date <= CURRENT_DATE`,
-    `p.end_date >= CURRENT_DATE`
+    `p.end_date >= CURRENT_DATE`,
+    `r.status = 'verified'`,
+    `r.is_active = TRUE`
   ];
   if (restaurantId) {
     conditions.push(`p.restaurant_id = $${idx++}`);
@@ -33,7 +35,9 @@ async function listActive({ limit = 12, offset = 0, restaurantId } = {}) {
   const where = `WHERE ${conditions.join(' AND ')}`;
 
   const { rows } = await query(
-    `SELECT p.*, r.name AS restaurant_name, r.slug AS restaurant_slug
+    `SELECT p.id, p.restaurant_id, p.title, p.description, p.image_url,
+       p.discount_label, p.start_date, p.end_date, p.status, p.created_at,
+       r.name AS restaurant_name, r.slug AS restaurant_slug
      FROM promotions p JOIN restaurants r ON r.id = p.restaurant_id
      ${where}
      ORDER BY p.end_date ASC, p.start_date DESC
@@ -41,7 +45,7 @@ async function listActive({ limit = 12, offset = 0, restaurantId } = {}) {
     [...params, limit, offset]
   );
   const { rows: countRows } = await query(
-    `SELECT COUNT(*) FROM promotions p ${where}`, params
+    `SELECT COUNT(*) FROM promotions p JOIN restaurants r ON r.id = p.restaurant_id ${where}`, params
   );
   return { rows, totalCount: parseInt(countRows[0].count, 10) };
 }

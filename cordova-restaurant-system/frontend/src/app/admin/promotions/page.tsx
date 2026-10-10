@@ -89,7 +89,7 @@ function AdminPromotionsContent() {
     } finally {
       setLoading(false);
     }
-  }, [status, debouncedSearch, toast]);
+  }, [status, debouncedSearch]);
 
   useEffect(() => {
     load();

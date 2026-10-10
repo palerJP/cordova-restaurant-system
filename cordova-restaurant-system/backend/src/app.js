@@ -60,6 +60,16 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // ---- Health check ----
 app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
+app.get('/ready', async (req, res) => {
+  try {
+    const { query } = require('./config/db');
+    const { rows } = await query('SELECT filename FROM _migrations WHERE filename = $1', ['013_disable_unclaimed_login.sql']);
+    if (!rows.length) return res.status(503).json({ status: 'not_ready' });
+    res.json({ status: 'ready' });
+  } catch {
+    res.status(503).json({ status: 'not_ready' });
+  }
+});
 
 // ---- Routes ----
 app.use('/api/auth', authRoutes);
