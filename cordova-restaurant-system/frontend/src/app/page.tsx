@@ -530,7 +530,7 @@ export default function HomePage() {
         </form>
 
         {/* Quick Recent Searches below homepage hero search */}
-        {recentSearches.length > 0 && (
+        {user && recentSearches.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
@@ -555,7 +555,7 @@ export default function HomePage() {
               ))}
               <Link
                 href="/history?tab=searches"
-                className="text-[11px] font-semibold text-amber-300 hover:text-white underline ml-1 drop-shadow transition-colors"
+                className="text-[11px] font-semibold text-emerald-900 hover:text-emerald-950 dark:text-white dark:hover:text-emerald-200 underline ml-1 drop-shadow transition-colors"
               >
                 View All →
               </Link>
