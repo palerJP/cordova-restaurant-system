@@ -25,9 +25,9 @@ function errorHandler(err, req, res, next) {
     } else if (err.code === '23503') {
       statusCode = 400;
       message = 'Referenced record does not exist';
-    } else if (err.type === 'entity.too.large') {
+    } else if (err.type === 'entity.too.large' || err.code === 'LIMIT_FILE_SIZE') {
       statusCode = 413;
-      message = 'Payload too large';
+      message = 'Upload is too large';
     } else {
       statusCode = 500;
       message = env.isProduction ? 'Internal server error' : err.message;

@@ -52,7 +52,7 @@ import type {
   Promotion,
 } from '@/lib/types';
 import { applyRestaurantCustomization, getStaticRestaurantBySlug } from '@/data/restaurants';
-import { getVerifiedReviews, addPersistedReview, calculateRestaurantRatingStats } from '@/data/restaurantReviews';
+import { getVerifiedReviews, calculateRestaurantRatingStats } from '@/data/restaurantReviews';
 import { MCDONALDS_CATEGORIES, MCDONALDS_MENU_ITEMS } from '@/data/mcdonaldsMenu';
 import { PAPSY_CATEGORIES, PAPSY_MENU_ITEMS } from '@/data/papsyMenu';
 import { PAROLA_CATEGORIES, PAROLA_MENU_ITEMS } from '@/data/parolaMenu';
@@ -219,7 +219,7 @@ export default function RestaurantDetailPage() {
         });
         found = detail.data.restaurant;
       } catch {
-        found = getStaticRestaurantBySlug(slug);
+        found = process.env.NODE_ENV === 'production' ? null : getStaticRestaurantBySlug(slug);
       }
 
       if (!found) {
@@ -706,59 +706,45 @@ export default function RestaurantDetailPage() {
   const submitReview = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!restaurant) return;
+    if (!user || user.role !== 'customer') {
+      toast('Please sign in with a diner account to post a review.', 'info');
+      return;
+    }
     if (!reviewComment.trim()) {
       toast('Please write a brief comment describing your dining experience', 'info');
       return;
     }
     setSubmittingReview(true);
     try {
-      const newReviewId = `rev-${Date.now()}`;
-      const reviewerName = user?.full_name || 'Verified Cordova Foodie';
-      const reviewerAvatar = user?.avatar_url;
-      let submittedPhotos: string[] = [...reviewPhotoPreviews];
-
-      try {
-        if (reviewPhotos.length > 0) {
-          const formData = new FormData();
-          formData.append('rating', String(reviewRating));
-          if (reviewComment.trim()) formData.append('comment', reviewComment.trim());
-          reviewPhotos.forEach((file) => formData.append('photos', file));
-          const res = await api.post(`/api/restaurants/${restaurant.id}/reviews`, formData, { isFormData: true });
-          if (res?.data?.review?.photos?.length) {
-            submittedPhotos = res.data.review.photos;
-          }
-        } else {
-          await api.post(`/api/restaurants/${restaurant.id}/reviews`, {
-            rating: reviewRating,
-            comment: reviewComment,
-          });
-        }
-      } catch {
-        // Continue with real-time local persistence if backend is in mock/offline mode
+      const comment = reviewComment.trim();
+      let response: { success: boolean; data?: { review?: Review } };
+      if (reviewPhotos.length > 0) {
+        const formData = new FormData();
+        formData.append('rating', String(reviewRating));
+        formData.append('comment', comment);
+        reviewPhotos.forEach((file) => formData.append('photos', file));
+        response = await api.post(`/api/restaurants/${restaurant.id}/reviews`, formData, { isFormData: true });
+      } else {
+        response = await api.post(`/api/restaurants/${restaurant.id}/reviews`, {
+          rating: reviewRating,
+          comment,
+        });
       }
 
-      const newReviewObj: Review = {
-        id: newReviewId,
-        restaurant_id: restaurant.id,
-        user_id: user?.id || 'usr-guest',
-        reviewer_name: reviewerName,
-        reviewer_avatar: reviewerAvatar || undefined,
-        rating: Number(reviewRating),
-        comment: reviewComment.trim(),
-        photos: submittedPhotos,
-        reactions: { '❤️': 1 },
-        status: 'visible',
-        created_at: new Date().toISOString(),
+      if (!response?.success || !response.data?.review?.id) {
+        throw new Error('Review submission did not return a saved review');
+      }
+
+      const savedReview: Review = {
+        ...response.data.review,
+        reviewer_name: user.full_name,
+        reviewer_avatar: user.avatar_url || undefined,
         like_count: 0,
         liked_by_me: false,
-        visit_type: user ? 'verified diner' : 'guest explorer',
       };
-
-      // Add to persistent storage and get updated list
-      const updatedReviews = addPersistedReview(slug || restaurant.slug || restaurant.id, newReviewObj);
+      const updatedReviews = [savedReview, ...reviews.filter((review) => review.id !== savedReview.id)];
       setReviews(updatedReviews);
 
-      // Immediately recalculate accurate rating and review count in state
       const newStats = calculateRestaurantRatingStats(updatedReviews);
       setRestaurant((prev) =>
         prev
@@ -772,10 +758,11 @@ export default function RestaurantDetailPage() {
 
       setReviewComment('');
       setReviewPhotos([]);
+      reviewPhotoPreviews.forEach((preview) => URL.revokeObjectURL(preview));
       setReviewPhotoPreviews([]);
-      toast('Review submitted! Establishment ratings and review count updated automatically.', 'success');
+      toast('Review submitted successfully.', 'success');
     } catch (err) {
-      toast(err instanceof ApiClientError ? err.message : 'Failed to submit review', 'error');
+      toast(err instanceof ApiClientError ? err.message : 'Failed to submit review. Please try again.', 'error');
     } finally {
       setSubmittingReview(false);
     }
@@ -1334,13 +1321,13 @@ export default function RestaurantDetailPage() {
                         Write a Spatial Review & Upload Dish Photos
                       </h3>
                     </div>
-                    {user ? (
+                    {user?.role === 'customer' ? (
                       <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-3 py-1 rounded-full border border-emerald-200 dark:border-emerald-800">
                         Posting as {user.full_name || 'Verified User'}
                       </span>
                     ) : (
                       <span className="text-xs font-medium text-stone-500 dark:text-stone-400">
-                        Verified Guest Reviewer
+                        {user ? 'Diner account required to post' : 'Sign in to post a review'}
                       </span>
                     )}
                   </div>
@@ -1440,7 +1427,7 @@ export default function RestaurantDetailPage() {
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2">
                     <button
                       type="submit"
-                      disabled={submittingReview}
+                      disabled={submittingReview || user?.role !== 'customer'}
                       className="bg-cordova-green hover:bg-cordova-greenHover text-white text-xs font-bold px-7 py-3 rounded-xl shadow-md transition-all hover:scale-[1.02] active:scale-98 flex items-center gap-2"
                     >
                       <Sparkles size={14} />
@@ -1448,7 +1435,7 @@ export default function RestaurantDetailPage() {
                     </button>
                     {!user && (
                       <p className="text-xs text-stone-500 dark:text-stone-400">
-                        Posting as guest. <Link href="/login" className="text-cordova-green dark:text-emerald-400 font-bold hover:underline">Log in</Link> to save to your personal profile.
+                        <Link href={`/login?redirect=${encodeURIComponent(`/restaurants/${slug}`)}`} className="text-cordova-green dark:text-emerald-400 font-bold hover:underline">Log in</Link> with a diner account to post.
                       </p>
                     )}
                   </div>

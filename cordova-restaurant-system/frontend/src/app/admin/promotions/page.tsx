@@ -46,12 +46,11 @@ function AdminPromotionsContent() {
   const [deleteTarget, setDeleteTarget] = useState<Promotion | null>(null);
   const [deleteSubTarget, setDeleteSubTarget] = useState<SubscriptionTransaction | null>(null);
   const [copiedRef, setCopiedRef] = useState<string | null>(null);
+  const [renderedAt] = useState(() => Date.now());
 
   useEffect(() => {
     const urlStatus = searchParams.get('status') || 'pending_verification';
-    if (urlStatus !== status) {
-      setStatus(urlStatus);
-    }
+    setStatus((current) => current === urlStatus ? current : urlStatus);
   }, [searchParams]);
 
   const copyToClipboard = (text: string) => {
@@ -240,7 +239,7 @@ function AdminPromotionsContent() {
               const isVerified = tx.status === 'verified';
               const isRejected = tx.status === 'rejected';
               const daysLeft = tx.expires_at
-                ? Math.max(0, Math.ceil((new Date(tx.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+                ? Math.max(0, Math.ceil((new Date(tx.expires_at).getTime() - renderedAt) / (1000 * 60 * 60 * 24)))
                 : null;
 
               return (

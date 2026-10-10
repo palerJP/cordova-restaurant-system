@@ -8,7 +8,8 @@ import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import { ApiClientError } from '@/lib/api';
 
-const REQUIRE_EMAIL_VERIFICATION = process.env.NEXT_PUBLIC_REQUIRE_EMAIL_VERIFICATION === 'true';
+const REQUIRE_EMAIL_VERIFICATION = process.env.NODE_ENV === 'production'
+  || process.env.NEXT_PUBLIC_REQUIRE_EMAIL_VERIFICATION === 'true';
 
 export default function VerifyEmailRequiredPage() {
   const router = useRouter();
@@ -121,7 +122,7 @@ export default function VerifyEmailRequiredPage() {
 
         {/* Action Buttons */}
         <div className="space-y-3">
-          {!REQUIRE_EMAIL_VERIFICATION && (
+          {process.env.NODE_ENV !== 'production' && !REQUIRE_EMAIL_VERIFICATION && (
             <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 rounded-xl mb-3 space-y-2">
               <p className="text-[11px] font-semibold text-emerald-800 dark:text-emerald-300">
                 🛠️ Localhost Dev Mode Active (Email verification is optional)

@@ -6,32 +6,42 @@
 const path = require('node:path');
 const dotenv = require('dotenv');
 
-// Local admin settings are ignored by Git. Existing process variables win.
-dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+// Local files are for development only. Production must use deployment secrets.
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
+  dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+}
 
 const REQUIRED_IN_PRODUCTION = [
   'DATABASE_URL',
   'JWT_ACCESS_SECRET',
   'JWT_REFRESH_SECRET',
   'COOKIE_SECRET',
+  'CLIENT_URL',
+  'EMAIL_FROM',
+  'BLOB_READ_WRITE_TOKEN',
+  'BLOB_PRIVATE_READ_WRITE_TOKEN',
 ];
 
 function required(name, fallback) {
-  const value = process.env[name] ?? fallback;
-  if (value === undefined) {
-    if (process.env.NODE_ENV === 'production' || REQUIRED_IN_PRODUCTION.includes(name)) {
-      throw new Error(`Missing required environment variable: ${name}`);
+  const configured = process.env[name]?.trim();
+  if (process.env.NODE_ENV === 'production' && REQUIRED_IN_PRODUCTION.includes(name)) {
+    if (!configured || configured === fallback) {
+      throw new Error(`Missing required production environment variable: ${name}`);
     }
   }
-  return value;
+  return configured || fallback;
+}
+
+if (process.env.NODE_ENV === 'production' && process.env.REQUIRE_EMAIL_VERIFICATION === 'false') {
+  throw new Error('Email verification cannot be disabled in production');
 }
 
 const env = {
   nodeEnv: process.env.NODE_ENV || 'development',
   isProduction: process.env.NODE_ENV === 'production',
   port: parseInt(process.env.PORT || '4000', 10),
-  clientUrl: process.env.CLIENT_URL || 'http://localhost:3000',
+  clientUrl: required('CLIENT_URL', 'http://localhost:3000'),
 
   db: {
     url: required('DATABASE_URL', 'postgres://postgres:postgres@localhost:5433/cordova_restaurants'),
@@ -48,7 +58,7 @@ const env = {
 
   cookie: {
     secret: required('COOKIE_SECRET', 'dev_cookie_secret_change_me'),
-    secure: process.env.COOKIE_SECURE === 'true',
+    secure: process.env.NODE_ENV === 'production' || process.env.COOKIE_SECURE === 'true',
   },
 
   rateLimit: {
@@ -60,6 +70,8 @@ const env = {
   upload: {
     dir: process.env.UPLOAD_DIR || 'uploads',
     maxMb: parseInt(process.env.MAX_UPLOAD_MB || '5', 10),
+    publicBlobToken: required('BLOB_READ_WRITE_TOKEN', null),
+    privateBlobToken: required('BLOB_PRIVATE_READ_WRITE_TOKEN', null),
   },
 
   logLevel: process.env.LOG_LEVEL || 'info',
@@ -69,6 +81,11 @@ const env = {
     clientSecret: process.env.GOOGLE_CLIENT_SECRET || null,
   },
 
+  facebook: {
+    appId: process.env.FB_APP_ID || null,
+    appSecret: process.env.FB_APP_SECRET || null,
+  },
+
   email: {
     resendApiKey: process.env.RESEND_API_KEY || null,
     smtpHost: process.env.SMTP_HOST || null,
@@ -76,7 +93,7 @@ const env = {
     smtpUser: process.env.SMTP_USER || null,
     smtpPass: process.env.SMTP_PASS || null,
     smtpSecure: process.env.SMTP_SECURE === 'true',
-    from: process.env.EMAIL_FROM || 'CordovaEats <noreply@cordovaeats.com>',
+    from: required('EMAIL_FROM', 'CordovaEats <noreply@cordovaeats.com>'),
   },
 
   groq: {
@@ -89,10 +106,27 @@ const env = {
   },
 
   auth: {
-    requireEmailVerification: process.env.REQUIRE_EMAIL_VERIFICATION !== undefined
-      ? process.env.REQUIRE_EMAIL_VERIFICATION === 'true'
-      : (process.env.NODE_ENV === 'production' && process.env.REQUIRE_EMAIL_VERIFICATION !== 'false'),
+    requireEmailVerification: process.env.NODE_ENV === 'production'
+      || process.env.REQUIRE_EMAIL_VERIFICATION === 'true',
   },
 };
+
+if (env.isProduction) {
+  if (env.upload.publicBlobToken === env.upload.privateBlobToken) {
+    throw new Error('Public and private Blob stores must use different credentials');
+  }
+  const secrets = [env.jwt.accessSecret, env.jwt.refreshSecret, env.cookie.secret];
+  if (secrets.some((secret) => secret.length < 32) || new Set(secrets).size !== secrets.length) {
+    throw new Error('Production JWT and cookie secrets must be distinct and at least 32 characters');
+  }
+  let clientOrigin;
+  try { clientOrigin = new URL(env.clientUrl); } catch (_err) { /* validated below */ }
+  if (!clientOrigin || clientOrigin.protocol !== 'https:' || clientOrigin.origin !== env.clientUrl) {
+    throw new Error('Production CLIENT_URL must be an HTTPS origin');
+  }
+  if (!env.email.resendApiKey && !(env.email.smtpHost && env.email.smtpUser && env.email.smtpPass)) {
+    throw new Error('Production email delivery requires RESEND_API_KEY or complete SMTP settings');
+  }
+}
 
 module.exports = env;

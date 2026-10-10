@@ -29,10 +29,10 @@ const create = asyncHandler(async (req, res) => {
   const photos = [];
   if (req.files && Array.isArray(req.files)) {
     for (const f of req.files) {
-      photos.push(uploadService.publicUrlFor(f));
+      photos.push(await uploadService.publicUrlFor(await uploadService.processImage(f, { maxWidth: 1400 })));
     }
   } else if (req.file) {
-    photos.push(uploadService.publicUrlFor(req.file));
+    photos.push(await uploadService.publicUrlFor(await uploadService.processImage(req.file, { maxWidth: 1400 })));
   }
 
   if (req.body.photos) {

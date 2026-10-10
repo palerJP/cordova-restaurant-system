@@ -1,1 +1,0 @@
-const http = require('http'); const server = http.createServer((req, res) => { const target = 'http://localhost:3000' + req.url; res.writeHead(302, { Location: target }); res.end('Redirecting to ' + target); }); server.listen(3001, '0.0.0.0', () => console.log('Redirecting :3001 -> :3000'));

@@ -129,7 +129,9 @@ export default function HomePage() {
       }
 
       // Static fallback list with customizations applied
-      const staticList = getAllStaticRestaurants().filter(isRestaurantVisible);
+      const staticList = process.env.NODE_ENV === 'production'
+        ? []
+        : getAllStaticRestaurants().filter(isRestaurantVisible);
       const map = new Map<string, Restaurant>();
 
       if (apiList.length > 0) {
@@ -223,7 +225,7 @@ export default function HomePage() {
       }
 
       // Use generic offline fallback only for guests; never bypass a user's saved constraints.
-      if (recList.length === 0 && !recommendationsApiResponded && !user) {
+      if (process.env.NODE_ENV !== 'production' && recList.length === 0 && !recommendationsApiResponded && !user) {
         const staticList = getAllStaticRestaurants().filter(isRestaurantVisible);
         recList = staticList.slice(0, 8).map((r, i) => ({
           restaurant: r,

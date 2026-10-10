@@ -1490,6 +1490,7 @@ function StatCard({ label, value }: { label: string; value: number }) {
 // ---------------- Subscription & Ranking Boost Tab ----------------
 function SubscriptionTab({ restaurant, onUpdated }: { restaurant: Restaurant; onUpdated: () => void }) {
   const { toast } = useToast();
+  const [renderedAt] = useState(() => Date.now());
   const [updating, setUpdating] = useState(false);
   const [payTier, setPayTier] = useState<PaymentTier | null>(null);
   const [payMethod, setPayMethod] = useState<'gcash' | 'maya'>('gcash');
@@ -1609,7 +1610,7 @@ function SubscriptionTab({ restaurant, onUpdated }: { restaurant: Restaurant; on
   };
 
   const daysRemaining = restaurant.subscription_expires_at
-    ? Math.max(0, Math.ceil((new Date(restaurant.subscription_expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    ? Math.max(0, Math.ceil((new Date(restaurant.subscription_expires_at).getTime() - renderedAt) / (1000 * 60 * 60 * 24)))
     : null;
 
   return (

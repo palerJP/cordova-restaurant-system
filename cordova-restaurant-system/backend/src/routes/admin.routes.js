@@ -14,6 +14,7 @@ router.use(requireAuth, requireRole('admin'));
 
 // Business permit & registration verification
 router.get('/restaurants', restaurantController.adminList);
+router.get('/restaurants/:id/permit', restaurantController.getPermit);
 router.patch('/restaurants/:id/verify', validate(verifyBusinessValidator), restaurantController.verify);
 router.patch('/restaurants/:id/suspend', restaurantController.suspend);
 router.delete('/restaurants/:id', restaurantController.adminDelete);

@@ -3,6 +3,11 @@
  * Safe to re-run: seed.sql uses ON CONFLICT DO NOTHING throughout.
  * Intended for local development / demo environments only.
  */
+if (process.env.NODE_ENV === 'production') {
+  console.error('Demo seed is disabled in production because it creates known test accounts.');
+  process.exit(1);
+}
+
 const fs = require('fs');
 const path = require('path');
 const { pool } = require('../config/db');

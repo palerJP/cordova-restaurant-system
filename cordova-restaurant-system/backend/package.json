@@ -16,31 +16,32 @@
     "db:seed-eat-n-repeat-menu": "node src/scripts/seed_eatnrepeat_menu.js",
     "db:seed-entoys-menu": "node src/scripts/seed_entoys_menu.js",
     "db:verify-users": "node src/scripts/verify_all_users.js",
+    "storage:migrate": "node src/scripts/migrate_local_uploads_to_blob.js",
     "test": "jest --runInBand",
     "test:watch": "jest --watch --runInBand",
     "test:coverage": "jest --coverage --runInBand",
     "lint": "eslint src"
   },
   "dependencies": {
-    "bcrypt": "^5.1.1",
-    "compression": "^1.7.4",
+    "@vercel/blob": "^2.8.1",
+    "bcrypt": "^6.0.0",
+    "compression": "^1.8.2",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
-    "express": "^4.19.2",
+    "express": "^4.22.3",
     "express-rate-limit": "^7.2.0",
     "express-validator": "^7.0.1",
     "google-auth-library": "^11.0.0",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
-    "morgan": "^1.10.0",
+    "morgan": "^1.12.1",
     "multer": "^1.4.5-lts.1",
-    "nodemailer": "^9.0.5",
+    "nodemailer": "^10.0.16",
     "pg": "^8.11.5",
-    "sharp": "^0.33.3",
+    "sharp": "^0.35.5",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0",
-    "uuid": "^9.0.1",
     "winston": "^3.13.0",
     "xss": "^1.0.15"
   },
@@ -51,6 +52,6 @@
     "supertest": "^7.0.0"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.9.0"
   }
 }

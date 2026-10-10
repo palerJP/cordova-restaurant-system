@@ -18,7 +18,7 @@ import {
   Trash2,
   AlertTriangle,
 } from 'lucide-react';
-import { api, ApiClientError } from '@/lib/api';
+import { api, ApiClientError, API_URL, getAccessToken } from '@/lib/api';
 import { useToast } from '@/lib/toast-context';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -45,9 +45,7 @@ function BusinessVerificationContent() {
   // Sync state if URL search param changes
   useEffect(() => {
     const urlStatus = searchParams.get('status') as BusinessStatus;
-    if (urlStatus && urlStatus !== status) {
-      setStatus(urlStatus);
-    }
+    if (urlStatus) setStatus((current) => current === urlStatus ? current : urlStatus);
   }, [searchParams]);
 
   const load = useCallback(async () => {
@@ -130,6 +128,30 @@ function BusinessVerificationContent() {
       r.phone?.toLowerCase().includes(q)
     );
   });
+
+  const openPermit = async (restaurantId: string) => {
+    const tab = window.open('about:blank', '_blank');
+    if (!tab) {
+      toast('Allow pop-ups to view the permit document.', 'error');
+      return;
+    }
+    tab.opener = null;
+    try {
+      const token = getAccessToken();
+      if (!token) throw new Error('Sign in again to view the permit.');
+      const response = await fetch(`${API_URL}/api/admin/restaurants/${restaurantId}/permit`, {
+        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Unable to load the permit document.');
+      const objectUrl = URL.createObjectURL(await response.blob());
+      tab.location.replace(objectUrl);
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 5 * 60 * 1000);
+    } catch (error) {
+      tab.close();
+      toast(error instanceof Error ? error.message : 'Unable to load the permit document.', 'error');
+    }
+  };
 
   const getStatusBadge = (s: string) => {
     switch (s) {
@@ -259,16 +281,15 @@ function BusinessVerificationContent() {
                 {/* Permit document */}
                 {r.business_permit_url ? (
                   <div className="pt-1">
-                    <a
-                      href={r.business_permit_url}
-                      target="_blank"
-                      rel="noreferrer"
+                    <button
+                      type="button"
+                      onClick={() => openPermit(r.id)}
                       className="inline-flex items-center gap-1.5 text-xs font-bold text-cordova-green hover:underline bg-emerald-500/10 px-3 py-1 rounded-lg border border-emerald-500/20"
                     >
                       <FileText size={13} />
                       <span>View Uploaded Business Permit</span>
                       <ExternalLink size={12} />
-                    </a>
+                    </button>
                   </div>
                 ) : (
                   <p className="text-[11px] text-stone-400 italic">No business permit document attached.</p>

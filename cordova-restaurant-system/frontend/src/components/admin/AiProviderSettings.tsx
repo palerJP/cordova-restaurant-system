@@ -154,7 +154,7 @@ export function AiProviderSettings({ onStatusChange }: { onStatusChange: (status
             </p>}
           </div>
           {!settings.canConfigure && <p className="text-sm text-amber-700 dark:text-amber-300">
-            Connection settings can be edited only from this computer in local development. For a hosted system, ask the server administrator to configure Groq.
+            Hosted connection settings are managed by the server. Add GROQ_API_KEY in the backend Vercel project’s Environment Variables, then redeploy the backend. A key saved on this computer does not transfer to Vercel.
           </p>}
           <form onSubmit={saveSettings} className="space-y-4">
             <fieldset disabled={!settings.canConfigure || busy} className="space-y-4 disabled:opacity-60">

@@ -39,7 +39,7 @@ const createItem = asyncHandler(async (req, res) => {
   let imageUrl;
   if (req.file) {
     const processed = await uploadService.processImage(req.file, { maxWidth: 800 });
-    imageUrl = uploadService.publicUrlFor(processed);
+    imageUrl = await uploadService.publicUrlFor(processed);
   }
 
   const item = await menuModel.createItem(req.params.restaurantId, { ...req.body, imageUrl });
@@ -52,7 +52,7 @@ const updateItem = asyncHandler(async (req, res) => {
   let imageUrl;
   if (req.file) {
     const processed = await uploadService.processImage(req.file, { maxWidth: 800 });
-    imageUrl = uploadService.publicUrlFor(processed);
+    imageUrl = await uploadService.publicUrlFor(processed);
   }
 
   const item = await menuModel.updateItem(req.params.itemId, req.params.restaurantId, { ...req.body, imageUrl });

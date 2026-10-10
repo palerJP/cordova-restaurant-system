@@ -1,5 +1,13 @@
 const { query, withTransaction } = require('../config/db');
 
+// Permit references never leave the model on public or owner-facing reads.
+function withoutPermit(row) {
+  if (!row) return row;
+  const restaurant = { ...row };
+  delete restaurant.business_permit_url;
+  return restaurant;
+}
+
 /**
  * Shared SELECT fragment. Distance is computed with the Haversine formula
  * directly in SQL when lat/lng are supplied, so we can ORDER BY / filter on
@@ -54,6 +62,7 @@ async function search({
   sortBy = 'relevance', // relevance | rating | distance | newest | price_asc | price_desc
   limit = 12,
   offset = 0,
+  includePermit = false,
 }) {
   const params = [];
   let idx = 1;
@@ -198,7 +207,7 @@ async function search({
   const { rows } = await query(wrappedQuery, dataParams);
   const { rows: countRows } = await query(countQuery, params);
 
-  return { rows, totalCount: parseInt(countRows[0].count, 10) };
+  return { rows: includePermit ? rows : rows.map(withoutPermit), totalCount: parseInt(countRows[0].count, 10) };
 }
 
 async function findById(id, { userLat, userLng } = {}) {
@@ -209,17 +218,22 @@ async function findById(id, { userLat, userLng } = {}) {
     params.push(userLat, userLng);
   }
   const { rows } = await query(`${select} WHERE r.id = $1`, params);
-  return rows[0] || null;
+  return withoutPermit(rows[0]) || null;
 }
 
 async function findBySlug(slug) {
   const { rows } = await query(`${buildSelectBase({})} WHERE r.slug = $1`, [slug]);
-  return rows[0] || null;
+  return withoutPermit(rows[0]) || null;
 }
 
 async function findByOwner(ownerId) {
   const { rows } = await query(`${buildSelectBase({})} WHERE r.owner_id = $1 ORDER BY r.created_at DESC`, [ownerId]);
-  return rows;
+  return rows.map(withoutPermit);
+}
+
+async function findPermitReference(id) {
+  const { rows } = await query('SELECT business_permit_url FROM restaurants WHERE id = $1', [id]);
+  return rows[0]?.business_permit_url || null;
 }
 
 /**
@@ -238,7 +252,7 @@ async function findAllForRecommendation({ userLat, userLng }) {
     `${select} WHERE r.status = 'verified' AND r.is_active = TRUE`,
     params
   );
-  return rows;
+  return rows.map(withoutPermit);
 }
 
 async function create(data, cuisineIds = [], dietaryOptions = []) {
@@ -286,7 +300,7 @@ async function create(data, cuisineIds = [], dietaryOptions = []) {
         [restaurant.id, option]
       );
     }
-    return restaurant;
+    return withoutPermit(restaurant);
   });
 }
 
@@ -314,7 +328,7 @@ async function update(id, data) {
     `UPDATE restaurants SET ${fields.join(', ')} WHERE id = $1 RETURNING *`,
     params
   );
-  return rows[0] || null;
+  return withoutPermit(rows[0]) || null;
 }
 
 async function setVerificationStatus(id, { status, adminId, rejectionReason = null }) {
@@ -327,7 +341,7 @@ async function setVerificationStatus(id, { status, adminId, rejectionReason = nu
      WHERE id = $1 RETURNING *`,
     [id, status, adminId, rejectionReason]
   );
-  return rows[0] || null;
+  return withoutPermit(rows[0]) || null;
 }
 
 async function incrementViewCount(id) {
@@ -365,7 +379,7 @@ async function findSimilar(restaurantId, { limit = 4 } = {}) {
      LIMIT $2`,
     [restaurantId, limit]
   );
-  if (rows.length > 0) return rows;
+  if (rows.length > 0) return rows.map(withoutPermit);
 
   // Fallback: same price range, still excluding self
   const { rows: fallback } = await query(
@@ -376,7 +390,7 @@ async function findSimilar(restaurantId, { limit = 4 } = {}) {
      LIMIT $2`,
     [restaurantId, limit]
   );
-  return fallback;
+  return fallback.map(withoutPermit);
 }
 
 async function updateSubscription(id, { tier = 'none', expiresAt = null }) {
@@ -389,7 +403,7 @@ async function updateSubscription(id, { tier = 'none', expiresAt = null }) {
      RETURNING *`,
     [id, tier, expiresAt]
   );
-  return rows[0] || null;
+  return withoutPermit(rows[0]) || null;
 }
 
 async function remove(id) {
@@ -406,6 +420,7 @@ module.exports = {
   findById,
   findBySlug,
   findByOwner,
+  findPermitReference,
   findAllForRecommendation,
   findSimilar,
   create,

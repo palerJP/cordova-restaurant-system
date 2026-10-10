@@ -2,6 +2,12 @@ const { verifyAccessToken } = require('../utils/jwt');
 const ApiError = require('../utils/apiError');
 const asyncHandler = require('../utils/asyncHandler');
 const userModel = require('../models/user.model');
+const env = require('../config/env');
+
+const UNVERIFIED_AUTH_PATHS = new Set([
+  '/api/auth/me',
+  '/api/auth/resend-verification',
+]);
 
 /**
  * Requires a valid access token. Populates req.user with { id, role, email }.
@@ -28,6 +34,12 @@ const requireAuth = asyncHandler(async (req, res, next) => {
     throw ApiError.unauthorized('Account no longer active');
   }
 
+  const routePath = `${req.baseUrl}${req.path}`;
+  if (env.auth.requireEmailVerification && !user.email_verified
+    && !UNVERIFIED_AUTH_PATHS.has(routePath)) {
+    throw ApiError.forbidden('Verify your email address before using this feature');
+  }
+
   req.user = { id: user.id, role: user.role, email: user.email, fullName: user.full_name };
   next();
 });
@@ -46,7 +58,7 @@ const optionalAuth = asyncHandler(async (req, res, next) => {
   try {
     const payload = verifyAccessToken(token);
     const user = await userModel.findById(payload.sub);
-    if (user && user.is_active) {
+    if (user && user.is_active && (!env.auth.requireEmailVerification || user.email_verified)) {
       req.user = { id: user.id, role: user.role, email: user.email, fullName: user.full_name };
     }
   } catch (err) {

@@ -1522,9 +1522,6 @@ const SLUG_ALIASES: Record<string, string> = {
   eatnrepeat: 'eat-n-repeat',
 };
 
-// In-memory runtime persistence cache to ensure immediate cross-component sync
-const RUNTIME_USER_REVIEWS: Record<string, Review[]> = {};
-
 export function normalizeKey(key: string): string {
   return (key || '')
     .toLowerCase()
@@ -1551,143 +1548,14 @@ export function resolveReviewKey(slugOrId: string): string {
 }
 
 /**
- * Get verified reviews for a restaurant by slug or id, including persistent user-submitted reviews.
+ * Get curated reviews for a restaurant by slug or id.
  */
 export function getVerifiedReviews(slugOrId: string): Review[] {
   if (!slugOrId) return [];
   const exactKey = resolveReviewKey(slugOrId);
-  const norm = normalizeKey(exactKey);
-
-  const baseReviews: Review[] = ESTABLISHMENT_REVIEWS[exactKey]
+  return ESTABLISHMENT_REVIEWS[exactKey]
     ? [...ESTABLISHMENT_REVIEWS[exactKey]]
-    : [
-        {
-          id: 'base-rev-' + slugOrId + '-1',
-          restaurant_id: slugOrId,
-          user_id: 'usr-default-1',
-          reviewer_name: 'Cordova Food Explorer',
-          rating: 5,
-          comment: 'Great dining experience with fresh flavors, friendly local hospitality, and authentic Cordova vibes!',
-          reactions: { '❤️': 8, '👏': 5 },
-          status: 'visible',
-          created_at: '2026-03-01T12:00:00Z',
-          like_count: 4,
-          liked_by_me: false,
-          visit_type: 'casual',
-        },
-        {
-          id: 'base-rev-' + slugOrId + '-2',
-          restaurant_id: slugOrId,
-          user_id: 'usr-default-2',
-          reviewer_name: 'Cebu Local Guide',
-          rating: 4,
-          comment: 'Very good food quality and generous portions. Definitely recommended when visiting this part of Cordova.',
-          reactions: { '👍': 6 },
-          status: 'visible',
-          created_at: '2026-02-20T17:30:00Z',
-          like_count: 3,
-          liked_by_me: false,
-          visit_type: 'dine-in',
-        },
-      ];
-
-  const userReviews: Review[] = [];
-
-  // Check runtime memory cache
-  if (RUNTIME_USER_REVIEWS[norm]) {
-    userReviews.push(...RUNTIME_USER_REVIEWS[norm]);
-  }
-
-  // Merge with client-side user submitted reviews from localStorage if in browser
-  if (typeof window !== 'undefined') {
-    try {
-      const storageKey = 'cordova_user_reviews_' + norm;
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        const parsed: Review[] = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          for (const item of parsed) {
-            if (!userReviews.some((r) => r.id === item.id)) {
-              userReviews.push(item);
-            }
-          }
-        }
-      }
-    } catch {
-      // Ignore localStorage read errors
-    }
-  }
-
-  // Combine user reviews on top of base reviews, removing duplicate IDs
-  const combined = [...userReviews, ...baseReviews];
-  const seenIds = new Set<string>();
-  const uniqueReviews: Review[] = [];
-
-  for (const r of combined) {
-    if (!seenIds.has(r.id)) {
-      seenIds.add(r.id);
-      uniqueReviews.push(r);
-    }
-  }
-
-  return uniqueReviews;
-}
-
-/**
- * Add and persist a user-submitted review in real time.
- */
-export function addPersistedReview(slugOrId: string, newReview: Review): Review[] {
-  const exactKey = resolveReviewKey(slugOrId);
-  const norm = normalizeKey(exactKey);
-
-  // Update in-memory runtime cache
-  if (!RUNTIME_USER_REVIEWS[norm]) {
-    RUNTIME_USER_REVIEWS[norm] = [];
-  }
-  RUNTIME_USER_REVIEWS[norm] = [
-    newReview,
-    ...RUNTIME_USER_REVIEWS[norm].filter((r) => r.id !== newReview.id),
-  ];
-
-  // Update localStorage in browser
-  if (typeof window !== 'undefined') {
-    try {
-      const storageKey = 'cordova_user_reviews_' + norm;
-      const saved = localStorage.getItem(storageKey);
-      const userList: Review[] = saved ? JSON.parse(saved) : [];
-      const updatedUserList = [
-        newReview,
-        ...userList.filter((r) => r.id !== newReview.id),
-      ];
-      localStorage.setItem(storageKey, JSON.stringify(updatedUserList));
-    } catch {
-      // Ignore storage write errors
-    }
-  }
-
-  const updatedReviews = getVerifiedReviews(exactKey);
-  const newStats = calculateRestaurantRatingStats(updatedReviews);
-
-  if (typeof window !== 'undefined') {
-    try {
-      // Dispatch global real-time event for cards and directories
-      window.dispatchEvent(
-        new CustomEvent('cordova_review_updated', {
-          detail: {
-            slugOrId: exactKey,
-            rawSlugOrId: slugOrId,
-            review: newReview,
-            totalReviews: updatedReviews.length,
-            stats: newStats,
-          },
-        })
-      );
-    } catch {
-      // Ignore dispatch errors
-    }
-  }
-
-  return updatedReviews;
+    : [];
 }
 
 /**
@@ -1695,7 +1563,7 @@ export function addPersistedReview(slugOrId: string, newReview: Review): Review[
  */
 export function calculateRestaurantRatingStats(reviews: Review[]): { count: number; rating: number } {
   if (!reviews || reviews.length === 0) {
-    return { count: 0, rating: 5.0 };
+    return { count: 0, rating: 0 };
   }
   const sum = reviews.reduce((acc, r) => acc + (Number(r.rating) || 5), 0);
   const avg = parseFloat((sum / reviews.length).toFixed(1));

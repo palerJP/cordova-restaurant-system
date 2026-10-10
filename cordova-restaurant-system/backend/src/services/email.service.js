@@ -2,18 +2,18 @@ const nodemailer = require('nodemailer');
 const logger = require('../utils/logger');
 const env = require('../config/env');
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.CLIENT_URL || 'http://localhost:3000';
-const FROM_EMAIL = process.env.EMAIL_FROM || 'CordovaEats <noreply@cordovaeats.com>';
+const APP_URL = env.clientUrl;
+const FROM_EMAIL = env.email.from;
 
 function createTransporter() {
-  if (process.env.SMTP_HOST && process.env.SMTP_USER) {
+  if (env.email.smtpHost && env.email.smtpUser && env.email.smtpPass) {
     return nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || '587', 10),
-      secure: process.env.SMTP_SECURE === 'true',
+      host: env.email.smtpHost,
+      port: env.email.smtpPort,
+      secure: env.email.smtpSecure,
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+        user: env.email.smtpUser,
+        pass: env.email.smtpPass,
       },
     });
   }
@@ -25,13 +25,13 @@ function createTransporter() {
  */
 async function sendEmail({ to, subject, html, text }) {
   // 1. Try Resend API if API Key is configured
-  if (process.env.RESEND_API_KEY) {
+  if (env.email.resendApiKey) {
     try {
       const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+          Authorization: `Bearer ${env.email.resendApiKey}`,
         },
         body: JSON.stringify({
           from: FROM_EMAIL,
@@ -71,7 +71,12 @@ async function sendEmail({ to, subject, html, text }) {
     }
   }
 
-  // 3. Fallback for Local Development — Log clean link to console & logs
+  // Production never logs private verification or reset links as a fallback.
+  if (env.isProduction) {
+    throw new Error('Email delivery failed');
+  }
+
+  // Local development fallback.
   logger.info(`=======================================================`);
   logger.info(`[LOCAL DEV EMAIL DISPATCH]`);
   logger.info(`To: ${to}`);

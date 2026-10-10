@@ -51,7 +51,7 @@ past Git history.
 
 ## Prerequisites
 
-- Node.js 18+
+- Node.js 20.9+
 - PostgreSQL 14+ (running locally, in Docker, or a hosted instance)
 
 ## Setup

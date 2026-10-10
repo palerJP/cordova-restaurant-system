@@ -108,7 +108,7 @@ export function TastePreferencesDialog({ open, onClose, onSaved }: TastePreferen
   const onCloseRef = useRef(onClose);
   const savingRef = useRef(false);
   const requestIdRef = useRef(0);
-  onCloseRef.current = onClose;
+  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
 
   const [cuisines, setCuisines] = useState<string[]>([]);
   const [dietary, setDietary] = useState<string[]>([]);
@@ -121,7 +121,7 @@ export function TastePreferencesDialog({ open, onClose, onSaved }: TastePreferen
   const [fetchFailed, setFetchFailed] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  savingRef.current = saving;
+  useEffect(() => { savingRef.current = saving; }, [saving]);
 
   const loadPreferences = async () => {
     const requestId = ++requestIdRef.current;
@@ -161,7 +161,6 @@ export function TastePreferencesDialog({ open, onClose, onSaved }: TastePreferen
     }
     return () => { requestIdRef.current += 1; };
     // Load once per opening. Retry uses the button below.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   useEffect(() => {

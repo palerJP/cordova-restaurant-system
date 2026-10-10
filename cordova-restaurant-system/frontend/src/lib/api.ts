@@ -1,4 +1,8 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+// Keep production requests on the frontend origin so the refresh cookie works
+// when the API is hosted as a separate Vercel project behind a rewrite.
+const API_URL = process.env.NODE_ENV === 'production'
+  ? ''
+  : (process.env.NEXT_PUBLIC_API_URL || '');
 
 export class ApiClientError extends Error {
   status: number;

@@ -11,6 +11,7 @@ const env = require('./config/env');
 const swaggerSpec = require('./config/swagger');
 const logger = require('./utils/logger');
 const { apiLimiter } = require('./middleware/rateLimiter');
+const { limitUploadRequest } = require('./middleware/upload');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
 
 const authRoutes = require('./routes/auth.routes');
@@ -42,11 +43,17 @@ app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 app.use(cookieParser(env.cookie.secret));
 app.use(morgan(env.isProduction ? 'combined' : 'dev', { stream: { write: (msg) => logger.info(msg.trim()) } }));
-app.use('/api', apiLimiter);
+app.use('/api', limitUploadRequest, apiLimiter);
 
-// Static file serving for uploaded images/documents
-app.use('/uploads', express.static(path.join(process.cwd(), env.upload.dir)));
-app.use('/api/uploads', express.static(path.join(process.cwd(), env.upload.dir)));
+// Local public images remain available in development. Private permits are
+// served only through the authenticated admin route.
+if (!env.isProduction) {
+  for (const subdir of ['restaurant-images', 'avatars']) {
+    const publicDir = path.join(process.cwd(), env.upload.dir, subdir);
+    app.use(`/uploads/${subdir}`, express.static(publicDir));
+    app.use(`/api/uploads/${subdir}`, express.static(publicDir));
+  }
+}
 
 // ---- API docs ----
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));

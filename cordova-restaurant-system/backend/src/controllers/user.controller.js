@@ -6,7 +6,8 @@ const { parsePagination, buildPageMeta } = require('../utils/pagination');
 
 const getProfile = asyncHandler(async (req, res) => {
   const user = await userModel.findById(req.user.id);
-  const { password_hash, ...safeUser } = user;
+  const safeUser = { ...user };
+  delete safeUser.password_hash;
   res.json({ success: true, data: { user: safeUser } });
 });
 
@@ -15,7 +16,7 @@ const updateProfile = asyncHandler(async (req, res) => {
   let avatarUrl;
   if (req.file) {
     const processed = await uploadService.processImage(req.file, { maxWidth: 400 });
-    avatarUrl = uploadService.publicUrlFor(processed);
+    avatarUrl = await uploadService.publicUrlFor(processed);
   }
   const user = await userModel.updateProfile(req.user.id, { fullName, phone, avatarUrl });
   res.json({ success: true, message: 'Profile updated', data: { user } });

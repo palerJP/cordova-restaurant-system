@@ -10,7 +10,7 @@ const favoriteController = require('../controllers/favorite.controller');
 const { requireAuth, optionalAuth } = require('../middleware/auth');
 const { requireRole } = require('../middleware/rbac');
 const validate = require('../middleware/validate');
-const { uploadRestaurantImage, uploadBusinessPermit, uploadBusinessCreation } = require('../middleware/upload');
+const { uploadRestaurantImage, uploadBusinessCreation } = require('../middleware/upload');
 
 const {
   createRestaurantValidator, updateRestaurantValidator, searchValidator,

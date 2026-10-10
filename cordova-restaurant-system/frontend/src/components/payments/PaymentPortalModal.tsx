@@ -62,22 +62,9 @@ export function PaymentPortalModal({
   };
 
   // Pure clean QR code assets only (no screenshot images)
-  const getQrCodeSrc = () => {
-    const amt = tier.amount;
-    if (payMethod === 'gcash') {
-      if (amt === 499) return '/images/payments/gcash-qr-499-code.png';
-      if (amt === 999) return '/images/payments/gcash-qr-999-code.png';
-      if (amt === 1999) return '/images/payments/gcash-qr-1999-code.png';
-      return '/images/payments/gcash-qr-code.png';
-    } else {
-      if (amt === 499) return '/images/payments/maya-qr-499-code.png';
-      if (amt === 999) return '/images/payments/maya-qr-999-code.png';
-      if (amt === 1999) return '/images/payments/maya-qr-1999-code.png';
-      return '/images/payments/maya-qr-code.png';
-    }
-  };
-
-  const currentQrSrc = getQrCodeSrc();
+  const currentQrSrc = payMethod === 'gcash'
+    ? '/images/payments/gcash-qr-code.png'
+    : '/images/payments/maya-qr-code.png';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

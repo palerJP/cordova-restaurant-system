@@ -31,9 +31,7 @@ function ReviewModerationContent() {
 
   useEffect(() => {
     const urlStatus = searchParams.get('status') || 'flagged';
-    if (urlStatus !== status) {
-      setStatus(urlStatus);
-    }
+    setStatus((current) => current === urlStatus ? current : urlStatus);
   }, [searchParams]);
 
   const load = useCallback(async () => {

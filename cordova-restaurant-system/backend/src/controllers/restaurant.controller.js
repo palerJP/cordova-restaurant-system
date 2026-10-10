@@ -7,6 +7,7 @@ const imageModel = require('../models/restaurantImage.model');
 const uploadService = require('../services/upload.service');
 const asyncHandler = require('../utils/asyncHandler');
 const ApiError = require('../utils/apiError');
+const { pipeline } = require('node:stream/promises');
 const { query } = require('../config/db');
 const { parsePagination, buildPageMeta } = require('../utils/pagination');
 const cache = require('../utils/cache');
@@ -84,20 +85,20 @@ const create = asyncHandler(async (req, res) => {
 
   if (req.files) {
     if (req.files.businessPermit && req.files.businessPermit[0]) {
-      businessPermitUrl = uploadService.publicUrlFor(req.files.businessPermit[0]);
+      businessPermitUrl = await uploadService.privateUrlFor(req.files.businessPermit[0]);
     }
     const imgFile =
       (req.files.image && req.files.image[0]) ||
       (req.files.logo && req.files.logo[0]) ||
       (req.files.coverImage && req.files.coverImage[0]);
     if (imgFile) {
-      coverImageUrl = uploadService.publicUrlFor(imgFile);
+      coverImageUrl = await uploadService.publicUrlFor(await uploadService.processImage(imgFile));
     }
   } else if (req.file) {
     if (req.file.fieldname === 'businessPermit') {
-      businessPermitUrl = uploadService.publicUrlFor(req.file);
+      businessPermitUrl = await uploadService.privateUrlFor(req.file);
     } else {
-      coverImageUrl = uploadService.publicUrlFor(req.file);
+      coverImageUrl = await uploadService.publicUrlFor(await uploadService.processImage(req.file));
     }
   }
 
@@ -193,7 +194,7 @@ const uploadCoverImage = asyncHandler(async (req, res) => {
   if (!req.file) throw ApiError.badRequest('No image file provided');
 
   const processed = await uploadService.processImage(req.file);
-  const coverImageUrl = uploadService.publicUrlFor(processed);
+  const coverImageUrl = await uploadService.publicUrlFor(processed);
   const restaurant = await restaurantModel.update(req.params.id, { coverImageUrl });
 
   if (restaurant.status === 'verified') {
@@ -219,8 +220,27 @@ const adminList = asyncHandler(async (req, res) => {
     limit,
     offset,
     sortBy: 'newest',
+    includePermit: true,
   });
-  res.json({ success: true, data: rows, meta: buildPageMeta({ page, limit, totalCount }) });
+  const safeRows = rows.map(({ business_permit_url: permit, ...restaurant }) => ({
+    ...restaurant,
+    business_permit_url: permit ? `/api/admin/restaurants/${restaurant.id}/permit` : null,
+  }));
+  res.json({ success: true, data: safeRows, meta: buildPageMeta({ page, limit, totalCount }) });
+});
+
+/** GET /api/admin/restaurants/:id/permit — never exposes a storage URL. */
+const getPermit = asyncHandler(async (req, res) => {
+  const reference = await restaurantModel.findPermitReference(req.params.id);
+  if (!reference) throw ApiError.notFound('Permit not found');
+  const { stream, contentType } = await uploadService.openPrivatePermit(reference);
+  res.set({
+    'Content-Type': contentType,
+    'Content-Disposition': 'inline',
+    'Cache-Control': 'private, no-store',
+    'X-Content-Type-Options': 'nosniff',
+  });
+  await pipeline(stream, res);
 });
 
 /** PATCH /api/admin/restaurants/:id/verify */
@@ -281,7 +301,7 @@ const uploadImage = asyncHandler(async (req, res) => {
   if (!req.file) throw ApiError.badRequest('No image file provided');
 
   const processed = await uploadService.processImage(req.file, { maxWidth: 1400 });
-  const imageUrl = uploadService.publicUrlFor(processed);
+  const imageUrl = await uploadService.publicUrlFor(processed);
   const image = await imageModel.add(req.params.restaurantId, imageUrl);
 
   res.status(201).json({ success: true, message: 'Photo added', data: { image } });
@@ -457,7 +477,7 @@ const removeRecentlyViewedItem = asyncHandler(async (req, res) => {
 
 module.exports = {
   search, getById, getBySlug, listMine, create, update, uploadCoverImage,
-  listCuisines, adminList, verify, suspend, adminDelete, getSimilar, listImages, uploadImage, deleteImage,
+  listCuisines, adminList, getPermit, verify, suspend, adminDelete, getSimilar, listImages, uploadImage, deleteImage,
   updateSubscription, getSubscriptionStatus,
   getRecentlyViewed, clearRecentlyViewed, removeRecentlyViewedItem,
 };

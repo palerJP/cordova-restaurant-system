@@ -220,7 +220,7 @@ export const BARRACKS_MENU_ITEMS: MenuItem[] = [
       "name": "Garlic Butter Shrimp",
       "description": "Fresh prawns bathed in savory melted butter and minced garlic sauce.",
       "price": 279,
-      "image_url": "/images/barracks/garlic-butter-shrimp.jpg",
+      "image_url": "/images/barracks/gambas-ajillo.jpg",
       "is_available": true,
       "dietary_tags": [
           "seafood",

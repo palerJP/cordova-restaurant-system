@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useRef, useState, useCallback, ReactNode } from 'react';
-import { api, getAccessToken, setAccessToken, onSessionExpired, ApiClientError } from './api';
+import { api, API_URL, getAccessToken, setAccessToken, onSessionExpired, ApiClientError } from './api';
 import type { User } from './types';
 
 interface UpdateProfileData {
@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const bootstrap = useCallback(async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/auth/refresh`, {
+      const res = await fetch(`${API_URL}/api/auth/refresh`, {
         method: 'POST',
         credentials: 'include',
       });

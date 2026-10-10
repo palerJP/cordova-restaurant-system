@@ -41,6 +41,8 @@ function normalizeKey(str = '') {
 }
 
 function syncToRestaurantTs(restaurant) {
+  // Production deployments have immutable code; listings are read from Postgres.
+  if (process.env.NODE_ENV === 'production') return false;
   try {
     if (!fs.existsSync(RESTAURANTS_TS_PATH)) {
       logger.warn(`restaurants.ts not found at ${RESTAURANTS_TS_PATH}`);
@@ -125,6 +127,7 @@ function syncToRestaurantTs(restaurant) {
 }
 
 function removeFromRestaurantTs(restaurant) {
+  if (process.env.NODE_ENV === 'production') return false;
   try {
     if (!fs.existsSync(RESTAURANTS_TS_PATH)) {
       logger.warn(`restaurants.ts not found at ${RESTAURANTS_TS_PATH}`);

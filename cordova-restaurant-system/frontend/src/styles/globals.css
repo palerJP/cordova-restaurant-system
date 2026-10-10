@@ -3,6 +3,8 @@
 @tailwind utilities;
 
 :root {
+  --font-inter: 'Inter Variable';
+  --font-playfair: 'Playfair Display Variable';
   --bg: #faf8f4;
   --bg-elevated: #ffffff;
   --text: #1b241f;

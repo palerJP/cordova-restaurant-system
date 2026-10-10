@@ -31,7 +31,7 @@ const create = asyncHandler(async (req, res) => {
   let imageUrl;
   if (req.file) {
     const processed = await uploadService.processImage(req.file, { maxWidth: 1000 });
-    imageUrl = uploadService.publicUrlFor(processed);
+    imageUrl = await uploadService.publicUrlFor(processed);
   }
 
   const { title, description, discountLabel, startDate, endDate, paymentMethod, paymentReference, referenceNo } = req.body;
@@ -57,7 +57,7 @@ const update = asyncHandler(async (req, res) => {
   let updateData = { ...req.body };
   if (req.file) {
     const processed = await uploadService.processImage(req.file, { maxWidth: 1000 });
-    updateData.imageUrl = uploadService.publicUrlFor(processed);
+    updateData.imageUrl = await uploadService.publicUrlFor(processed);
   }
 
   const promotion = await promotionModel.update(req.params.id, req.params.restaurantId, updateData);

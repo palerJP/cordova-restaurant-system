@@ -370,7 +370,7 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
   'sip-n-street-brew-and-refreshments-mu9qvrtr': {
     name: 'Sip ‘n Street Brew and Refreshments',
     category: 'Cafe',
-    coverImage: '/uploads/restaurant-images/1789904428171-0769693d4cfcfd3b.png',
+    coverImage: '/images/sip-n-street/sip-n-street-logo.png',
     barangay: 'Catarman Cordova',
     description: 'a local beverage spot in Dakit-dakit, Catarman, Cordova, offering iced and hot coffee, non-coffee drinks, and soda.',
     address: 'Dakit-dakit Catarman Cordova',
@@ -514,6 +514,8 @@ export function matchesCategory(restaurant: Restaurant, category: string): boole
 
 export function getRestaurantCustomization(restaurant: Restaurant): RestaurantCustomConfig | null {
   if (!restaurant) return null;
+  // Database records belong to owners/admins and must keep their live edits.
+  if (!restaurant.id?.startsWith('static-')) return null;
 
   // Direct lookup
   let custom =
@@ -553,6 +555,7 @@ export function isRestaurantVisible(restaurant: Restaurant): boolean {
 
 export function applyRestaurantCustomization(restaurant: Restaurant): Restaurant {
   if (!restaurant) return restaurant;
+  if (!restaurant.id?.startsWith('static-')) return restaurant;
   const custom = getRestaurantCustomization(restaurant);
   const stats = getRestaurantReviewStats(restaurant.slug || restaurant.id || restaurant.name);
 

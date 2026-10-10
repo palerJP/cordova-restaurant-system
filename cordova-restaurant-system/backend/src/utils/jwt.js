@@ -24,7 +24,9 @@ function verifyAccessToken(token) {
  * can be individually revoked (logout, password change, theft response).
  */
 function signRefreshToken(user) {
-  return jwt.sign({ sub: user.id }, env.jwt.refreshSecret, {
+  // Tokens issued in the same second must still be unique. Without a nonce,
+  // JWTs have identical payloads and collide with the token_hash unique key.
+  return jwt.sign({ sub: user.id, jti: crypto.randomUUID() }, env.jwt.refreshSecret, {
     expiresIn: env.jwt.refreshExpiresIn,
   });
 }

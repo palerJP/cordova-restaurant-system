@@ -50,12 +50,14 @@ async function register({ email, password, fullName, role = 'customer', phone, a
     emailVerified: !requireVerification,
   });
 
-  // Generate single-use verification token and dispatch real email (or console log in dev)
+  // Generate a single-use verification token and dispatch the email.
   try {
     const rawToken = await tokenModel.createEmailVerificationToken(user.id, 30);
     await emailService.sendVerificationEmail(user.email, user.full_name, rawToken);
   } catch (emailErr) {
-    // Non-fatal if email dispatch fails during dev registration
+    if (env.isProduction) {
+      throw new ApiError(503, 'Account created, but verification email could not be sent. Sign in and request a new verification email.');
+    }
   }
 
   return user;
@@ -132,7 +134,11 @@ async function forgotPassword(email) {
 
   if (user && user.is_active) {
     const rawToken = await tokenModel.createPasswordResetToken(user.id, 15);
-    await emailService.sendPasswordResetEmail(user.email, user.full_name, rawToken);
+    try {
+      await emailService.sendPasswordResetEmail(user.email, user.full_name, rawToken);
+    } catch (_err) {
+      // Keep the response identical for known and unknown emails.
+    }
   }
 
   // Always return generic success to prevent email enumeration attacks
@@ -170,65 +176,42 @@ async function resetPassword({ token, newPassword }) {
 async function googleOAuth({ idToken, credential, accessToken, token: clientToken }, meta = {}) {
   const token = idToken || credential || accessToken || clientToken;
   if (!token) throw ApiError.badRequest('Google authentication token is required');
+  if (!env.google.clientId) throw ApiError.forbidden('Google sign-in is not configured');
 
   let email, googleId, name, picture;
-
-  // 1. Local Dev Mode fallback (when testing before GOOGLE_CLIENT_ID is set)
-  if (typeof token === 'string' && token.startsWith('google_oauth_token_')) {
-    googleId = `google_user_${token.split('_').pop()}`;
-    email = `google.user.${token.slice(-6)}@gmail.com`;
-    name = 'Google Diner User';
-    picture = 'https://lh3.googleusercontent.com/a/default-user=s96-c';
-  } else {
-    // 2. Try Google UserInfo API (handles Google Access Tokens)
-    try {
-      const userInfoRes = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo`, {
+  try {
+    if (typeof token === 'string' && token.split('.').length === 3) {
+      // Credential mode: verify signature, issuer, expiry, and our client audience.
+      const ticket = await googleClient.verifyIdToken({ idToken: token, audience: env.google.clientId });
+      const payload = ticket.getPayload();
+      if (!payload?.sub || !payload.email || payload.email_verified !== true) {
+        throw new Error('Unverified Google account');
+      }
+      ({ email, name, picture } = payload);
+      googleId = payload.sub;
+    } else {
+      // The frontend uses Google's OAuth access-token popup. TokenInfo proves
+      // that the token was issued for our app before we trust UserInfo.
+      const info = await googleClient.getTokenInfo(token);
+      if (info.aud !== env.google.clientId || (info.expiry_date && info.expiry_date <= Date.now())) {
+        throw new Error('Google token audience or expiry mismatch');
+      }
+      const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (userInfoRes.ok) {
-        const userInfo = await userInfoRes.json();
-        email = userInfo.email;
-        googleId = userInfo.sub;
-        name = userInfo.name || userInfo.given_name;
-        picture = userInfo.picture;
+      if (!response.ok) throw new Error('Google UserInfo request failed');
+      const profile = await response.json();
+      if (!profile.sub || !profile.email || profile.email_verified !== true
+        || (info.user_id && info.user_id !== profile.sub)) {
+        throw new Error('Unverified Google account');
       }
-    } catch (e) {
-      // Ignore network / non-access token errors
+      email = profile.email;
+      googleId = profile.sub;
+      name = profile.name || profile.given_name;
+      picture = profile.picture;
     }
-
-    // 3. Try Google ID Token verification / JWT decoding if UserInfo API didn't return email
-    if (!email) {
-      try {
-        const ticket = await googleClient.verifyIdToken({
-          idToken: token,
-          audience: [process.env.GOOGLE_CLIENT_ID, process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID].filter(Boolean),
-        });
-        const payload = ticket.getPayload();
-        if (payload) {
-          email = payload.email;
-          googleId = payload.sub;
-          name = payload.name;
-          picture = payload.picture;
-        }
-      } catch (err) {
-        try {
-          const jwt = require('jsonwebtoken');
-          const decoded = jwt.decode(token);
-          if (decoded && decoded.email) {
-            email = decoded.email;
-            googleId = decoded.sub || decoded.id;
-            name = decoded.name;
-            picture = decoded.picture;
-          }
-        } catch (jwtErr) {
-          // Leave email unset so the request receives the validation error below.
-        }
-      }
-    }
-  }
-
-  if (!email) {
-    throw ApiError.badRequest('Could not retrieve email from Google authentication payload. Please ensure GOOGLE_CLIENT_ID is configured.');
+  } catch (_err) {
+    throw ApiError.unauthorized('Invalid or unverified Google token');
   }
 
   // 4. Check if user already linked via Google ID
@@ -259,28 +242,38 @@ async function googleOAuth({ idToken, credential, accessToken, token: clientToke
 async function facebookOAuth({ accessToken, token: clientToken }, meta = {}) {
   const token = accessToken || clientToken;
   if (!token) throw ApiError.badRequest('Facebook Access Token is required');
+  if (!env.facebook.appId || !env.facebook.appSecret) {
+    throw ApiError.forbidden('Facebook sign-in is not configured');
+  }
 
   let facebookId, email, name, picture;
-
-  // Local Dev Mode fallback
-  if (typeof token === 'string' && token.startsWith('fb_oauth_token_')) {
-    facebookId = `fb_user_${token.split('_').pop()}`;
-    email = `facebook.user.${token.slice(-6)}@facebook.cordovaeats.internal`;
-    name = 'Facebook Diner User';
-    picture = 'https://graph.facebook.com/v12.0/10000/picture?type=large';
-  } else {
-    const fbUrl = `https://graph.facebook.com/me?fields=id,name,email,picture.type(large)&access_token=${token}`;
-    const response = await fetch(fbUrl);
-    const fbUser = await response.json();
-
-    if (!fbUser || fbUser.error) {
-      throw ApiError.unauthorized(fbUser?.error?.message || 'Failed to authenticate with Facebook');
+  try {
+    const debugUrl = new URL('https://graph.facebook.com/debug_token');
+    debugUrl.searchParams.set('input_token', token);
+    debugUrl.searchParams.set('access_token', `${env.facebook.appId}|${env.facebook.appSecret}`);
+    const debugResponse = await fetch(debugUrl);
+    if (!debugResponse.ok) throw new Error('Facebook token verification failed');
+    const verified = (await debugResponse.json()).data;
+    if (!verified?.is_valid || verified.app_id !== env.facebook.appId
+      || !verified.user_id || (verified.expires_at && verified.expires_at * 1000 <= Date.now())) {
+      throw new Error('Invalid Facebook app token');
     }
 
-    facebookId = fbUser.id;
-    email = fbUser.email || `${facebookId}@facebook.cordovaeats.internal`;
-    name = fbUser.name || 'Facebook User';
-    picture = fbUser.picture?.data?.url || null;
+    const profileUrl = new URL('https://graph.facebook.com/me');
+    profileUrl.searchParams.set('fields', 'id,name,email,picture.type(large)');
+    profileUrl.searchParams.set('access_token', token);
+    const profileResponse = await fetch(profileUrl);
+    if (!profileResponse.ok) throw new Error('Facebook profile request failed');
+    const profile = await profileResponse.json();
+    if (profile.error || profile.id !== verified.user_id || !profile.email) {
+      throw new Error('Unverified Facebook profile');
+    }
+    facebookId = profile.id;
+    email = profile.email;
+    name = profile.name || 'Facebook User';
+    picture = profile.picture?.data?.url || null;
+  } catch (_err) {
+    throw ApiError.unauthorized('Invalid or unverified Facebook token');
   }
 
   // 1. Check if user already linked via Facebook ID
@@ -290,7 +283,9 @@ async function facebookOAuth({ accessToken, token: clientToken }, meta = {}) {
   if (!user) {
     const existingUser = await userModel.findByEmail(email);
     if (existingUser) {
-      user = await userModel.linkFacebookAccount(existingUser.id, facebookId, picture);
+      // Facebook does not provide a reliable verified-email claim. Linking by
+      // email alone could give access to an unrelated existing account.
+      throw ApiError.conflict('An account with this email already exists. Sign in with its original method.');
     } else {
       user = await userModel.createOAuthUser({
         email,
@@ -353,7 +348,7 @@ async function changePassword(userId, currentPassword, newPassword) {
 }
 
 async function devVerifyEmail({ email, userId }) {
-  if (env.isProduction && env.auth.requireEmailVerification) {
+  if (env.isProduction) {
     throw ApiError.forbidden('Dev-verify is disabled in production environments');
   }
   let user;
@@ -364,7 +359,8 @@ async function devVerifyEmail({ email, userId }) {
   }
   if (!user) throw ApiError.notFound('User not found');
   const updated = await userModel.updateEmailVerified(user.id, true);
-  const { password_hash, ...safeUser } = updated;
+  const safeUser = { ...updated };
+  delete safeUser.password_hash;
   return safeUser;
 }
 

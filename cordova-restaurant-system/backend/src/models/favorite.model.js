@@ -30,7 +30,14 @@ async function listForUser(userId, { limit = 12, offset = 0 }) {
     [userId, limit, offset]
   );
   const { rows: countRows } = await query(`SELECT COUNT(*) FROM favorites WHERE user_id = $1`, [userId]);
-  return { rows, totalCount: parseInt(countRows[0].count, 10) };
+  return {
+    rows: rows.map((row) => {
+      const restaurant = { ...row };
+      delete restaurant.business_permit_url;
+      return restaurant;
+    }),
+    totalCount: parseInt(countRows[0].count, 10),
+  };
 }
 
 module.exports = { add, remove, isFavorite, listForUser };

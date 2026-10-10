@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -33,6 +33,7 @@ export default function SearchPage() {
     userLat: undefined,
     userLng: undefined,
   });
+  const initialFiltersRef = useRef(filters);
 
   const [results, setResults] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,6 +67,8 @@ export default function SearchPage() {
 
       if (res.data && Array.isArray(res.data) && res.data.length > 0) {
         setResults(res.data);
+      } else if (process.env.NODE_ENV === 'production') {
+        setResults([]);
       } else {
         // Fallback to static directory with AI semantic search
         const staticList = getAllStaticRestaurants().filter(isRestaurantVisible);
@@ -73,23 +76,25 @@ export default function SearchPage() {
         setResults(filtered);
       }
     } catch (err) {
-      console.warn('API search failed, falling back to static directory', err);
-      // Fallback to static directory with AI semantic search
-      const staticList = getAllStaticRestaurants().filter(isRestaurantVisible);
-      const filtered = aiSearchRestaurants(staticList, activeFilters.keyword, activeFilters.cuisine);
-      setResults(filtered);
+      console.warn('API search failed', err);
+      if (process.env.NODE_ENV === 'production') {
+        setResults([]);
+      } else {
+        const staticList = getAllStaticRestaurants().filter(isRestaurantVisible);
+        setResults(aiSearchRestaurants(staticList, activeFilters.keyword, activeFilters.cuisine));
+      }
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchResults(filters);
+    fetchResults(initialFiltersRef.current);
     setRecentlyViewed(getRecentlyViewed());
     return onActivityChange(() => {
       setRecentlyViewed(getRecentlyViewed());
     });
-  }, []);
+  }, [fetchResults]);
 
   const handleSearch = (customFilters?: SearchFilterState) => {
     const active = customFilters || filters;
