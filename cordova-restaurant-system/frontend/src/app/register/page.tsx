@@ -8,6 +8,7 @@ import { Eye, EyeOff, CheckCircle2, XCircle } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import { ApiClientError } from '@/lib/api';
+import { getAuthApiFeedback, normalizeAuthEmail, validateAuthEmail, validateRegistrationPassword } from '@/lib/auth-form';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 
@@ -22,15 +23,12 @@ const REQUIRE_EMAIL_VERIFICATION = process.env.NEXT_PUBLIC_REQUIRE_EMAIL_VERIFIC
 type PasswordStrength = 'weak' | 'fair' | 'strong' | 'very-strong';
 
 function getPasswordStrength(pw: string): PasswordStrength {
-  if (pw.length < 6) return 'weak';
+  if (pw.length < 8) return 'weak';
+  if (validateRegistrationPassword(pw)) return 'fair';
   let score = 0;
-  if (pw.length >= 8) score++;
-  if (/[A-Z]/.test(pw)) score++;
-  if (/[0-9]/.test(pw)) score++;
+  if (pw.length >= 12) score++;
   if (/[^A-Za-z0-9]/.test(pw)) score++;
-  if (score <= 1) return 'fair';
-  if (score === 2) return 'strong';
-  return 'very-strong';
+  return score === 2 ? 'very-strong' : 'strong';
 }
 
 const strengthConfig: Record<PasswordStrength, { label: string; color: string; width: string }> = {
@@ -86,9 +84,10 @@ export default function RegisterPage() {
     const e: Record<string, string> = {};
     if (!firstName.trim() || firstName.trim().length < 2) e.firstName = 'Please enter your first name.';
     if (!lastName.trim() || lastName.trim().length < 1) e.lastName = 'Please enter your last name.';
-    if (!email.trim()) e.email = 'Please enter your email address.';
-    else if (!/\S+@\S+\.\S+/.test(email)) e.email = 'Please enter a valid email address.';
-    if (!password || password.length < 8) e.password = 'Password must be at least 8 characters.';
+    const emailError = validateAuthEmail(normalizeAuthEmail(email));
+    if (emailError) e.email = emailError;
+    const passwordError = validateRegistrationPassword(password);
+    if (passwordError) e.password = passwordError;
     if (password !== confirmPassword) e.confirmPassword = 'Passwords do not match.';
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -97,10 +96,11 @@ export default function RegisterPage() {
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
     if (!validate()) return;
+    const normalizedEmail = normalizeAuthEmail(email);
     setLoading(true);
     try {
       await register({
-        email,
+        email: normalizedEmail,
         password,
         fullName: `${firstName.trim()} ${lastName.trim()}`,
         role,
@@ -113,7 +113,7 @@ export default function RegisterPage() {
       } else {
         setHasRegistered(true);
         try {
-          const loggedInUser = await login(email, password);
+          const loggedInUser = await login(normalizedEmail, password);
           showToast('Account created successfully! Welcome to CordovaEats.', 'success');
 
           if (redirectTo && redirectTo !== '/' && redirectTo.startsWith('/')) {
@@ -131,7 +131,11 @@ export default function RegisterPage() {
       }
     } catch (err) {
       if (err instanceof ApiClientError) {
-        showToast(err.message, 'error');
+        const feedback = getAuthApiFeedback(err, {
+          email: 'email', password: 'password', fullName: 'firstName', role: 'role',
+        });
+        setErrors(feedback.fieldErrors);
+        showToast(feedback.message, 'error');
       } else {
         showToast('Registration failed. Please try again.', 'error');
       }
@@ -300,12 +304,14 @@ export default function RegisterPage() {
                 </button>
               ))}
             </div>
+            {errors.role && <p className="mt-1 text-sm text-red-500">{errors.role}</p>}
           </div>
 
           {/* First + Last Name */}
           <div className="grid grid-cols-2 gap-3">
             <Input
               label="First name"
+              name="firstName"
               type="text"
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
@@ -316,6 +322,7 @@ export default function RegisterPage() {
             />
             <Input
               label="Last name"
+              name="lastName"
               type="text"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
@@ -328,6 +335,7 @@ export default function RegisterPage() {
 
           <Input
             label="Email address"
+            name="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -361,6 +369,9 @@ export default function RegisterPage() {
               </button>
             </div>
             {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
+            <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+              Use at least 8 characters, an uppercase letter, and a number.
+            </p>
             {strength && (
               <div className="mt-2">
                 <div className="h-1.5 w-full bg-stone-200 dark:bg-stone-700 rounded-full overflow-hidden">

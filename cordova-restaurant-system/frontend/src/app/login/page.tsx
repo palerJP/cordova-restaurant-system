@@ -8,6 +8,7 @@ import { Eye, EyeOff, Sparkles, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import { ApiClientError } from '@/lib/api';
+import { getAuthApiFeedback, normalizeAuthEmail, validateAuthEmail } from '@/lib/auth-form';
 import { syncTastePreferencesToAccount } from '@/lib/taste-preferences';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -87,8 +88,8 @@ export default function LoginPage() {
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!email.trim()) e.email = 'Please enter your email address.';
-    else if (!/\S+@\S+\.\S+/.test(email)) e.email = 'Please enter a valid email address.';
+    const emailError = validateAuthEmail(normalizeAuthEmail(email));
+    if (emailError) e.email = emailError;
     if (!password) e.password = 'Password is required.';
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -99,12 +100,14 @@ export default function LoginPage() {
     if (!validate()) return;
     setLoading(true);
     try {
-      const loggedUser = await login(email, password);
+      const loggedUser = await login(normalizeAuthEmail(email), password);
       showToast('Welcome back to CordovaEats!', 'success');
       await handleSuccessfulAuth(loggedUser);
     } catch (err) {
       if (err instanceof ApiClientError) {
-        showToast(err.message, 'error');
+        const feedback = getAuthApiFeedback(err, { email: 'email', password: 'password' });
+        setErrors(feedback.fieldErrors);
+        showToast(feedback.message, 'error');
       } else if (err instanceof TypeError && (err.message.includes('fetch') || err.message.includes('network') || err.message.includes('Failed'))) {
         showToast('Cannot reach the server. Please make sure the backend is running.', 'error');
       } else {
