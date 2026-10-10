@@ -23,6 +23,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { getTastePreferences } from '@/lib/taste-preferences';
 import { RestaurantCard } from '@/components/RestaurantCard';
+import { SearchRestaurantImage } from '@/components/SearchRestaurantImage';
 import { TastePreferencesDialog } from '@/components/TastePreferencesDialog';
 import { RestaurantGridSkeleton } from '@/components/ui/Skeleton';
 import { Pagination } from '@/components/ui/Pagination';
@@ -36,6 +37,8 @@ import {
   type SearchHistoryItem,
 } from '@/lib/activity-history';
 
+const normalizeSearch = (value: string) => value.toLowerCase().replace(/['\u2019]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+
 export default function HomePage() {
   const router = useRouter();
   const { user } = useAuth();
@@ -47,6 +50,59 @@ export default function HomePage() {
   const [meta, setMeta] = useState<PageMeta | null>(null);
   const [loading, setLoading] = useState(true);
   const [recentSearches, setRecentSearches] = useState<SearchHistoryItem[]>([]);
+  const [searchCatalog, setSearchCatalog] = useState<Restaurant[]>([]);
+  const catalogRefresh = useRef<(() => void) | null>(null);
+  const [suggestionsOpen, setSuggestionsOpen] = useState(false);
+  const [activeSuggestion, setActiveSuggestion] = useState(-1);
+  const searchRequestId = useRef(0);
+  const suggestionTokens = normalizeSearch(searchQuery).split(' ').filter(Boolean);
+  const suggestionCatalog = new Map(getAllStaticRestaurants().filter(isRestaurantVisible).map(r => [normalizeKey(r.slug || r.name), r]));
+  searchCatalog.filter(isRestaurantVisible).forEach(r => suggestionCatalog.set(normalizeKey(r.slug || r.name), r));
+  const suggestions = suggestionTokens.length ? Array.from(suggestionCatalog.values())
+    .filter(r => suggestionTokens.every(token => normalizeSearch(r.name).includes(token)))
+    .sort((a, b) => Number(normalizeSearch(b.name).startsWith(normalizeSearch(searchQuery))) - Number(normalizeSearch(a.name).startsWith(normalizeSearch(searchQuery))) || a.name.localeCompare(b.name))
+    .slice(0, 5) : [];
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let refreshing = false;
+    const refresh = async () => {
+      if (refreshing || document.visibilityState === 'hidden') return;
+      refreshing = true;
+      try {
+        const items: Restaurant[] = [];
+        let catalogPage = 1;
+        let hasNextPage = true;
+        while (hasNextPage && !controller.signal.aborted) {
+          const response = await api.get<{ data: Restaurant[]; meta?: PageMeta }>(
+            `/api/restaurants?limit=100&page=${catalogPage}`,
+            { auth: false, cache: 'no-store', signal: controller.signal }
+          );
+          if (!Array.isArray(response.data)) throw new Error('Invalid restaurant catalog');
+          items.push(...response.data);
+          hasNextPage = Boolean(response.meta?.hasNextPage);
+          catalogPage += 1;
+        }
+        if (!controller.signal.aborted) setSearchCatalog(items.filter(isRestaurantVisible));
+      } catch {
+        // Preserve the last catalog when the API is temporarily unavailable.
+      } finally {
+        refreshing = false;
+      }
+    };
+    catalogRefresh.current = refresh;
+    void refresh();
+    const interval = window.setInterval(refresh, 30000);
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      controller.abort();
+      catalogRefresh.current = null;
+      window.clearInterval(interval);
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', refresh);
+    };
+  }, []);
 
   useEffect(() => {
     setRecentSearches(getSearchHistory());
@@ -94,6 +150,7 @@ export default function HomePage() {
   };
 
   const fetchRestaurants = useCallback(async () => {
+    const requestId = ++searchRequestId.current;
     setLoading(true);
     try {
       let apiList: Restaurant[] = [];
@@ -129,6 +186,7 @@ export default function HomePage() {
       }
 
       // Static fallback list with customizations applied
+      if (requestId !== searchRequestId.current) return;
       const staticList = getAllStaticRestaurants().filter(isRestaurantVisible);
       const map = new Map<string, Restaurant>();
 
@@ -151,6 +209,15 @@ export default function HomePage() {
         } else {
           all = standardSearchRestaurants(staticList, queryTerm, activeCategory);
         }
+        const nameTokens = normalizeSearch(queryTerm).split(' ').filter(Boolean);
+        const matchesName = (r: Restaurant) => nameTokens.length > 0 && nameTokens.every(token => normalizeSearch(r.name).includes(token));
+        const catalog = new Map(staticList.map(r => [normalizeKey(r.slug || r.name), r]));
+        searchCatalog.forEach(r => catalog.set(normalizeKey(r.slug || r.name), r));
+        const nameMatches = Array.from(catalog.values()).filter(r => (!activeCategory || matchesCategory(r, activeCategory)) && matchesName(r));
+        const results = new Map(nameMatches.map(r => [normalizeKey(r.slug || r.name), r]));
+        all.forEach(r => results.set(normalizeKey(r.slug || r.name), r));
+        all = Array.from(results.values());
+        if (all.some(matchesName)) all = all.filter(matchesName);
       } else {
         all = Array.from(map.values()).filter(isRestaurantVisible);
         // Filter by active category
@@ -175,12 +242,13 @@ export default function HomePage() {
         hasPrevPage: currentPage > 1,
       });
     } catch {
+      if (requestId !== searchRequestId.current) return;
       setRestaurants([]);
       setMeta(null);
     } finally {
-      setLoading(false);
+      if (requestId === searchRequestId.current) setLoading(false);
     }
-  }, [debouncedQuery, activeCategory, page]);
+  }, [debouncedQuery, activeCategory, page, searchCatalog]);
 
   const fetchRecommendations = useCallback(async (requestId: number) => {
     setRecLoading(true);
@@ -263,15 +331,25 @@ export default function HomePage() {
     }
   };
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
+  const runSearch = (query: string) => {
+    const trimmed = query.trim();
+    setSearchQuery(trimmed);
+    setDebouncedQuery(trimmed);
+    setPage(1);
+    setSuggestionsOpen(false);
+    setActiveSuggestion(-1);
+    if (trimmed) {
       saveSearchHistory({
-        query: searchQuery.trim(),
+        query: trimmed,
         source: 'search',
       });
     }
-    router.push('/history?tab=searches');
+    establishmentsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    runSearch(searchQuery);
   };
 
   const handleCategoryClick = (categorySlug: string) => {
@@ -373,6 +451,7 @@ export default function HomePage() {
 
         <form
           onSubmit={handleSearchSubmit}
+          style={{ zIndex: 30 }}
           className="relative rounded-2xl transition-all duration-300 p-2 sm:p-2.5 flex items-center gap-2 backdrop-blur-2xl bg-white/90 dark:bg-[#161e18]/90 border border-white/80 dark:border-white/15 shadow-[0_16px_40px_rgba(0,0,0,0.08),inset_0_1px_1.5px_rgba(255,255,255,0.9)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.4),inset_0_1px_1.5px_rgba(255,255,255,0.12)] ring-1 ring-black/[0.04] dark:ring-white/[0.05]"
         >
           <div className="flex items-center pl-3 text-stone-500 shrink-0">
@@ -382,9 +461,30 @@ export default function HomePage() {
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setPage(1);
+              setSuggestionsOpen(true);
+              setActiveSuggestion(-1);
+            }}
+            onFocus={() => { setSuggestionsOpen(true); catalogRefresh.current?.(); }}
+            onBlur={() => { setSuggestionsOpen(false); setActiveSuggestion(-1); }}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') { setSuggestionsOpen(false); setActiveSuggestion(-1); }
+              if (!suggestionsOpen || !suggestions.length) return;
+              if (e.key === 'ArrowDown') { e.preventDefault(); setActiveSuggestion(i => (i + 1) % suggestions.length); }
+              if (e.key === 'ArrowUp') { e.preventDefault(); setActiveSuggestion(i => (i <= 0 ? suggestions.length : i) - 1); }
+              if (e.key === 'Enter' && activeSuggestion >= 0 && suggestions[activeSuggestion]) { e.preventDefault(); runSearch(suggestions[activeSuggestion].name); }
+            }}
+            role="combobox"
+            aria-label="Search restaurants"
+            aria-autocomplete="list"
+            aria-expanded={suggestionsOpen && suggestions.length > 0}
+            aria-controls="restaurant-suggestions"
+            aria-activedescendant={suggestionsOpen && activeSuggestion >= 0 && suggestions[activeSuggestion] ? `restaurant-suggestion-${activeSuggestion}` : undefined}
+            autoComplete="off"
             placeholder="Search restaurants, fresh seafood, BBQ, cafes..."
-            className="flex-1 px-2.5 py-3 bg-transparent text-sm sm:text-base outline-none font-sans font-medium transition-colors text-stone-900 dark:text-white placeholder:text-stone-500 dark:placeholder:text-stone-400"
+            className="min-w-0 flex-1 px-2.5 py-3 bg-transparent text-sm sm:text-base outline-none font-sans font-medium transition-colors text-stone-900 dark:text-white placeholder:text-stone-500 dark:placeholder:text-stone-400"
           />
 
           {searchQuery && (
@@ -394,6 +494,8 @@ export default function HomePage() {
                 setSearchQuery('');
                 setDebouncedQuery('');
                 setPage(1);
+                setSuggestionsOpen(false);
+                setActiveSuggestion(-1);
               }}
               className="p-1.5 rounded-full text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-white/10 transition-colors"
               title="Clear search"
@@ -410,6 +512,19 @@ export default function HomePage() {
           >
             <Search size={18} />
           </button>
+          {suggestionsOpen && suggestions.length > 0 && (
+            <ul id="restaurant-suggestions" role="listbox" aria-label="Restaurant suggestions" className="absolute z-30 left-0 right-0 top-full mt-2 overflow-hidden rounded-lg border border-stone-200 dark:border-white/15 bg-white dark:bg-[#161e18] shadow-xl">
+              {suggestions.map((restaurant, index) => (
+                <li key={restaurant.slug || restaurant.id} id={`restaurant-suggestion-${index}`} role="option" aria-selected={activeSuggestion === index} onMouseDown={e => e.preventDefault()} onMouseEnter={() => setActiveSuggestion(index)} onClick={() => runSearch(restaurant.name)} className={`flex cursor-pointer items-center gap-3 px-4 py-3 text-left text-sm text-stone-900 dark:text-white ${activeSuggestion === index ? 'bg-emerald-50 dark:bg-white/10' : ''}`}>
+                  <SearchRestaurantImage restaurant={restaurant} />
+                  <span className="min-w-0 break-words">
+                    <span className="block font-medium">{restaurant.name}</span>
+                    {restaurant.barangay && <span className="block text-xs text-stone-500 dark:text-stone-400">{restaurant.barangay}, Cordova</span>}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </form>
 
         {/* Quick Recent Searches below homepage hero search */}
@@ -429,8 +544,7 @@ export default function HomePage() {
                   key={item.id}
                   type="button"
                   onClick={() => {
-                    saveSearchHistory({ query: item.query, source: 'search' });
-                    router.push('/history?tab=searches');
+                    runSearch(item.query);
                   }}
                   className="bg-black/50 hover:bg-black/75 backdrop-blur-md border border-white/20 hover:border-amber-400 text-white text-xs px-3 py-1 rounded-full transition-all duration-200 shadow-sm flex items-center gap-1"
                 >
