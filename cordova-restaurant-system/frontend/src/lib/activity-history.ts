@@ -27,6 +27,25 @@ const SEARCH_HISTORY_KEY = 'cordova_recent_searches_v1';
 const RECENTLY_VIEWED_KEY = 'cordova_recently_viewed_v1';
 const MAX_SEARCH_HISTORY = 15;
 const MAX_RECENTLY_VIEWED = 20;
+let activityAccountId: string | null = null;
+
+export function setActivityAccount(userId: string | null): void {
+  activityAccountId = userId;
+  if (isBrowser()) {
+    try {
+      // Legacy shared history has no reliable owner and must not be reassigned.
+      localStorage.removeItem(SEARCH_HISTORY_KEY);
+      localStorage.removeItem(RECENTLY_VIEWED_KEY);
+    } catch {
+      // Storage may be disabled in the browser.
+    }
+  }
+  notifyUpdate();
+}
+
+function accountKey(key: string): string {
+  return `${key}:user:${encodeURIComponent(activityAccountId || '')}`;
+}
 
 function isBrowser(): boolean {
   return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
@@ -47,9 +66,9 @@ function notifyUpdate() {
 // ============================================================================
 
 export function getSearchHistory(): SearchHistoryItem[] {
-  if (!isBrowser()) return [];
+  if (!isBrowser() || !activityAccountId) return [];
   try {
-    const raw = localStorage.getItem(SEARCH_HISTORY_KEY);
+    const raw = localStorage.getItem(accountKey(SEARCH_HISTORY_KEY));
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [];
@@ -64,7 +83,7 @@ export function saveSearchHistory(entry: {
   priceRange?: string;
   source?: 'search' | 'recommendation';
 }): void {
-  if (!isBrowser()) return;
+  if (!isBrowser() || !activityAccountId) return;
   const trimmedQuery = entry.query.trim();
   const trimmedCuisine = entry.cuisine?.trim();
 
@@ -92,7 +111,7 @@ export function saveSearchHistory(entry: {
     };
 
     const updated = [newItem, ...filtered].slice(0, MAX_SEARCH_HISTORY);
-    localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(updated));
+    localStorage.setItem(accountKey(SEARCH_HISTORY_KEY), JSON.stringify(updated));
     notifyUpdate();
   } catch (err) {
     console.warn('Failed to save search history:', err);
@@ -100,11 +119,11 @@ export function saveSearchHistory(entry: {
 }
 
 export function deleteSearchHistoryItem(id: string): void {
-  if (!isBrowser()) return;
+  if (!isBrowser() || !activityAccountId) return;
   try {
     const existing = getSearchHistory();
     const updated = existing.filter((item) => item.id !== id);
-    localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(updated));
+    localStorage.setItem(accountKey(SEARCH_HISTORY_KEY), JSON.stringify(updated));
     notifyUpdate();
   } catch (err) {
     console.warn('Failed to delete search history item:', err);
@@ -112,9 +131,9 @@ export function deleteSearchHistoryItem(id: string): void {
 }
 
 export function clearSearchHistory(): void {
-  if (!isBrowser()) return;
+  if (!isBrowser() || !activityAccountId) return;
   try {
-    localStorage.removeItem(SEARCH_HISTORY_KEY);
+    localStorage.removeItem(accountKey(SEARCH_HISTORY_KEY));
     notifyUpdate();
   } catch (err) {
     console.warn('Failed to clear search history:', err);
@@ -126,9 +145,9 @@ export function clearSearchHistory(): void {
 // ============================================================================
 
 export function getRecentlyViewed(): RecentlyViewedRestaurant[] {
-  if (!isBrowser()) return [];
+  if (!isBrowser() || !activityAccountId) return [];
   try {
-    const raw = localStorage.getItem(RECENTLY_VIEWED_KEY);
+    const raw = localStorage.getItem(accountKey(RECENTLY_VIEWED_KEY));
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [];
@@ -149,7 +168,7 @@ export function recordRestaurantView(restaurant: {
   address?: string;
   barangay?: string;
 }): void {
-  if (!isBrowser() || !restaurant || (!restaurant.id && !restaurant.slug)) return;
+  if (!isBrowser() || !activityAccountId || !restaurant || (!restaurant.id && !restaurant.slug)) return;
 
   try {
     const existing = getRecentlyViewed();
@@ -173,7 +192,7 @@ export function recordRestaurantView(restaurant: {
     };
 
     const updated = [newItem, ...filtered].slice(0, MAX_RECENTLY_VIEWED);
-    localStorage.setItem(RECENTLY_VIEWED_KEY, JSON.stringify(updated));
+    localStorage.setItem(accountKey(RECENTLY_VIEWED_KEY), JSON.stringify(updated));
     notifyUpdate();
   } catch (err) {
     console.warn('Failed to save recently viewed restaurant:', err);
@@ -181,11 +200,11 @@ export function recordRestaurantView(restaurant: {
 }
 
 export function deleteRecentlyViewedItem(idOrSlug: string): void {
-  if (!isBrowser()) return;
+  if (!isBrowser() || !activityAccountId) return;
   try {
     const existing = getRecentlyViewed();
     const updated = existing.filter((item) => item.id !== idOrSlug && item.slug !== idOrSlug);
-    localStorage.setItem(RECENTLY_VIEWED_KEY, JSON.stringify(updated));
+    localStorage.setItem(accountKey(RECENTLY_VIEWED_KEY), JSON.stringify(updated));
     notifyUpdate();
   } catch (err) {
     console.warn('Failed to delete recently viewed item:', err);
@@ -193,9 +212,9 @@ export function deleteRecentlyViewedItem(idOrSlug: string): void {
 }
 
 export function clearRecentlyViewed(): void {
-  if (!isBrowser()) return;
+  if (!isBrowser() || !activityAccountId) return;
   try {
-    localStorage.removeItem(RECENTLY_VIEWED_KEY);
+    localStorage.removeItem(accountKey(RECENTLY_VIEWED_KEY));
     notifyUpdate();
   } catch (err) {
     console.warn('Failed to clear recently viewed restaurants:', err);
