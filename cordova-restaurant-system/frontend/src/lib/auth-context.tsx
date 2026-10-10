@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const bootstrap = useCallback(async () => {
     const revision = sessionRevision.current;
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/auth/refresh`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:4000')}/api/auth/refresh`, {
         method: 'POST',
         credentials: 'include',
       });
@@ -84,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [setUser]);
 
   const bootstrapped = useRef(false);
   useEffect(() => {
@@ -102,10 +102,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const revision = sessionRevision.current;
     const res = await api.post('/api/auth/login', { email, password }, { auth: false });
     if (revision !== sessionRevision.current) throw new Error('Sign-in cancelled because the session ended.');
+    sessionRevision.current += 1;
     setAccessToken(res.data.accessToken);
     setUser(res.data.user);
     return res.data.user as User;
-  }, []);
+  }, [setUser]);
 
   const register = useCallback(
     async (data: {
@@ -125,27 +126,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const revision = sessionRevision.current;
     const res = await api.post('/api/auth/google', { credential }, { auth: false });
     if (revision !== sessionRevision.current) throw new Error('Sign-in cancelled because the session ended.');
+    sessionRevision.current += 1;
     setAccessToken(res.data.accessToken);
     setUser(res.data.user);
     return res.data.user as User;
-  }, []);
+  }, [setUser]);
 
   const loginWithFacebook = useCallback(async (accessToken: string) => {
     const revision = sessionRevision.current;
     const res = await api.post('/api/auth/facebook', { accessToken }, { auth: false });
     if (revision !== sessionRevision.current) throw new Error('Sign-in cancelled because the session ended.');
+    sessionRevision.current += 1;
     setAccessToken(res.data.accessToken);
     setUser(res.data.user);
     return res.data.user as User;
-  }, []);
+  }, [setUser]);
 
   const verifyEmail = useCallback(async (token: string) => {
+    const revision = sessionRevision.current;
     const res = await api.post('/api/auth/verify-email', { token }, { auth: false });
-    if (res.data?.user && getAccessToken()) {
+    if (res.data?.user && getAccessToken() && revision === sessionRevision.current) {
       setUser(res.data.user);
     }
     return res.data?.user as User;
-  }, []);
+  }, [setUser]);
 
   const devVerifyEmail = useCallback(async (email?: string) => {
     const revision = sessionRevision.current;
@@ -154,7 +158,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(res.data.user);
     }
     return res.data?.user as User;
-  }, []);
+  }, [setUser]);
 
   const resendVerificationEmail = useCallback(async () => {
     await api.post('/api/auth/resend-verification');
@@ -182,16 +186,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(res.data.user);
     }
     return res.data?.user as User;
-  }, []);
+  }, [setUser]);
 
   const logout = useCallback(async () => {
     const request = api.post('/api/auth/logout');
     clearSession();
     broadcastLogout();
+    const revision = sessionRevision.current;
     try {
       await request;
     } finally {
-      clearSession();
+      if (revision === sessionRevision.current) clearSession();
     }
   }, [clearSession]);
 

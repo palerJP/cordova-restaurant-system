@@ -45,14 +45,32 @@ app.use(morgan(env.isProduction ? 'combined' : 'dev', { stream: { write: (msg) =
 app.use('/api', apiLimiter);
 
 // Static file serving for uploaded images/documents
-app.use('/uploads', express.static(path.join(process.cwd(), env.upload.dir)));
-app.use('/api/uploads', express.static(path.join(process.cwd(), env.upload.dir)));
+const { requireAuth } = require('./middleware/auth');
+const { requireRole } = require('./middleware/rbac');
+app.use(['/uploads/business-permits', '/api/uploads/business-permits'], requireAuth, requireRole('admin'), (req, res, next) => {
+  res.set('Cache-Control', 'private, no-store');
+  next();
+});
+for (const directory of ['avatars', 'restaurant-images']) {
+  app.use([`/uploads/${directory}`, `/api/uploads/${directory}`], express.static(path.resolve(env.upload.dir, directory)));
+}
+app.use(['/uploads/business-permits', '/api/uploads/business-permits'], express.static(path.resolve(env.upload.dir, 'business-permits')));
 
 // ---- API docs ----
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // ---- Health check ----
 app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
+app.get('/ready', async (req, res) => {
+  try {
+    const { query } = require('./config/db');
+    const { rows } = await query('SELECT filename FROM _migrations WHERE filename = $1', ['013_disable_unclaimed_login.sql']);
+    if (!rows.length) return res.status(503).json({ status: 'not_ready' });
+    res.json({ status: 'ready' });
+  } catch {
+    res.status(503).json({ status: 'not_ready' });
+  }
+});
 
 // ---- Routes ----
 app.use('/api/auth', authRoutes);

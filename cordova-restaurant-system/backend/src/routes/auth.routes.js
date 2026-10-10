@@ -10,7 +10,7 @@ router.post('/login', authLimiter, validate(loginValidator), controller.login);
 router.get('/verify-email', controller.verifyEmail);
 router.post('/verify-email', controller.verifyEmail);
 router.post('/resend-verification', requireAuth, authLimiter, controller.resendVerification);
-router.post('/dev-verify', controller.devVerifyEmail);
+if (!require('../config/env').isProduction) router.post('/dev-verify', authLimiter, controller.devVerifyEmail);
 
 router.post('/forgot-password', authLimiter, controller.forgotPassword);
 router.post('/reset-password', authLimiter, controller.resetPassword);

@@ -50,9 +50,7 @@ function AdminPromotionsContent() {
 
   useEffect(() => {
     const urlStatus = searchParams.get('status') || 'pending_verification';
-    if (urlStatus !== status) {
-      setStatus(urlStatus);
-    }
+    setStatus(urlStatus);
   }, [searchParams]);
 
   const copyToClipboard = (text: string) => {
@@ -90,7 +88,7 @@ function AdminPromotionsContent() {
     } finally {
       setLoading(false);
     }
-  }, [status, debouncedSearch, toast]);
+  }, [status, debouncedSearch]);
 
   useEffect(() => {
     load();

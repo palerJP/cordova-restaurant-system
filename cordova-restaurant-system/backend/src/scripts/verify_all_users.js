@@ -1,6 +1,7 @@
 const { pool } = require('../config/db');
 
 async function verifyAllUsers() {
+  if (require('../config/env').isProduction) throw new Error('Bulk verification is disabled in production');
   console.log('🔧 Updating all users to email_verified = true in database...');
   try {
     const result = await pool.query(`

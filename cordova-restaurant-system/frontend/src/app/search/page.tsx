@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -83,13 +83,14 @@ export default function SearchPage() {
     }
   }, []);
 
+  const initialFilters = useRef(filters);
   useEffect(() => {
-    fetchResults(filters);
+    fetchResults(initialFilters.current);
     setRecentlyViewed(getRecentlyViewed());
     return onActivityChange(() => {
       setRecentlyViewed(getRecentlyViewed());
     });
-  }, []);
+  }, [fetchResults]);
 
   const handleSearch = (customFilters?: SearchFilterState) => {
     const active = customFilters || filters;

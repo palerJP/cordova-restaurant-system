@@ -42,9 +42,7 @@ function AdminUsersContent() {
   // Sync state if URL param changes
   useEffect(() => {
     const urlRole = searchParams.get('role') || '';
-    if (urlRole !== roleFilter) {
-      setRoleFilter(urlRole);
-    }
+    setRoleFilter(urlRole);
   }, [searchParams]);
 
   const load = useCallback(async () => {

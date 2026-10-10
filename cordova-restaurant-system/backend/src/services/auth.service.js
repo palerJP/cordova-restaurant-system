@@ -17,6 +17,7 @@ function refreshExpiryDate() {
 }
 
 async function issueTokenPair(user, meta = {}) {
+  if (!user.is_active) throw ApiError.unauthorized('Account no longer active');
   const accessToken = signAccessToken(user);
   const refreshToken = signRefreshToken(user);
   await refreshTokenModel.store({
@@ -175,11 +176,13 @@ async function googleOAuth({ idToken, credential, accessToken, token: clientToke
 
   // 1. Local Dev Mode fallback (when testing before GOOGLE_CLIENT_ID is set)
   if (typeof token === 'string' && token.startsWith('google_oauth_token_')) {
+    if (env.isProduction) throw ApiError.unauthorized('Simulated sign-in is disabled');
     googleId = `google_user_${token.split('_').pop()}`;
     email = `google.user.${token.slice(-6)}@gmail.com`;
     name = 'Google Diner User';
     picture = 'https://lh3.googleusercontent.com/a/default-user=s96-c';
   } else {
+    if (!env.google.clientId) throw ApiError.unauthorized('Google sign-in is not configured');
     // 2. Try Google UserInfo API (handles Google Access Tokens)
     try {
       const userInfoRes = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo`, {
@@ -187,6 +190,10 @@ async function googleOAuth({ idToken, credential, accessToken, token: clientToke
       });
       if (userInfoRes.ok) {
         const userInfo = await userInfoRes.json();
+        const tokenInfo = await googleClient.getTokenInfo(token);
+        if (tokenInfo.aud !== env.google.clientId || userInfo.email_verified !== true) {
+          throw ApiError.unauthorized('Google authentication could not be verified');
+        }
         email = userInfo.email;
         googleId = userInfo.sub;
         name = userInfo.name || userInfo.given_name;
@@ -201,28 +208,17 @@ async function googleOAuth({ idToken, credential, accessToken, token: clientToke
       try {
         const ticket = await googleClient.verifyIdToken({
           idToken: token,
-          audience: [process.env.GOOGLE_CLIENT_ID, process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID].filter(Boolean),
+          audience: env.google.clientId,
         });
         const payload = ticket.getPayload();
-        if (payload) {
+        if (payload && payload.email_verified === true) {
           email = payload.email;
           googleId = payload.sub;
           name = payload.name;
           picture = payload.picture;
         }
       } catch (err) {
-        try {
-          const jwt = require('jsonwebtoken');
-          const decoded = jwt.decode(token);
-          if (decoded && decoded.email) {
-            email = decoded.email;
-            googleId = decoded.sub || decoded.id;
-            name = decoded.name;
-            picture = decoded.picture;
-          }
-        } catch (jwtErr) {
-          // Leave email unset so the request receives the validation error below.
-        }
+        throw ApiError.unauthorized('Google authentication could not be verified');
       }
     }
   }
@@ -238,6 +234,7 @@ async function googleOAuth({ idToken, credential, accessToken, token: clientToke
   if (!user) {
     const existingUser = await userModel.findByEmail(email);
     if (existingUser) {
+      if (!existingUser.is_active) throw ApiError.unauthorized('Account no longer active');
       user = await userModel.linkGoogleAccount(existingUser.id, googleId, picture);
     } else {
       user = await userModel.createOAuthUser({
@@ -257,6 +254,7 @@ async function googleOAuth({ idToken, credential, accessToken, token: clientToke
 }
 
 async function facebookOAuth({ accessToken, token: clientToken }, meta = {}) {
+  if (env.isProduction) throw ApiError.unauthorized('Facebook sign-in is not configured for production');
   const token = accessToken || clientToken;
   if (!token) throw ApiError.badRequest('Facebook Access Token is required');
 
@@ -264,6 +262,7 @@ async function facebookOAuth({ accessToken, token: clientToken }, meta = {}) {
 
   // Local Dev Mode fallback
   if (typeof token === 'string' && token.startsWith('fb_oauth_token_')) {
+    if (env.isProduction) throw ApiError.unauthorized('Simulated sign-in is disabled');
     facebookId = `fb_user_${token.split('_').pop()}`;
     email = `facebook.user.${token.slice(-6)}@facebook.cordovaeats.internal`;
     name = 'Facebook Diner User';
@@ -353,7 +352,7 @@ async function changePassword(userId, currentPassword, newPassword) {
 }
 
 async function devVerifyEmail({ email, userId }) {
-  if (env.isProduction && env.auth.requireEmailVerification) {
+  if (env.isProduction) {
     throw ApiError.forbidden('Dev-verify is disabled in production environments');
   }
   let user;

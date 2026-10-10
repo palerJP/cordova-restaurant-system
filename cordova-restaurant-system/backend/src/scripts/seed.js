@@ -12,6 +12,7 @@ const logger = require('../utils/logger');
 const SEED_FILE = path.join(__dirname, '../../../database/seed.sql');
 
 async function run() {
+  if (require('../config/env').isProduction) throw new Error('Demo seeding is disabled in production');
   const sql = fs.readFileSync(SEED_FILE, 'utf8');
   logger.info('Applying seed data...');
   await pool.query(sql);

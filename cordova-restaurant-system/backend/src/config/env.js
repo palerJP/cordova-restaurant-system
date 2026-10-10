@@ -7,8 +7,10 @@ const path = require('node:path');
 const dotenv = require('dotenv');
 
 // Local admin settings are ignored by Git. Existing process variables win.
-dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
+  dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+}
 
 const REQUIRED_IN_PRODUCTION = [
   'DATABASE_URL',
@@ -18,7 +20,7 @@ const REQUIRED_IN_PRODUCTION = [
 ];
 
 function required(name, fallback) {
-  const value = process.env[name] ?? fallback;
+  const value = process.env[name] || (process.env.NODE_ENV === 'production' ? undefined : fallback);
   if (value === undefined) {
     if (process.env.NODE_ENV === 'production' || REQUIRED_IN_PRODUCTION.includes(name)) {
       throw new Error(`Missing required environment variable: ${name}`);
@@ -31,7 +33,7 @@ const env = {
   nodeEnv: process.env.NODE_ENV || 'development',
   isProduction: process.env.NODE_ENV === 'production',
   port: parseInt(process.env.PORT || '4000', 10),
-  clientUrl: process.env.CLIENT_URL || 'http://localhost:3000',
+  clientUrl: required('CLIENT_URL', 'http://localhost:3000'),
 
   db: {
     url: required('DATABASE_URL', 'postgres://postgres:postgres@localhost:5433/cordova_restaurants'),
@@ -48,7 +50,7 @@ const env = {
 
   cookie: {
     secret: required('COOKIE_SECRET', 'dev_cookie_secret_change_me'),
-    secure: process.env.COOKIE_SECURE === 'true',
+    secure: process.env.NODE_ENV === 'production' || process.env.COOKIE_SECURE === 'true',
   },
 
   rateLimit: {
@@ -94,5 +96,20 @@ const env = {
       : (process.env.NODE_ENV === 'production' && process.env.REQUIRE_EMAIL_VERIFICATION !== 'false'),
   },
 };
+
+if (env.isProduction) {
+  for (const name of ['JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET', 'COOKIE_SECRET']) {
+    const value = process.env[name];
+    if (value.length < 32 || /^(dev_|replace_me|change_me)/i.test(value)) {
+      throw new Error(`${name} must be a strong production secret of at least 32 characters`);
+    }
+  }
+  if (env.jwt.accessSecret === env.jwt.refreshSecret) throw new Error('JWT secrets must be different');
+  if (new URL(env.clientUrl).protocol !== 'https:') throw new Error('CLIENT_URL must use HTTPS in production');
+  if (!env.auth.requireEmailVerification) throw new Error('Email verification must be enabled in production');
+  if (!env.email.resendApiKey && !(env.email.smtpHost && env.email.smtpUser && env.email.smtpPass)) {
+    throw new Error('Configure Resend or SMTP for production account verification and password resets');
+  }
+}
 
 module.exports = env;

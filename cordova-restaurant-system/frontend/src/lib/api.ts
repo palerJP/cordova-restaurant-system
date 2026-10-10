@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:4000');
 
 export class ApiClientError extends Error {
   status: number;
@@ -33,6 +33,7 @@ export function onSessionExpired(listener: () => void) {
 interface RequestOptions extends RequestInit {
   auth?: boolean; // attach the bearer token (default true)
   isFormData?: boolean;
+  responseType?: 'json' | 'blob';
 }
 
 let refreshPromise: Promise<boolean> | null = null;
@@ -66,7 +67,7 @@ async function tryRefresh(): Promise<boolean> {
 }
 
 async function request<T = any>(path: string, options: RequestOptions = {}, isRetry = false): Promise<T> {
-  const { auth = true, isFormData = false, headers, ...rest } = options;
+  const { auth = true, isFormData = false, responseType = 'json', headers, ...rest } = options;
 
   const finalHeaders: Record<string, string> = { ...(headers as Record<string, string>) };
   if (!isFormData) finalHeaders['Content-Type'] = 'application/json';
@@ -83,6 +84,7 @@ async function request<T = any>(path: string, options: RequestOptions = {}, isRe
     if (refreshed) return request<T>(path, options, true);
   }
 
+  if (res.ok && responseType === 'blob') return await res.blob() as T;
   let json: any = null;
   try {
     json = await res.json();

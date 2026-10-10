@@ -11,19 +11,19 @@ export function RequireRole({ roles, children }: { roles: UserRole[]; children: 
   const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const rolesKey = roles.join(',');
+  const allowed = !!user && roles.includes(user.role);
 
   useEffect(() => {
     if (loading) return;
     if (!user) {
       router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
-    } else if (!roles.includes(user.role)) {
+    } else if (!allowed) {
       // Authenticated user lacks permission for this role; redirect to home to prevent bounce loop
       router.replace('/');
     }
-  }, [loading, user, rolesKey, router, pathname]);
+  }, [loading, user, allowed, router, pathname]);
 
-  if (loading || !user || !roles.includes(user.role)) {
+  if (loading || !user || !allowed) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-1/3" />

@@ -2,6 +2,7 @@ const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs/promises');
 const logger = require('../utils/logger');
+const env = require('../config/env');
 
 /**
  * Resizes and compresses an uploaded image in place, converting to WebP for
@@ -37,8 +38,9 @@ async function processImage(file, { maxWidth = 1600, quality = 80 } = {}) {
 function publicUrlFor(file) {
   // Files are served statically from /uploads (see app.js) — this maps the
   // absolute disk path back to a public-facing relative URL.
-  const uploadsIndex = file.path.indexOf('uploads');
-  return `/${file.path.slice(uploadsIndex).replace(/\\/g, '/')}`;
+  const relative = path.relative(path.resolve(env.upload.dir), path.resolve(file.path));
+  if (relative.startsWith('..') || path.isAbsolute(relative)) throw new Error('Uploaded file is outside the upload directory');
+  return `/uploads/${relative.split(path.sep).join('/')}`;
 }
 
 module.exports = { processImage, publicUrlFor };

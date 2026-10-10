@@ -1,0 +1,9 @@
+{
+  email {$ACME_EMAIL}
+}
+{$DOMAIN} {
+  encode zstd gzip
+  @backend path /api/* /uploads/* /health /ready
+  reverse_proxy @backend backend:4000
+  reverse_proxy frontend:3000
+}

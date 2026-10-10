@@ -19,6 +19,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { api, ApiClientError } from '@/lib/api';
+import PermitDownload from '@/components/PermitDownload';
 import { useToast } from '@/lib/toast-context';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -45,9 +46,7 @@ function BusinessVerificationContent() {
   // Sync state if URL search param changes
   useEffect(() => {
     const urlStatus = searchParams.get('status') as BusinessStatus;
-    if (urlStatus && urlStatus !== status) {
-      setStatus(urlStatus);
-    }
+    setStatus(urlStatus || 'pending');
   }, [searchParams]);
 
   const load = useCallback(async () => {
@@ -259,16 +258,7 @@ function BusinessVerificationContent() {
                 {/* Permit document */}
                 {r.business_permit_url ? (
                   <div className="pt-1">
-                    <a
-                      href={r.business_permit_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-cordova-green hover:underline bg-emerald-500/10 px-3 py-1 rounded-lg border border-emerald-500/20"
-                    >
-                      <FileText size={13} />
-                      <span>View Uploaded Business Permit</span>
-                      <ExternalLink size={12} />
-                    </a>
+                    <PermitDownload url={r.business_permit_url} />
                   </div>
                 ) : (
                   <p className="text-[11px] text-stone-400 italic">No business permit document attached.</p>

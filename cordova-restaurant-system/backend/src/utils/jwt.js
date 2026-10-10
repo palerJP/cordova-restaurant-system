@@ -26,6 +26,7 @@ function verifyAccessToken(token) {
 function signRefreshToken(user) {
   return jwt.sign({ sub: user.id }, env.jwt.refreshSecret, {
     expiresIn: env.jwt.refreshExpiresIn,
+    jwtid: crypto.randomUUID(),
   });
 }
 

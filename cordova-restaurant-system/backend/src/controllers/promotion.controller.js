@@ -21,7 +21,12 @@ const listActive = asyncHandler(async (req, res) => {
 });
 
 const listForRestaurant = asyncHandler(async (req, res) => {
-  const promotions = await promotionModel.listForRestaurant(req.params.restaurantId);
+  const restaurant = await restaurantModel.findById(req.params.restaurantId);
+  if (!restaurant) throw ApiError.notFound('Restaurant not found');
+  const canManage = req.user && (req.user.role === 'admin' || restaurant.owner_id === req.user.id);
+  const promotions = canManage
+    ? await promotionModel.listForRestaurant(req.params.restaurantId)
+    : (await promotionModel.listActive({ restaurantId: req.params.restaurantId, limit: 100 })).rows;
   res.json({ success: true, data: promotions });
 });
 
@@ -55,6 +60,10 @@ const update = asyncHandler(async (req, res) => {
   await assertOwnership(req.params.restaurantId, req.user.id, req.user.role);
 
   let updateData = { ...req.body };
+  if (req.user.role !== 'admin') {
+    updateData.status = 'pending_verification';
+    updateData.paymentStatus = 'pending_verification';
+  }
   if (req.file) {
     const processed = await uploadService.processImage(req.file, { maxWidth: 1000 });
     updateData.imageUrl = uploadService.publicUrlFor(processed);

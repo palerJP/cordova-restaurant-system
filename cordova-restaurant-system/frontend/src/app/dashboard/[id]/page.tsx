@@ -653,7 +653,7 @@ function PromotionsTab({ restaurantId }: { restaurantId: string }) {
 
   const load = useCallback(async () => {
     try {
-      const res = await api.get(`/api/restaurants/${restaurantId}/promotions`, { auth: false });
+      const res = await api.get(`/api/restaurants/${restaurantId}/promotions`);
       setPromotions(res.data);
     } catch {
       toast('Failed to load promotions', 'error');

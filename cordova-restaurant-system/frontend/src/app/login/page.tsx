@@ -159,6 +159,7 @@ export default function LoginPage() {
     // 2. Local Dev fallback if Google Client ID is not yet configured in .env.local
     try {
       showToast('Dev Mode: Signing in with simulated Google account…', 'info');
+      if (process.env.NODE_ENV === 'production') throw new Error('Google sign-in is unavailable. Please use email sign-in.');
       const devToken = `google_oauth_token_${Date.now()}`;
       const loggedUser = await loginWithGoogle(devToken);
       showToast('Signed in with Google (Dev Mode)!', 'success');
@@ -230,6 +231,7 @@ export default function LoginPage() {
         <button
           type="button"
           onClick={handleGoogleSignIn}
+          style={{ display: process.env.NODE_ENV === 'production' && !process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? 'none' : undefined }}
           disabled={!!oauthLoading}
           className="w-full flex items-center justify-center gap-3 bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-200 font-semibold text-sm py-3 px-4 rounded-xl border border-stone-300 dark:border-stone-700 shadow-sm transition-colors mb-3 disabled:opacity-60"
         >
@@ -246,6 +248,7 @@ export default function LoginPage() {
         <button
           type="button"
           onClick={handleFacebookSignIn}
+          style={{ display: process.env.NODE_ENV === 'production' ? 'none' : undefined }}
           disabled={!!oauthLoading}
           className="w-full flex items-center justify-center gap-3 bg-[#1877F2] hover:bg-[#166fe5] text-white font-semibold text-sm py-3 px-4 rounded-xl shadow-sm transition-colors mb-6 disabled:opacity-60"
         >
