@@ -1,8 +1,16 @@
 'use client';
 
-import { createContext, useContext, useEffect, useRef, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, useCallback, ReactNode, Fragment } from 'react';
 import { api, getAccessToken, setAccessToken, onSessionExpired, ApiClientError } from './api';
 import type { User } from './types';
+import { clearSearchHistory, clearRecentlyViewed } from './activity-history';
+import { clearTastePreferences, getTastePreferences } from './taste-preferences';
+
+function clearLocalAccountData() {
+  clearSearchHistory();
+  clearRecentlyViewed();
+  clearTastePreferences();
+}
 
 interface UpdateProfileData {
   fullName?: string;
@@ -51,6 +59,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const json = await res.json();
         setAccessToken(json.data.accessToken);
         setUser(json.data.user);
+      } else if (res.status === 401 || res.status === 403) {
+        clearSearchHistory();
+        clearRecentlyViewed();
+        if (getTastePreferences()?.syncedUserId) clearTastePreferences();
       }
     } catch {
       // User stays logged out
@@ -66,7 +78,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     bootstrap();
   }, [bootstrap]);
 
-  useEffect(() => onSessionExpired(() => setUser(null)), []);
+  useEffect(() => onSessionExpired(() => {
+    clearLocalAccountData();
+    setUser(null);
+  }), []);
 
   const login = useCallback(async (email: string, password: string) => {
     const res = await api.post('/api/auth/login', { email, password }, { auth: false });
@@ -151,6 +166,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await api.post('/api/auth/logout');
     } finally {
       setAccessToken(null);
+      clearLocalAccountData();
       setUser(null);
     }
   }, []);
@@ -160,7 +176,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const res = await api.get('/api/auth/me');
       setUser(res.data.user);
     } catch (err) {
-      if (err instanceof ApiClientError && err.status === 401) setUser(null);
+      if (err instanceof ApiClientError && err.status === 401) {
+        setAccessToken(null);
+        clearLocalAccountData();
+        setUser(null);
+      }
     }
   }, []);
 
@@ -184,7 +204,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         refreshUser,
       }}
     >
-      {children}
+      <Fragment key={user?.id || 'guest'}>{children}</Fragment>
     </AuthContext.Provider>
   );
 }
