@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   Users,
@@ -20,23 +20,33 @@ import { Skeleton } from '@/components/ui/Skeleton';
 
 export default function AdminOverviewPage() {
   const [data, setData] = useState<any>(null);
+  const [error, setError] = useState(false);
+  const load = useCallback(() => {
+    setError(false);
+    api.get('/api/admin/analytics/overview').then((res) => setData(res.data)).catch(() => setError(true));
+  }, []);
 
   useEffect(() => {
-    api.get('/api/admin/analytics/overview').then((res) => setData(res.data)).catch(() => {});
-  }, []);
+    load();
+  }, [load]);
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900 dark:text-white">
-          Admin Dashboard Overview
+          Overview
         </h1>
         <p className="text-xs sm:text-sm text-stone-500 mt-1">
-          Real-time system telemetry, active accounts, moderation queues, and municipal dining insights. Click any card to inspect and manage.
+          Municipality of Cordova
         </p>
       </div>
 
-      {!data ? (
+      {error ? (
+        <div role="alert" className="border-l-4 border-red-500 bg-red-50 dark:bg-red-950/30 p-4">
+          <p className="text-sm font-semibold">Overview data could not be loaded.</p>
+          <button onClick={load} className="mt-2 text-sm underline font-medium">Try again</button>
+        </div>
+      ) : !data ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           {Array.from({ length: 10 }).map((_, i) => (
             <Skeleton key={i} className="h-32 rounded-2xl" />
@@ -242,7 +252,7 @@ function StatCard({ href, label, value, icon: Icon, colorClass, highlight, badge
       <p className="font-serif text-3xl font-bold text-stone-900 dark:text-white tracking-tight">
         {value}
       </p>
-      <p className="text-xs font-semibold text-stone-500 dark:text-stone-400 mt-1 line-clamp-1 group-hover:text-stone-800 dark:group-hover:text-stone-200 transition-colors">
+      <p className="text-xs font-semibold text-stone-500 dark:text-stone-400 mt-1 group-hover:text-stone-800 dark:group-hover:text-stone-200 transition-colors">
         {label}
       </p>
     </Link>

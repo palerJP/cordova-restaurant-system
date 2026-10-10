@@ -6,8 +6,7 @@ import { AuthProvider } from '@/lib/auth-context';
 import { ThemeProvider } from '@/lib/theme-context';
 import { ToastProvider } from '@/lib/toast-context';
 import { CookieConsentProvider } from '@/lib/cookie-consent-context';
-import { Navbar } from '@/components/Navbar';
-import { Footer } from '@/components/Footer';
+import { PublicSiteChrome } from '@/components/PublicSiteChrome';
 import { CookieBanner } from '@/components/cookies/CookieBanner';
 
 export const metadata: Metadata = {
@@ -41,9 +40,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <ToastProvider>
             <AuthProvider>
               <CookieConsentProvider>
-                <Navbar />
+                <PublicSiteChrome position="header" />
                 <main className="min-h-[70vh]">{children}</main>
-                <Footer />
+                <PublicSiteChrome position="footer" />
                 <CookieBanner />
               </CookieConsentProvider>
             </AuthProvider>
