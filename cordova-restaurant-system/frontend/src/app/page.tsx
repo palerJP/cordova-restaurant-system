@@ -30,14 +30,13 @@ import { Pagination } from '@/components/ui/Pagination';
 import type { Restaurant, PageMeta, MatchedPreferences } from '@/lib/types';
 import { isRestaurantVisible, getAllStaticRestaurants, normalizeKey, matchesCategory } from '@/data/restaurants';
 import { standardSearchRestaurants } from '@/lib/aiSearch';
+import { rankRestaurantNames } from '@/lib/restaurant-search';
 import {
   saveSearchHistory,
   getSearchHistory,
   onActivityChange,
   type SearchHistoryItem,
 } from '@/lib/activity-history';
-
-const normalizeSearch = (value: string) => value.toLowerCase().replace(/['\u2019]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 
 export default function HomePage() {
   const router = useRouter();
@@ -55,13 +54,9 @@ export default function HomePage() {
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const [activeSuggestion, setActiveSuggestion] = useState(-1);
   const searchRequestId = useRef(0);
-  const suggestionTokens = normalizeSearch(searchQuery).split(' ').filter(Boolean);
   const suggestionCatalog = new Map(getAllStaticRestaurants().filter(isRestaurantVisible).map(r => [normalizeKey(r.slug || r.name), r]));
   searchCatalog.filter(isRestaurantVisible).forEach(r => suggestionCatalog.set(normalizeKey(r.slug || r.name), r));
-  const suggestions = suggestionTokens.length ? Array.from(suggestionCatalog.values())
-    .filter(r => suggestionTokens.every(token => normalizeSearch(r.name).includes(token)))
-    .sort((a, b) => Number(normalizeSearch(b.name).startsWith(normalizeSearch(searchQuery))) - Number(normalizeSearch(a.name).startsWith(normalizeSearch(searchQuery))) || a.name.localeCompare(b.name))
-    .slice(0, 5) : [];
+  const suggestions = rankRestaurantNames(Array.from(suggestionCatalog.values()), searchQuery).slice(0, 5);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -209,15 +204,14 @@ export default function HomePage() {
         } else {
           all = standardSearchRestaurants(staticList, queryTerm, activeCategory);
         }
-        const nameTokens = normalizeSearch(queryTerm).split(' ').filter(Boolean);
-        const matchesName = (r: Restaurant) => nameTokens.length > 0 && nameTokens.every(token => normalizeSearch(r.name).includes(token));
         const catalog = new Map(staticList.map(r => [normalizeKey(r.slug || r.name), r]));
         searchCatalog.forEach(r => catalog.set(normalizeKey(r.slug || r.name), r));
-        const nameMatches = Array.from(catalog.values()).filter(r => (!activeCategory || matchesCategory(r, activeCategory)) && matchesName(r));
+        const nameMatches = rankRestaurantNames(Array.from(catalog.values()).filter(r => !activeCategory || matchesCategory(r, activeCategory)), queryTerm);
         const results = new Map(nameMatches.map(r => [normalizeKey(r.slug || r.name), r]));
         all.forEach(r => results.set(normalizeKey(r.slug || r.name), r));
         all = Array.from(results.values());
-        if (all.some(matchesName)) all = all.filter(matchesName);
+        const rankedNames = rankRestaurantNames(all, queryTerm);
+        if (rankedNames.length) all = rankedNames;
       } else {
         all = Array.from(map.values()).filter(isRestaurantVisible);
         // Filter by active category

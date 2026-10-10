@@ -3,12 +3,11 @@
 import { createContext, useContext, useEffect, useRef, useState, useCallback, ReactNode, Fragment } from 'react';
 import { api, getAccessToken, setAccessToken, onSessionExpired, ApiClientError } from './api';
 import type { User } from './types';
-import { clearSearchHistory, clearRecentlyViewed } from './activity-history';
+import { setActivityAccount } from './activity-history';
 import { clearTastePreferences, getTastePreferences } from './taste-preferences';
 
 function clearLocalAccountData() {
-  clearSearchHistory();
-  clearRecentlyViewed();
+  setActivityAccount(null);
   clearTastePreferences();
 }
 
@@ -46,7 +45,11 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUserState] = useState<User | null>(null);
+  const setUser = useCallback((nextUser: User | null) => {
+    setActivityAccount(nextUser?.id || null);
+    setUserState(nextUser);
+  }, []);
   const [loading, setLoading] = useState(true);
 
   const bootstrap = useCallback(async () => {
@@ -60,8 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAccessToken(json.data.accessToken);
         setUser(json.data.user);
       } else if (res.status === 401 || res.status === 403) {
-        clearSearchHistory();
-        clearRecentlyViewed();
+        setActivityAccount(null);
         if (getTastePreferences()?.syncedUserId) clearTastePreferences();
       }
     } catch {
