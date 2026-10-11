@@ -39,7 +39,7 @@ async function getSearchCandidates() {
         '{}'
       ) AS dietary_options
     FROM restaurants r
-    WHERE r.is_active = TRUE
+    WHERE r.is_active = TRUE AND r.status = 'verified'
     ORDER BY r.avg_rating DESC
   `;
 

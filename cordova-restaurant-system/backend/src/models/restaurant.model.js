@@ -73,8 +73,17 @@ async function search({
     params.push(status);
   }
   if (searchTerm) {
-    conditions.push(`(r.name ILIKE $${idx} OR r.description ILIKE $${idx})`);
-    params.push(`%${searchTerm}%`);
+    conditions.push(`(
+      r.name ILIKE '%' || $${idx} || '%'
+      OR r.description ILIKE '%' || $${idx} || '%'
+      OR EXISTS (
+        SELECT 1 FROM menu_items mi
+        WHERE mi.restaurant_id = r.id AND mi.is_available = TRUE
+          AND (mi.name ILIKE '%' || $${idx} || '%'
+            OR mi.description ILIKE '%' || $${idx} || '%')
+      )
+    )`);
+    params.push(searchTerm);
     idx++;
   }
   if (priceRange) {
