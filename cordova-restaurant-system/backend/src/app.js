@@ -63,7 +63,7 @@ app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().
 app.get('/ready', async (req, res) => {
   try {
     const { query } = require('./config/db');
-    const { rows } = await query('SELECT filename FROM _migrations WHERE filename = $1', ['013_disable_unclaimed_login.sql']);
+    const { rows } = await query('SELECT filename FROM _migrations WHERE filename = $1', ['014_business_claims.sql']);
     if (!rows.length) return res.status(503).json({ status: 'not_ready' });
     res.json({ status: 'ready' });
   } catch {
@@ -74,6 +74,7 @@ app.get('/ready', async (req, res) => {
 // ---- Routes ----
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/claims', require('./routes/claims.routes'));
 app.use('/api/restaurants', restaurantRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/favorites', favoriteRoutes);

@@ -20,6 +20,11 @@ const {
 } = require('../validators/misc.validator');
 
 // ---- Public browse/search ----
+const claimController = require('../controllers/claim.controller');
+const { evidenceUpload } = require('../middleware/claimEvidence');
+const { claimLimiter } = require('../middleware/rateLimiter');
+router.get('/:id/claim-status', claimController.eligibility);
+router.post('/:id/claims', requireAuth, requireRole('customer','owner'), claimController.verifiedApplicant, claimLimiter, evidenceUpload, claimController.create);
 router.get('/', validate(searchValidator), restaurantController.search);
 router.get('/mine', requireAuth, requireRole('owner', 'admin', 'customer'), restaurantController.listMine);
 router.get('/recently-viewed', requireAuth, restaurantController.getRecentlyViewed);

@@ -11,6 +11,10 @@ const { verifyBusinessValidator } = require('../validators/restaurant.validator'
 const { moderateReviewValidator } = require('../validators/misc.validator');
 
 router.use(requireAuth, requireRole('admin'));
+const claimController = require('../controllers/claim.controller');
+router.get('/claims', claimController.listAdmin);
+router.patch('/claims/:id/review', claimController.review);
+router.post('/claims/:id/message', claimController.messageApplicant);
 
 // Business permit & registration verification
 router.get('/restaurants', restaurantController.adminList);

@@ -19,6 +19,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { api, ApiClientError, API_URL, getAccessToken } from '@/lib/api';
+import AdminClaims from '@/components/AdminClaims';
 import { useToast } from '@/lib/toast-context';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -181,6 +182,7 @@ function BusinessVerificationContent() {
         </div>
       </div>
 
+      <AdminClaims />
       {/* Filters & Search Toolbar */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white dark:bg-[#1a211c] p-3 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-sm">
         {/* Status Tabs */}

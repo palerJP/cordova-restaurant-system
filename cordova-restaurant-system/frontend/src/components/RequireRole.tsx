@@ -16,7 +16,7 @@ export function RequireRole({ roles, children }: { roles: UserRole[]; children: 
   useEffect(() => {
     if (loading) return;
     if (!user) {
-      router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
+      router.replace(`/login?redirect=${encodeURIComponent(pathname + window.location.search)}`);
     } else if (!hasRequiredRole) {
       // Authenticated user lacks permission for this role; redirect to home to prevent bounce loop
       router.replace('/');

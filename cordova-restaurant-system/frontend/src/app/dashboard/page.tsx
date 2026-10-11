@@ -49,6 +49,11 @@ export default function DashboardPage() {
           </Link>
         </div>
 
+        <div className="mb-6 rounded-xl border border-stone-200 p-4 dark:border-stone-700">
+          <p className="font-semibold text-stone-900 dark:text-white">Already listed on CordovaEats?</p>
+          <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">Find your establishment on <Link href="/search" className="underline">Browse restaurants</Link> and claim it instead of creating a duplicate.</p>
+          <Link href="/dashboard/claims" className="mt-2 inline-block text-sm font-semibold text-cordova-green underline">My business claims and notifications</Link>
+        </div>
         {loading ? (
           <RestaurantGridSkeleton count={3} />
         ) : restaurants.length === 0 ? (

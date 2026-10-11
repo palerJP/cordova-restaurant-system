@@ -7,10 +7,10 @@ Local builds alone are not deployment verification.
 
 ## Local Verification
 
-- 102 backend tests pass, including isolated-database migrations, authentication,
+- 115 backend tests pass, including isolated-database migrations, authentication,
   diner/owner/admin permissions, OAuth rejection, and private-document access.
 - 14 frontend regression tests pass for auth forms, search, history, and refresh.
-- Next.js production build renders all 32 routes without lint/type errors.
+- Next.js production build renders all 34 routes without lint/type errors.
 - Production dependency audits report zero known vulnerabilities at this check;
   development-tool advisories remain and are not a claim of zero security risk.
 - Browser verification confirms production-preview admin login and promotion/
@@ -22,6 +22,10 @@ Production email delivery, real OAuth configuration, DNS/TLS, container startup,
 backups/restoration, and comprehensive role-specific acceptance testing remain
 release gates. Do not interpret the local test suite as proof that every possible
 workflow is error-free.
+
+The ownership-claim workflow is documented in [BUSINESS_CLAIMS.md](BUSINESS_CLAIMS.md).
+Claim notifications and support replies currently appear inside the application;
+email notifications for claims and malware scanning for uploaded PDFs are not configured.
 
 ## Self-hosted option
 
