@@ -11,3 +11,11 @@ Migration: database/migrations/015_review_reporting.sql. Run npm run db:migrate 
 ## Live review totals
 
 Migration 016 reconciles stored restaurant ratings/counts against actual visible reviews. Cards and owner dashboards subscribe to a shared public statistics request every five seconds while visible. The detail page fetches reviews when their count/revision changes, refreshes on focus/reconnect, and retries periodically. It uses server pagination totals, supports older review pages, and retains confirmed reviews during connection failures. Empty ratings display an em dash; static sample reviews do not count. Statistics polling has its own request limit. These updates work while the frontend, API and database are running; polling resumes when a background tab becomes visible.
+
+## Managing your own reviews
+
+Select My Reviews from the profile menu to find all your reviews, including hidden/removed ones. On your review card, hold a touch for 600 ms or select the three-dot menu. Scrolling, releasing early, and canceled touches stop the hold gesture. Edit changes the rating/comment and can remove existing photos; deletion requires confirmation. Native modal dialogs trap focus and support Escape/Cancel. Updates refresh public review statistics. API ownership checks apply to every read/edit/delete, including users who have since become restaurant owners. Editing never changes moderation status. Mobile browser support targets current Android Chrome and iOS Safari; physical-device testing remains outstanding.
+
+## Unique reactions
+
+Migration 017 records each reaction against a review/account pair with a database unique index. Repeating the same emoji is idempotent; choosing another replaces that user's existing emoji. Concurrent requests cannot inflate counts. Allowed emojis are validated, hidden reviews reject reactions, and authenticated review reads return the user's current selection and ownership flag. Legacy anonymous counters are recalculated from attributed votes because repeated taps could have inflated them. The owner menu uses a three-dot button with an accessible label; selecting it opens Edit/Delete actions.

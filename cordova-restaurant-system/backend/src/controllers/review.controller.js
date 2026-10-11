@@ -71,7 +71,7 @@ const update = asyncHandler(async (req, res) => {
 });
 
 const remove = asyncHandler(async (req, res) => {
-  await reviewModel.remove(req.params.id, req.user.id);
+  if (!await reviewModel.remove(req.params.id, req.user.id)) throw ApiError.notFound('Review not found or not yours');
   res.json({ success: true, message: 'Review deleted' });
 });
 
@@ -126,8 +126,8 @@ const react = asyncHandler(async (req, res) => {
   if (!review) throw ApiError.notFound('Review not found');
 
   const emoji = req.body.emoji || '❤️';
-  const reactions = await reviewModel.react(req.params.id, emoji);
-  res.json({ success: true, data: { reactions } });
+  const result = await reviewModel.react(req.params.id, req.user.id, emoji);
+  res.json({ success: true, data: result });
 });
 
 const report = asyncHandler(async (req, res) => {
@@ -141,4 +141,9 @@ const publicStats = asyncHandler(async (req, res) => {
  res.set('Cache-Control','no-store');
  res.json({success:true,data:rows});
 });
-module.exports = { publicStats, report, listForRestaurant, create, update, remove, reply, moderate, listFlagged, listAdminReviews, toggleLike, react };
+const mine = asyncHandler(async (req,res)=>{
+ const {page,limit,offset}=parsePagination(req.query);
+ const {rows,totalCount}=await reviewModel.mine(req.user.id,{limit,offset});
+ res.json({success:true,data:rows,meta:buildPageMeta({page,limit,totalCount})});
+});
+module.exports = { mine, publicStats, report, listForRestaurant, create, update, remove, reply, moderate, listFlagged, listAdminReviews, toggleLike, react };

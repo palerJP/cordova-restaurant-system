@@ -52,6 +52,34 @@ describeDb('review reporting and moderation', () => {
     expect(stats.body.data.find(r=>r.id===restaurant).review_count).toBe(1);
     expect(Number(stats.body.data.find(r=>r.id===restaurant).avg_rating)).toBe(1);
   });
+  test('one persisted reaction per user, including duplicate and concurrent requests',async()=>{
+    const react=(emoji,who='customer')=>request(app).post('/api/reviews/'+id+'/react').set('Authorization','Bearer '+tokens[who]).send({emoji});
+    expect((await request(app).post('/api/reviews/'+id+'/react').send({emoji:'❤️'})).status).toBe(401);
+    expect((await react('invalid')).status).toBe(400);
+    const repeated=await Promise.all([react('😋'),react('😋'),react('😋')]);
+    repeated.forEach(result=>{expect(result.status).toBe(200);expect(result.body.data.reactions['😋']).toBe(1);});
+    const switched=await react('🔥');expect(switched.body.data.reactions).toEqual({'🔥':1});
+    await react('❤️','owner');
+    const rows=(await query('SELECT * FROM review_reactions WHERE review_id=$1',[id])).rows;expect(rows).toHaveLength(2);
+    const refreshed=await request(app).get('/api/restaurants/'+restaurant+'/reviews').set('Authorization','Bearer '+tokens.customer);
+    const review=refreshed.body.data.find(r=>r.id===id);expect(review.my_reaction).toBe('🔥');expect(review.is_mine).toBe(true);expect(review.reactions).toEqual({'🔥':1,'❤️':1});
+    await moderate('flagged');expect((await react('😋')).status).toBe(404);await moderate('visible');
+  });
+  test('only authors can manage reviews and edits cannot bypass moderation',async()=>{
+    expect((await request(app).get('/api/reviews/mine')).status).toBe(401);
+    const own=await request(app).get('/api/reviews/mine').set('Authorization','Bearer '+tokens.customer);
+    expect(own.status).toBe(200);expect(own.body.data.some(r=>r.id===id)).toBe(true);
+    const other=await request(app).get('/api/reviews/mine').set('Authorization','Bearer '+tokens.owner);expect(other.body.data).toHaveLength(0);
+    expect((await request(app).patch('/api/reviews/'+id).set('Authorization','Bearer '+tokens.owner).send({rating:5})).status).toBe(404);
+    expect((await request(app).delete('/api/reviews/'+id).set('Authorization','Bearer '+tokens.owner)).status).toBe(404);
+    expect((await request(app).patch('/api/reviews/'+id).set('Authorization','Bearer '+tokens.customer).send({rating:6})).status).toBe(400);
+    expect((await request(app).patch('/api/reviews/'+id).set('Authorization','Bearer '+tokens.customer).send({comment:'   '})).status).toBe(400);
+    expect((await request(app).patch('/api/reviews/'+id).set('Authorization','Bearer '+tokens.customer).send({photos:['https://example.com/injected.jpg']})).status).toBe(400);
+    await moderate('flagged');
+    const edited=await request(app).patch('/api/reviews/'+id).set('Authorization','Bearer '+tokens.customer).send({rating:1,comment:'Updated while awaiting moderation'});
+    expect(edited.status).toBe(200);expect(edited.body.data.review.status).toBe('flagged');
+    await moderate('visible');
+  });
   test('live totals follow customer edits, deletions and submissions', async()=>{
     const edit=await request(app).patch('/api/reviews/'+id).set('Authorization','Bearer '+tokens.customer).send({rating:5,comment:'An updated honest experience'});
     expect(edit.status).toBe(200);
