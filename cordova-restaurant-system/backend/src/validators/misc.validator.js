@@ -6,10 +6,16 @@ const createReviewValidator = [
   body('comment').optional().trim().isLength({ max: 1000 }),
 ];
 
+const reportReviewValidator = [
+ param('id').isUUID(),
+ body('category').isIn(['spam','harassment','hate_speech','personal_information','irrelevant','other']),
+ body('details').isString().trim().isLength({min:10,max:1000}),
+];
+
 const moderateReviewValidator = [
   param('id').isUUID(),
   body('status').isIn(['visible', 'flagged', 'removed']),
-  body('flaggedReason').if(body('status').equals('flagged')).notEmpty(),
+  body('flaggedReason').isString().trim().isLength({ min: 10, max: 1000 }).withMessage('Explain the moderation decision (10–1000 characters)'),
 ];
 
 const createMenuItemValidator = [
@@ -70,6 +76,7 @@ const updateWeightsValidator = [
 ];
 
 module.exports = {
+  reportReviewValidator,
   createReviewValidator,
   moderateReviewValidator,
   createMenuItemValidator,

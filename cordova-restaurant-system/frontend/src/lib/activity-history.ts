@@ -144,13 +144,22 @@ export function clearSearchHistory(): void {
 // RECENTLY VIEWED RESTAURANTS
 // ============================================================================
 
+function normalizeRating(value: unknown): number {
+  const rating = typeof value === 'number' || typeof value === 'string' ? Number(value) : 0;
+  return Number.isFinite(rating) && rating >= 0 && rating <= 5 ? rating : 0;
+}
+
 export function getRecentlyViewed(): RecentlyViewedRestaurant[] {
   if (!isBrowser() || !activityAccountId) return [];
   try {
     const raw = localStorage.getItem(accountKey(RECENTLY_VIEWED_KEY));
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed) ? parsed.filter(item => item && typeof item === 'object').map(item => ({
+      ...item,
+      avgRating: normalizeRating(item.avgRating),
+      reviewCount: Number.isFinite(Number(item.reviewCount)) ? Math.max(0, Math.floor(Number(item.reviewCount))) : 0,
+    })) : [];
   } catch {
     return [];
   }
@@ -182,7 +191,7 @@ export function recordRestaurantView(restaurant: {
       name: restaurant.name,
       slug: restaurant.slug,
       coverImageUrl: restaurant.coverImageUrl,
-      avgRating: restaurant.avgRating,
+      avgRating: normalizeRating(restaurant.avgRating),
       reviewCount: restaurant.reviewCount,
       priceRange: restaurant.priceRange,
       category: restaurant.category,

@@ -22,9 +22,10 @@ const {
 // ---- Public browse/search ----
 const claimController = require('../controllers/claim.controller');
 const { evidenceUpload } = require('../middleware/claimEvidence');
-const { claimLimiter } = require('../middleware/rateLimiter');
+const { claimLimiter, reviewStatsLimiter } = require('../middleware/rateLimiter');
 router.get('/:id/claim-status', claimController.eligibility);
 router.post('/:id/claims', requireAuth, requireRole('customer','owner'), claimController.verifiedApplicant, claimLimiter, evidenceUpload, claimController.create);
+router.get('/review-stats', reviewStatsLimiter, reviewController.publicStats);
 router.get('/', validate(searchValidator), restaurantController.search);
 router.get('/mine', requireAuth, requireRole('owner', 'admin', 'customer'), restaurantController.listMine);
 router.get('/recently-viewed', requireAuth, restaurantController.getRecentlyViewed);

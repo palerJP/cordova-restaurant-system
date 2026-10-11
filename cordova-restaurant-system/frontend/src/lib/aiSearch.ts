@@ -574,7 +574,7 @@ function scoreRestaurant(
   }
 
   // --- 9. Star Rating Bonus ---
-  const rating = Number(restaurant.avg_rating || 4.5);
+  const rating = Number(restaurant.avg_rating || 0);
   score += Math.min(8, (rating / 5.0) * 8);
 
   // Combine baseline score + Authority Champion boost into fine-grained raw score

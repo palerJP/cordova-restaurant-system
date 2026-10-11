@@ -35,6 +35,21 @@ test('activity stays isolated by account and survives logout without appearing f
     setActivityAccount('account-a');
     assert.equal(getSearchHistory()[0].query, 'Entoy');
     assert.equal(getRecentlyViewed()[0].id, 'entoy');
+    // PostgreSQL NUMERIC fields and older cached records can contain strings.
+    storage.setItem('cordova_recently_viewed_v1:user:account-a', JSON.stringify([
+      { id: 'old', slug: 'old', name: 'Old record', avgRating: '4.25', reviewCount: '2' },
+      { id: 'zero', slug: 'zero', name: 'Zero record', avgRating: '0' },
+      { id: 'invalid', slug: 'invalid', name: 'Invalid record', avgRating: 'bad' },
+      null,
+    ]));
+    const cached = getRecentlyViewed();
+    assert.equal(cached[0].avgRating?.toFixed(1), '4.3');
+    assert.equal(cached[0].reviewCount, 2);
+    assert.equal(cached[1].avgRating, 0);
+    assert.equal(cached[2].avgRating, 0);
+    assert.equal(cached.length, 3);
+    recordRestaurantView({id:'api',slug:'api',name:'API record',avgRating:'3.5' as unknown as number});
+    assert.equal(getRecentlyViewed()[0].avgRating?.toFixed(1), '3.5');
     clearSearchHistory();
     clearRecentlyViewed();
     assert.deepEqual(getSearchHistory(), []);
