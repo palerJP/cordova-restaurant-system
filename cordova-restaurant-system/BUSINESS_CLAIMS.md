@@ -9,8 +9,8 @@
 4. Enter your name, relationship to the establishment, contact number, and
    ownership explanation. Attach a permit or authorization document and confirm
    the information is truthful.
-5. Track the application under the profile menu's **Business Claims & Notifications**
-   or `/dashboard/claims`. Pending claims do not grant editing access.
+5. Track the application using **My claims and notifications** on the restaurant-owner
+   page or `/dashboard/claims`. Pending claims do not grant editing access.
 6. If more information is requested, reply and optionally attach another document.
    Previous evidence and messages remain in the history.
 7. After approval, use **Manage establishment**. The existing restaurant ID,

@@ -1,5 +1,4 @@
 import type { Restaurant } from '@/lib/types';
-import { getRestaurantReviewStats } from './restaurantReviews';
 
 /**
  * ============================================================================
@@ -441,7 +440,7 @@ export function getAllStaticRestaurants(): Restaurant[] {
     const slug = slugifyKey(key);
     const cuisines = inferCuisines(config.name, config.description, config.barangay);
     const priceRange = inferPriceRange(config.name, config.description);
-    const stats = getRestaurantReviewStats(slug);
+    const stats = { count: 0, rating: 0 };
 
     result.push({
       id: `static-${slug}`,
@@ -554,13 +553,11 @@ export function isRestaurantVisible(restaurant: Restaurant): boolean {
 export function applyRestaurantCustomization(restaurant: Restaurant): Restaurant {
   if (!restaurant) return restaurant;
   const custom = getRestaurantCustomization(restaurant);
-  const stats = getRestaurantReviewStats(restaurant.slug || restaurant.id || restaurant.name);
-
   if (!custom) {
     return {
       ...restaurant,
-      review_count: stats.count,
-      avg_rating: stats.rating,
+      review_count: Number.isFinite(Number(restaurant.review_count)) ? Math.max(0, Number(restaurant.review_count)) : 0,
+      avg_rating: Number.isFinite(Number(restaurant.avg_rating)) ? Number(restaurant.avg_rating) : 0,
     };
   }
 
@@ -579,7 +576,7 @@ export function applyRestaurantCustomization(restaurant: Restaurant): Restaurant
     email: custom.email || restaurant.email,
     hours: custom.hours || (restaurant as any)?.hours,
     is_open: /permanently closed/i.test(custom.hours || '') ? false : restaurant.is_open,
-    review_count: stats.count,
-    avg_rating: stats.rating,
+    review_count: Number.isFinite(Number(restaurant.review_count)) ? Math.max(0, Number(restaurant.review_count)) : 0,
+    avg_rating: Number.isFinite(Number(restaurant.avg_rating)) ? Number(restaurant.avg_rating) : 0,
   };
 }

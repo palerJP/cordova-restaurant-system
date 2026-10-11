@@ -40,6 +40,7 @@ import {
 import { api, ApiClientError } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
+import { ReportReview } from '@/components/ReportReview';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { MapViewClient } from '@/components/MapViewClient';
 import type {
@@ -52,7 +53,7 @@ import type {
   Promotion,
 } from '@/lib/types';
 import { applyRestaurantCustomization, getStaticRestaurantBySlug } from '@/data/restaurants';
-import { getVerifiedReviews, addPersistedReview, calculateRestaurantRatingStats } from '@/data/restaurantReviews';
+import { useLiveReviewStats, refreshReviewStats } from '@/lib/live-review-stats';
 import { MCDONALDS_CATEGORIES, MCDONALDS_MENU_ITEMS } from '@/data/mcdonaldsMenu';
 import { PAPSY_CATEGORIES, PAPSY_MENU_ITEMS } from '@/data/papsyMenu';
 import { PAROLA_CATEGORIES, PAROLA_MENU_ITEMS } from '@/data/parolaMenu';
@@ -185,6 +186,12 @@ export default function RestaurantDetailPage() {
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [items, setItems] = useState<MenuItem[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewsPage,setReviewsPage] = useState(1);
+  const [reviewsTotal,setReviewsTotal] = useState(0);
+  const [reviewsPages,setReviewsPages] = useState(1);
+  const [reviewsError,setReviewsError] = useState(false);
+  const [reviewsLoading,setReviewsLoading] = useState(true);
+  const liveStats=useLiveReviewStats(slug);
   const [hours, setHours] = useState<OperatingHour[]>([]);
   const [gallery, setGallery] = useState<RestaurantImage[]>([]);
   const [activePromotions, setActivePromotions] = useState<Promotion[]>([]);
@@ -209,6 +216,38 @@ export default function RestaurantDetailPage() {
     updateRecent();
     return onActivityChange(updateRecent);
   }, [slug, restaurant?.id]);
+
+  const reviewRestaurantId=restaurant?.id;
+  useEffect(() => {
+    if (!reviewRestaurantId || reviewRestaurantId.startsWith('static-')) {
+      setReviews([]);setReviewsTotal(0);setReviewsLoading(false);setReviewsError(Boolean(reviewRestaurantId));return;
+    }
+    const controller=new AbortController();
+    let pending=false;
+    setReviewsLoading(true);
+    const refresh=async()=>{
+      if(pending || document.visibilityState==='hidden') return;
+      pending=true;
+      try {
+        const res=await api.get('/api/restaurants/'+reviewRestaurantId+'/reviews?limit=12&page='+reviewsPage,{auth:false,cache:'no-store',signal:controller.signal});
+        if(controller.signal.aborted) return;
+        if(!Array.isArray(res.data) || !res.meta) throw new Error('Invalid reviews response');
+        if(reviewsPage>res.meta.totalPages) {setReviewsPage(res.meta.totalPages);return;}
+        setReviews(res.data);setReviewsTotal(res.meta.totalCount);setReviewsPages(res.meta.totalPages);setReviewsError(false);
+      } catch {
+        if(!controller.signal.aborted) setReviewsError(true);
+      } finally {pending=false;if(!controller.signal.aborted)setReviewsLoading(false);}
+    };
+    void refresh();
+    const timer=window.setInterval(refresh,20000);
+    window.addEventListener('focus',refresh);window.addEventListener('online',refresh);
+    window.addEventListener('cordova_review_updated',refresh);document.addEventListener('visibilitychange',refresh);
+    return ()=>{controller.abort();window.clearInterval(timer);window.removeEventListener('focus',refresh);window.removeEventListener('online',refresh);window.removeEventListener('cordova_review_updated',refresh);document.removeEventListener('visibilitychange',refresh);};
+  },[reviewRestaurantId,reviewsPage,liveStats?.revision,liveStats?.review_count]);
+
+  useEffect(()=>{
+    if(liveStats) setRestaurant(current=>current ? {...current,review_count:liveStats.review_count,avg_rating:liveStats.avg_rating} : current);
+  },[liveStats]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -245,9 +284,8 @@ export default function RestaurantDetailPage() {
       });
 
       try {
-        const [menu, reviewsRes, hoursRes, galleryRes, promoRes] = await Promise.all([
+        const [menu, hoursRes, galleryRes, promoRes] = await Promise.all([
           api.get(`/api/restaurants/${found.id}/menu`, { auth: false }).catch(() => ({ data: {} })),
-          api.get(`/api/restaurants/${found.id}/reviews`, { auth: false }).catch(() => ({ data: [] })),
           api.get(`/api/restaurants/${found.id}/hours`, { auth: false }).catch(() => ({ data: [] })),
           api.get(`/api/restaurants/${found.id}/images`, { auth: false }).catch(() => ({ data: [] })),
           api.get(`/api/restaurants/${found.id}/promotions`, { auth: false }).catch(() => ({ data: [] })),
@@ -561,35 +599,6 @@ export default function RestaurantDetailPage() {
             }
           ]);
         }
-        const verifiedList = getVerifiedReviews(slug || found.slug || found.id);
-        const apiReviews: Review[] = (reviewsRes.data && Array.isArray(reviewsRes.data)) ? reviewsRes.data : [];
-
-        // Combine verifiedList with apiReviews, without duplicates
-        const reviewMap = new Map<string, Review>();
-        for (const r of verifiedList) {
-          reviewMap.set(r.id, r);
-        }
-        for (const r of apiReviews) {
-          reviewMap.set(r.id, r);
-        }
-        const loadedReviews = Array.from(reviewMap.values()).sort(
-          (a, b) => new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime()
-        );
-
-        setReviews(loadedReviews);
-
-        // Sync restaurant stats to match exact reviews
-        const dynamicStats = calculateRestaurantRatingStats(loadedReviews);
-        setRestaurant((prev) =>
-          prev
-            ? {
-                ...prev,
-                review_count: dynamicStats.count,
-                avg_rating: dynamicStats.rating,
-              }
-            : prev
-        );
-
         setHours(hoursRes.data?.length ? hoursRes.data : [0, 1, 2, 3, 4, 5, 6].map(d => ({
           day_of_week: d,
           open_time: '08:00',
@@ -713,63 +722,24 @@ export default function RestaurantDetailPage() {
     }
     setSubmittingReview(true);
     try {
-      const newReviewId = `rev-${Date.now()}`;
-      const reviewerName = user?.full_name || 'Verified Cordova Foodie';
-      const reviewerAvatar = user?.avatar_url;
-      let submittedPhotos: string[] = [...reviewPhotoPreviews];
-
-      try {
-        if (reviewPhotos.length > 0) {
-          const formData = new FormData();
-          formData.append('rating', String(reviewRating));
-          if (reviewComment.trim()) formData.append('comment', reviewComment.trim());
-          reviewPhotos.forEach((file) => formData.append('photos', file));
-          const res = await api.post(`/api/restaurants/${restaurant.id}/reviews`, formData, { isFormData: true });
-          if (res?.data?.review?.photos?.length) {
-            submittedPhotos = res.data.review.photos;
-          }
-        } else {
-          await api.post(`/api/restaurants/${restaurant.id}/reviews`, {
-            rating: reviewRating,
-            comment: reviewComment,
-          });
-        }
-      } catch {
-        // Continue with real-time local persistence if backend is in mock/offline mode
+      if (!user) throw new Error('Please sign in to write a review');
+      let response;
+      if (reviewPhotos.length > 0) {
+        const formData = new FormData();
+        formData.append('rating', String(reviewRating));
+        formData.append('comment', reviewComment.trim());
+        reviewPhotos.forEach(file => formData.append('photos', file));
+        response = await api.post('/api/restaurants/' + restaurant.id + '/reviews', formData, {isFormData:true});
+      } else {
+        response = await api.post('/api/restaurants/' + restaurant.id + '/reviews', {rating:reviewRating,comment:reviewComment.trim()});
       }
-
-      const newReviewObj: Review = {
-        id: newReviewId,
-        restaurant_id: restaurant.id,
-        user_id: user?.id || 'usr-guest',
-        reviewer_name: reviewerName,
-        reviewer_avatar: reviewerAvatar || undefined,
-        rating: Number(reviewRating),
-        comment: reviewComment.trim(),
-        photos: submittedPhotos,
-        reactions: { '❤️': 1 },
-        status: 'visible',
-        created_at: new Date().toISOString(),
-        like_count: 0,
-        liked_by_me: false,
-        visit_type: user ? 'verified diner' : 'guest explorer',
-      };
-
-      // Add to persistent storage and get updated list
-      const updatedReviews = addPersistedReview(slug || restaurant.slug || restaurant.id, newReviewObj);
-      setReviews(updatedReviews);
-
-      // Immediately recalculate accurate rating and review count in state
-      const newStats = calculateRestaurantRatingStats(updatedReviews);
-      setRestaurant((prev) =>
-        prev
-          ? {
-              ...prev,
-              review_count: newStats.count,
-              avg_rating: newStats.rating,
-            }
-          : prev
-      );
+      const saved = response.data.review;
+      const newReviewObj: Review = {...saved, reviewer_name:user.full_name, reviewer_avatar:user.avatar_url || undefined, like_count:0, liked_by_me:false};
+      setReviewsPage(1);
+      setReviews(current=>[newReviewObj,...current.filter(r=>r.id!==newReviewObj.id)].slice(0,12));
+      setReviewsTotal(current=>current+1);
+      window.dispatchEvent(new Event('cordova_review_updated'));
+      void refreshReviewStats();
 
       setReviewComment('');
       setReviewPhotos([]);
@@ -1175,7 +1145,7 @@ export default function RestaurantDetailPage() {
                     <h3 className="font-serif text-2xl font-bold text-stone-900 dark:text-white flex items-center gap-2">
                       <span>Customer Reviews</span>
                       <span className="text-xs font-sans font-semibold bg-stone-100 dark:bg-stone-800 px-2.5 py-1 rounded-full text-stone-600 dark:text-stone-300">
-                        {reviews.length} total
+                        {reviewsTotal} total
                       </span>
                     </h3>
                     <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
@@ -1186,7 +1156,7 @@ export default function RestaurantDetailPage() {
 
                 {/* Review Cards */}
                 <div className="space-y-4">
-                  {reviews.length === 0 ? (
+                  {reviewsLoading ? <p className="text-sm text-stone-500">Loading reviews…</p> : reviewsError && reviews.length === 0 ? <p role="alert" className="text-sm text-amber-700">Reviews are temporarily unavailable. We will retry automatically.</p> : reviews.length === 0 ? (
                     <div className="text-center py-12 text-stone-400">
                       <p className="text-sm">No reviews yet. Be the first to review!</p>
                     </div>
@@ -1240,6 +1210,7 @@ export default function RestaurantDetailPage() {
                             </div>
                           </div>
 
+                          <ReportReview id={r.id} authorId={r.user_id} />
                           {/* Review Comment */}
                           {r.comment && (
                             <p className="text-xs sm:text-sm text-stone-700 dark:text-stone-300 leading-relaxed font-sans pl-1">
@@ -1324,6 +1295,8 @@ export default function RestaurantDetailPage() {
                   )}
                 </div>
 
+                {reviewsError && reviews.length > 0 && <p role="status" className="text-sm text-amber-700">Showing the last confirmed reviews. Reconnecting…</p>}
+                {reviewsPages > 1 && <div className="flex items-center gap-4 text-sm"><button type="button" disabled={reviewsPage<=1 || reviewsLoading} onClick={()=>setReviewsPage(p=>p-1)}>Previous</button><span>Page {reviewsPage} of {reviewsPages}</span><button type="button" disabled={reviewsPage>=reviewsPages || reviewsLoading} onClick={()=>setReviewsPage(p=>p+1)}>Next</button></div>}
                 {/* Add Review Form */}
                 <form
                   onSubmit={submitReview}

@@ -13,6 +13,7 @@ import {
   MessageSquare,
   Sparkles,
 } from 'lucide-react';
+import { refreshReviewStats } from '@/lib/live-review-stats';
 import { api, ApiClientError } from '@/lib/api';
 import { useToast } from '@/lib/toast-context';
 import { StarRating, Badge } from '@/components/ui/Badge';
@@ -24,28 +25,33 @@ function ReviewModerationContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const initialStatus = searchParams.get('status') || 'flagged';
+  const initialStatus = searchParams.get('status') || 'reported';
   const [status, setStatus] = useState(initialStatus);
   const [reviews, setReviews] = useState<any[]>([]);
+  const [reasons, setReasons] = useState<Record<string,string>>({});
+  const [busy, setBusy] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const urlStatus = searchParams.get('status') || 'flagged';
+    const urlStatus = searchParams.get('status') || 'reported';
     setStatus(urlStatus);
   }, [searchParams]);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.get(`/api/admin/reviews?status=${status}&limit=50`);
+      const res = await api.get(`/api/admin/reviews?status=${status}&limit=20&page=${page}`);
       setReviews(res.data || []);
+      setTotalPages(res.meta?.totalPages || 1);
     } catch (err) {
       setReviews([]);
       toast(err instanceof ApiClientError ? err.message : 'Failed to load reviews', 'error');
     } finally {
       setLoading(false);
     }
-  }, [status, toast]);
+  }, [status, page, toast]);
 
   useEffect(() => {
     load();
@@ -53,12 +59,15 @@ function ReviewModerationContent() {
 
   const handleTabChange = (newStatus: string) => {
     setStatus(newStatus);
+    setPage(1);
     router.replace(`/admin/reviews?status=${newStatus}`, { scroll: false });
   };
 
   const moderate = async (id: string, newStatus: 'visible' | 'removed' | 'flagged') => {
+    if (busy || (reasons[id] || '').trim().length < 10) return;
+    setBusy(true);
     try {
-      await api.patch(`/api/admin/reviews/${id}/moderate`, { status: newStatus });
+      await api.patch(`/api/admin/reviews/${id}/moderate`, { status: newStatus, flaggedReason: reasons[id].trim() });
       toast(
         newStatus === 'visible'
           ? 'Review restored and published'
@@ -67,10 +76,12 @@ function ReviewModerationContent() {
           : 'Review marked as flagged',
         'success'
       );
+      window.dispatchEvent(new Event('cordova_review_updated'));
+      void refreshReviewStats();
       load();
     } catch (err) {
       toast(err instanceof ApiClientError ? err.message : 'Failed to moderate review', 'error');
-    }
+    } finally { setBusy(false); }
   };
 
   return (
@@ -87,6 +98,7 @@ function ReviewModerationContent() {
       {/* Filter Tabs */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 bg-white dark:bg-[#1a211c] p-3 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-sm">
         {[
+          { id: 'reported', label: 'Reported Reviews', icon: Flag },
           { id: 'flagged', label: 'Flagged Reviews', icon: Flag },
           { id: 'visible', label: 'Visible Reviews', icon: CheckCircle },
           { id: 'removed', label: 'Removed / Hidden', icon: Trash2 },
@@ -111,6 +123,7 @@ function ReviewModerationContent() {
         })}
       </div>
 
+      <div className="flex gap-3 items-center text-sm"><button disabled={page<=1 || loading} onClick={()=>setPage(page-1)}>Previous</button><span>Page {page} of {totalPages}</span><button disabled={page>=totalPages || loading} onClick={()=>setPage(page+1)}>Next</button></div>
       {/* Reviews List */}
       {loading ? (
         <div className="space-y-4">
@@ -167,21 +180,22 @@ function ReviewModerationContent() {
 
                   {/* Moderation Action Buttons */}
                   <div className="flex flex-wrap items-center gap-2">
-                    {r.slug && (
-                      <Link href={`/restaurants/${r.slug}`} target="_blank">
+                    {r.restaurant_slug && (
+                      <Link href={`/restaurants/${r.restaurant_slug}`} target="_blank">
                         <Button variant="secondary" size="sm" className="text-xs">
                           <ExternalLink size={12} className="mr-1" /> View Venue
                         </Button>
                       </Link>
                     )}
 
-                    {r.status !== 'visible' && (
+                    {(r.status !== 'visible' || Number(r.report_count) > 0) && (
                       <Button
                         size="sm"
+                        disabled={busy || (reasons[r.id] || '').trim().length < 10}
                         onClick={() => moderate(r.id, 'visible')}
                         className="bg-cordova-green hover:bg-cordova-greenHover text-white text-xs font-bold"
                       >
-                        <CheckCircle2 size={13} className="mr-1" /> Restore (Visible)
+                        <CheckCircle2 size={13} className="mr-1" /> Keep / Restore Visible
                       </Button>
                     )}
 
@@ -189,10 +203,11 @@ function ReviewModerationContent() {
                       <Button
                         variant="secondary"
                         size="sm"
+                        disabled={busy || (reasons[r.id] || '').trim().length < 10}
                         onClick={() => moderate(r.id, 'flagged')}
                         className="text-xs text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30"
                       >
-                        <Flag size={13} className="mr-1" /> Flag
+                        <Flag size={13} className="mr-1" /> Hide for Investigation
                       </Button>
                     )}
 
@@ -200,6 +215,7 @@ function ReviewModerationContent() {
                       <Button
                         variant="secondary"
                         size="sm"
+                        disabled={busy || (reasons[r.id] || '').trim().length < 10}
                         onClick={() => moderate(r.id, 'removed')}
                         className="text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30"
                       >
@@ -237,10 +253,17 @@ function ReviewModerationContent() {
                   </div>
                 )}
 
+                <label className="block text-sm">Decision reason (required)
+                  <textarea maxLength={1000} rows={2} value={reasons[r.id] || ''} onChange={e=>setReasons({...reasons,[r.id]:e.target.value})} className="mt-1 block w-full p-3 border rounded-xl bg-white dark:bg-stone-900 dark:border-stone-700" placeholder="Explain the decision in at least 10 characters" />
+                </label>
+                <details className="text-sm"><summary className="cursor-pointer">Reports ({r.report_count} open) and decision history</summary>
+                 {(r.reports || []).map((report:any,i:number)=><div key={i} className="p-3 mt-2 border rounded-xl dark:border-stone-700"><p className="font-semibold">{report.category.replaceAll('_',' ')} · {report.status} · {new Date(report.created_at).toLocaleString()}</p><p className="whitespace-pre-wrap">{report.details}</p><p className="mt-2 text-stone-500">Review when reported: {report.snapshot.rating} stars — {report.snapshot.comment || '(no comment)'}</p></div>)}
+                 {(r.moderation_history || []).map((event:any,i:number)=><p key={i} className="p-3">{new Date(event.created_at).toLocaleString()} · {event.status}: {event.reason}</p>)}
+                </details>
                 {r.flagged_reason && (
                   <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-600 dark:text-rose-400 flex items-center gap-2">
                     <Flag size={14} className="shrink-0" />
-                    <span><span className="font-bold">Flagged Reason:</span> {r.flagged_reason}</span>
+                    <span><span className="font-bold">Decision Reason:</span> {r.flagged_reason}</span>
                   </div>
                 )}
               </div>

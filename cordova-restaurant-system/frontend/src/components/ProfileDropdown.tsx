@@ -54,7 +54,6 @@ export function ProfileDropdown() {
 
   const menuItems: { href: string; label: string; icon: any }[] = [
     { href: '/profile', label: 'My Profile', icon: UserCircle },
-    { href: '/dashboard/claims', label: 'Business Claims & Notifications', icon: LayoutDashboard },
   ];
 
   if (user.role === 'admin') {
