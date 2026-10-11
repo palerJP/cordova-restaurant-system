@@ -25,6 +25,12 @@ function errorHandler(err, req, res, next) {
     } else if (err.code === '23503') {
       statusCode = 400;
       message = 'Referenced record does not exist';
+    } else if (err.code === 'LIMIT_FILE_SIZE') {
+      statusCode = 413;
+      message = 'Uploaded file is too large';
+    } else if (err.name === 'MulterError') {
+      statusCode = 400;
+      message = 'Invalid upload: check the file count and form fields';
     } else if (err.type === 'entity.too.large') {
       statusCode = 413;
       message = 'Payload too large';

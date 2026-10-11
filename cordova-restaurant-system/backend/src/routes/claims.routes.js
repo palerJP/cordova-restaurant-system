@@ -1,0 +1,16 @@
+const router = require('express').Router();
+const controller = require('../controllers/claim.controller');
+const { requireAuth } = require('../middleware/auth');
+const { requireRole } = require('../middleware/rbac');
+const { evidenceUpload } = require('../middleware/claimEvidence');
+const { claimLimiter } = require('../middleware/rateLimiter');
+router.use(requireAuth);
+router.get('/', controller.listMine);
+router.get('/notifications', controller.notifications);
+router.patch('/notifications/:id/read', controller.readNotification);
+router.get('/:id', controller.detail);
+router.get('/:id/documents/:documentId', controller.download);
+router.post('/:id/respond', requireRole('customer','owner'), controller.verifiedApplicant, claimLimiter, evidenceUpload, controller.respond);
+router.post('/:id/support', requireRole('customer','owner'), claimLimiter, controller.support);
+router.post('/:id/withdraw', requireRole('customer','owner'), controller.withdraw);
+module.exports = router;

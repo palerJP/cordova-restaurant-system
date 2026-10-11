@@ -66,7 +66,7 @@ export default function RegisterPage() {
       redirectedRef.current = true;
       if (redirectTo && redirectTo !== '/' && redirectTo.startsWith('/')) {
         const isRestrictedAdmin = redirectTo.startsWith('/admin') && user.role !== 'admin';
-        const isRestrictedDashboard = redirectTo.startsWith('/dashboard') && user.role !== 'owner' && user.role !== 'admin';
+        const isRestrictedDashboard = redirectTo.startsWith('/dashboard') && !/^\/dashboard\/claims(?:\/|\?|$)/.test(redirectTo) && user.role !== 'owner' && user.role !== 'admin';
         if (!isRestrictedAdmin && !isRestrictedDashboard) {
           router.replace(redirectTo);
           return;

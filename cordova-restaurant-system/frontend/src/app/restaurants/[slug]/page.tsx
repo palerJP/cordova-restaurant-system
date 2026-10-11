@@ -78,6 +78,7 @@ import { LANTAW_CATEGORIES, LANTAW_MENU_ITEMS } from '@/data/lantawMenu';
 import { MAVERICKS_CATEGORIES, MAVERICKS_MENU_ITEMS } from '@/data/mavericksMenu';
 import { SpatialRestaurantMenu } from '@/components/menu/SpatialRestaurantMenu';
 
+
 const SPATIAL_EMOJIS = [
   { emoji: '❤️', label: 'Love it' },
   { emoji: '😋', label: 'Yummy' },
@@ -930,6 +931,7 @@ export default function RestaurantDetailPage() {
 
       {/* OVERLAPPING MAIN CONTAINER */}
       <section className="relative z-30 -mt-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+
         {/* ACTIVE PROMOTION BANNER IF AVAILABLE */}
         {activePromotions.length > 0 && (
           <div className="mb-5 bg-gradient-to-r from-amber-500 via-cordova-gold to-amber-600 rounded-3xl p-5 sm:p-6 text-white shadow-spatial-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-amber-300/50 backdrop-blur-2xl ring-1 ring-amber-300/30">

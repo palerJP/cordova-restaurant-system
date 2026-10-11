@@ -1,4 +1,5 @@
 'use client';
+import { pendingClaimDestination } from '@/lib/claims';
 
 import { useState, useEffect, useRef, useCallback, FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -57,12 +58,13 @@ export default function LoginPage() {
     }
 
     // Honour ?redirect= param from protected-route redirects (e.g. /dashboard/new) if role is authorized
-    if (redirectTo && redirectTo !== '/' && redirectTo.startsWith('/')) {
-      const isRestrictedAdmin = redirectTo.startsWith('/admin') && targetUser?.role !== 'admin';
-      const isRestrictedDashboard = redirectTo.startsWith('/dashboard') && targetUser?.role !== 'owner' && targetUser?.role !== 'admin';
+    const destination = redirectTo !== '/' ? redirectTo : pendingClaimDestination() || '/';
+    if (destination !== '/' && destination.startsWith('/') && !destination.startsWith('//') && !destination.includes('\\')) {
+      const isRestrictedAdmin = destination.startsWith('/admin') && targetUser?.role !== 'admin';
+      const isRestrictedDashboard = destination.startsWith('/dashboard') && !/^\/dashboard\/claims(?:\/|\?|$)/.test(destination) && targetUser?.role !== 'owner' && targetUser?.role !== 'admin';
 
       if (!isRestrictedAdmin && !isRestrictedDashboard) {
-        router.replace(redirectTo);
+        router.replace(destination);
         return;
       }
     }
@@ -336,7 +338,7 @@ export default function LoginPage() {
 
         <p className="text-sm text-stone-500 dark:text-stone-400 mt-6 text-center">
           Don&apos;t have an account?{' '}
-          <Link href="/register" className="text-cordova-green font-bold hover:underline">
+          <Link href={redirectTo !== '/' ? `/register?redirect=${encodeURIComponent(redirectTo)}` : '/register'} className="text-cordova-green font-bold hover:underline">
             Sign up
           </Link>
         </p>

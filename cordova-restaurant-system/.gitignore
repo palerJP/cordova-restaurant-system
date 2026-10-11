@@ -5,6 +5,7 @@ node_modules/
 .env.production
 .next-production/
 uploads/business-permits/*
+uploads/claim-evidence/*
 uploads/restaurant-images/*
 uploads/avatars/*
 !uploads/**/.gitkeep

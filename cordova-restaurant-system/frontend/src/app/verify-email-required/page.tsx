@@ -1,4 +1,5 @@
 'use client';
+import { pendingClaimDestination } from '@/lib/claims';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -27,7 +28,7 @@ export default function VerifyEmailRequiredPage() {
     } else if (user.email_verified || !REQUIRE_EMAIL_VERIFICATION) {
       // If already verified or verification is disabled on localhost, allow browsing
       if (user.email_verified) {
-        router.push('/');
+        router.push(pendingClaimDestination() || '/');
       }
     }
   }, [user, router]);
@@ -48,7 +49,7 @@ export default function VerifyEmailRequiredPage() {
     try {
       await devVerifyEmail(user?.email);
       showToast('Account verified (Dev Mode)! Welcome to CordovaEats.', 'success');
-      router.push('/');
+      router.push(pendingClaimDestination() || '/');
     } catch (err) {
       if (err instanceof ApiClientError) {
         showToast(err.message, 'error');
