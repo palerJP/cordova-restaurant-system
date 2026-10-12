@@ -9,6 +9,7 @@ async function run() {
     throw new Error('Isolated test runner only supports a local development database');
   }
   const name = `cordova_test_${crypto.randomBytes(8).toString('hex')}`;
+  if (!/^cordova_test_[0-9a-f]{16}$/.test(name)) throw new Error('Unsafe test database name');
   const admin = new Pool({ connectionString: source.toString() });
   let created = false;
   try {
@@ -23,7 +24,6 @@ async function run() {
     }
   } finally {
     if (created) {
-      if (!/^cordova_test_[0-9a-f]{16}$/.test(name)) throw new Error('Unsafe test database name');
       await admin.query(`DROP DATABASE "${name}" WITH (FORCE)`);
     }
     await admin.end();

@@ -16,7 +16,7 @@ test('an expired access token is refreshed and the training request is retried o
 
   try {
     globalThis.fetch = async (input, init) => {
-      const path = new URL(String(input)).pathname;
+      const path = new URL(String(input), 'http://localhost').pathname;
       const authorization = (init?.headers as Record<string, string> | undefined)?.Authorization;
       calls.push({ path, authorization });
 
@@ -47,7 +47,7 @@ test('later access token expiries can refresh again', async () => {
   try {
     globalThis.fetch = async (input, init) => {
       requestCount += 1;
-      const path = new URL(String(input)).pathname;
+      const path = new URL(String(input), 'http://localhost').pathname;
       if (path === '/api/auth/refresh') {
         return jsonResponse(200, { data: { accessToken: requestCount === 2 ? 'second-access' : 'third-access' } });
       }
@@ -76,7 +76,7 @@ test('a rejected refresh ends the local session', async () => {
 
   try {
     globalThis.fetch = async (input) =>
-      new URL(String(input)).pathname === '/api/auth/refresh'
+      new URL(String(input), 'http://localhost').pathname === '/api/auth/refresh'
         ? jsonResponse(401, { message: 'Refresh token expired' })
         : jsonResponse(401, { message: 'Invalid or expired token' });
 
@@ -101,7 +101,7 @@ test('a temporary refresh failure keeps the local session for a later retry', as
 
   try {
     globalThis.fetch = async (input) =>
-      new URL(String(input)).pathname === '/api/auth/refresh'
+      new URL(String(input), 'http://localhost').pathname === '/api/auth/refresh'
         ? jsonResponse(503, { message: 'Service unavailable' })
         : jsonResponse(401, { message: 'Invalid or expired token' });
 

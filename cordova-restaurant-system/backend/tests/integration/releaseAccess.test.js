@@ -20,10 +20,10 @@ describeWithDb('release access boundaries', () => {
     await query("INSERT INTO restaurants (id, owner_id, name, slug, address, latitude, longitude, status) VALUES ($1,$2,'Release Test',$3,'Test address',10,123,'verified')", [restaurantId, ids.owner, restaurantId]);
     await query("INSERT INTO promotions (id, restaurant_id, title, start_date, end_date, status, payment_status, payment_reference) VALUES ($1,$2,'Release Offer',CURRENT_DATE,CURRENT_DATE+7,'active','verified','PRIVATE-REFERENCE')", [promotionId, restaurantId]);
   });
-  test('private documents reject guests and diners', async () => {
-    expect((await request(app).get('/uploads/business-permits/example.pdf')).status).toBe(401);
+  test('private documents have no public URL for guests or diners', async () => {
+    expect((await request(app).get('/uploads/business-permits/example.pdf')).status).toBe(404);
     expect((await request(app).get('/uploads/%62usiness-permits/example.pdf')).status).toBe(404);
-    expect((await request(app).get('/uploads/business-permits/example.pdf').set('Authorization', `Bearer ${tokens.customer}`)).status).toBe(403);
+    expect((await request(app).get('/uploads/business-permits/example.pdf').set('Authorization', `Bearer ${tokens.customer}`)).status).toBe(404);
   });
   test('only admins can load promotion moderation', async () => {
     for (const role of ['customer', 'owner']) {

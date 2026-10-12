@@ -63,7 +63,7 @@ app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().
 app.get('/ready', async (req, res) => {
   try {
     const { query } = require('./config/db');
-    const { rows } = await query('SELECT filename FROM _migrations WHERE filename = $1', ['014_business_claims.sql']);
+    const { rows } = await query('SELECT filename FROM _migrations WHERE filename = $1', ['016_reconcile_review_statistics.sql']);
     if (!rows.length) return res.status(503).json({ status: 'not_ready' });
     res.json({ status: 'ready' });
   } catch {
