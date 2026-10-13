@@ -253,13 +253,13 @@ function MapViewContent({
             >
               <div className="p-2 max-w-xs text-stone-900 font-sans">
                 {selectedRestaurant.cover_image_url && (
-                  <div className="mb-2 h-24 w-full rounded-lg overflow-hidden relative bg-stone-100">
+                  <div className={`mb-2 h-24 w-full rounded-lg overflow-hidden relative ${selectedRestaurant.slug === 'horizon-bean-cafe' ? 'bg-[#3b2923]' : 'bg-stone-100'}`}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={selectedRestaurant.cover_image_url}
                       alt={selectedRestaurant.name}
                       className={hasOriginalRestaurantLogo(selectedRestaurant.slug)
-                        ? 'w-full h-full object-contain bg-white'
+                        ? 'w-full h-full object-contain'
                         : 'w-full h-full object-cover'}
                     />
                   </div>

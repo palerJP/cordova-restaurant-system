@@ -130,7 +130,7 @@ export const RESTAURANT_CUSTOMIZATIONS: Record<string, RestaurantCustomConfig> =
   'rca-bilao-food-station': {
     name: 'RCA Bilao Food Station',
     category: 'Restaurant',
-    coverImage: '/images/rca/rca-lechon-belly-bilao.png',
+    coverImage: '/images/rca/rca-logo-clean.png',
     barangay: 'Gabi',
     description: 'Pansit stir-fry, boneless lechon belly, kakanin sa bilao, ug lain-laing food trays.',
     address: 'Sitio Mahayahay, Gabi, Cordova, Cebu',

@@ -17,7 +17,7 @@ test('live restaurant cards use the three original business logos', () => {
   const expectedLogos = new Map([
     ['horizon-bean-cafe', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQjr6iV9_a_faqTZ-ifuWgFk7EFlqV4QwQobcFDdYO8WXbjpAq1AmURrTo0&s=10'],
     ['barracks-grill-and-resto-bar', '/images/barracks/barracks-logo.jpg'],
-    ['rca-bilao-food-station', '/images/rca/rca-lechon-belly-bilao.png'],
+    ['rca-bilao-food-station', '/images/rca/rca-logo-clean.png'],
   ]);
 
   for (const [slug, logo] of expectedLogos) {

@@ -22,6 +22,7 @@ export const RestaurantCard = memo(function RestaurantCard({
   const restaurant = applyRestaurantCustomization(rawRestaurant);
   const [imgError, setImgError] = useState(false);
   const showOriginalLogo = !imgError && hasOriginalRestaurantLogo(restaurant.slug);
+  const isHorizonLogo = showOriginalLogo && restaurant.slug === 'horizon-bean-cafe';
   const live = useLiveReviewStats(restaurant.slug || restaurant.id);
   const reviewCount = live?.review_count ?? Number(restaurant.review_count || 0);
   const ratingVal = reviewCount > 0 ? Number(live?.avg_rating ?? restaurant.avg_rating ?? 0).toFixed(1) : '—';
@@ -76,7 +77,7 @@ export const RestaurantCard = memo(function RestaurantCard({
         : 'border-stone-200/80 dark:border-white/10'
     }`}>
       {/* Cover Image Container */}
-      <div className="relative h-48 sm:h-52 w-full bg-stone-100 dark:bg-stone-800/80 overflow-hidden">
+      <div className={`relative h-48 sm:h-52 w-full overflow-hidden ${isHorizonLogo ? 'bg-[#3b2923]' : 'bg-stone-100 dark:bg-stone-800/80'}`}>
         <Image
           src={imageSrc}
           alt={restaurant.name}
@@ -84,7 +85,7 @@ export const RestaurantCard = memo(function RestaurantCard({
           unoptimized
           onError={() => setImgError(true)}
           className={showOriginalLogo
-            ? 'object-contain bg-white p-3 transition-transform duration-700 ease-out group-hover:scale-105'
+            ? 'object-contain p-3 transition-transform duration-700 ease-out group-hover:scale-105'
             : 'object-cover transition-transform duration-700 ease-out group-hover:scale-105'}
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />

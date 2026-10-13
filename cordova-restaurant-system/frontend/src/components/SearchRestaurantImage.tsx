@@ -13,10 +13,11 @@ export function SearchRestaurantImage({ restaurant }: { restaurant: Restaurant }
   const image = source && source !== failedSource ? source : '/cordova_eats_logo.png';
 
   return (
-    <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md bg-stone-100 dark:bg-white/10">
+    <div className={`relative h-12 w-12 shrink-0 overflow-hidden rounded-md ${restaurant.slug === 'horizon-bean-cafe' ? 'bg-[#3b2923]' : 'bg-stone-100 dark:bg-white/10'}`}>
       <Image src={image} alt={restaurant.name} fill unoptimized sizes="48px"
         className={image === '/cordova_eats_logo.png' || hasOriginalRestaurantLogo(restaurant.slug)
-          ? 'object-contain bg-white p-1' : 'object-cover'}
+          ? 'object-contain p-1'
+          : 'object-cover'}
         onError={() => { if (source) setFailedSource(source); }} />
     </div>
   );

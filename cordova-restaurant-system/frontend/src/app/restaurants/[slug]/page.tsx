@@ -830,6 +830,7 @@ export default function RestaurantDetailPage() {
       ? 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=1200&auto=format&fit=crop&q=85'
       : 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=1200&auto=format&fit=crop&q=85';
 
+  const isRcaLogo = restaurant.slug === 'rca-bilao-food-station';
   const heroImageSrc =
     !heroImgError &&
     restaurant.cover_image_url &&
@@ -837,6 +838,7 @@ export default function RestaurantDetailPage() {
       ? restaurant.cover_image_url
       : fallbackHeroImage;
   const showOriginalLogo = !heroImgError && hasOriginalRestaurantLogo(restaurant.slug);
+  const isHorizonLogo = restaurant.slug === 'horizon-bean-cafe';
 
   return (
     <div className="min-h-screen bg-cordova-cream dark:bg-[#121614] pb-24 relative overflow-hidden">
@@ -845,8 +847,8 @@ export default function RestaurantDetailPage() {
       <div className="absolute top-[55%] right-[-10%] w-[550px] h-[550px] rounded-full bg-amber-500/12 dark:bg-amber-500/18 blur-[130px] pointer-events-none -z-0" />
 
       {/* HERO COVER SECTION WITH SPATIAL GLASS DEPTH */}
-      <section className="relative w-full h-[430px] sm:h-[500px] overflow-hidden bg-stone-950">
-        <Image
+      <section className={`relative w-full h-[430px] sm:h-[500px] overflow-hidden ${isHorizonLogo ? 'bg-[#3b2923]' : isRcaLogo ? 'bg-gradient-to-br from-emerald-950 via-stone-900 to-stone-950' : 'bg-stone-950'}`}>
+        {!isRcaLogo && <Image
           src={heroImageSrc}
           alt={restaurant.name}
           fill
@@ -856,10 +858,16 @@ export default function RestaurantDetailPage() {
           className={showOriginalLogo
             ? 'object-contain object-center opacity-85 transition-transform duration-1000'
             : 'object-cover object-center opacity-85 scale-[1.02] transition-transform duration-1000'}
-        />
+        />}
 
         {/* Ambient Dark Gradient Overlay for Maximum Text Clarity */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/55 to-black/35 backdrop-blur-[1.5px]" />
+
+        {isRcaLogo && restaurant.cover_image_url && (
+          <div className="absolute top-8 sm:top-10 left-1/2 -translate-x-1/2 z-10 w-44 h-44 sm:w-52 sm:h-52 rounded-full bg-amber-50 p-2 shadow-2xl ring-4 ring-amber-400/50">
+            <Image src={restaurant.cover_image_url} alt="RCA Lechon Belly & Bilao logo" fill unoptimized className="object-contain p-2" />
+          </div>
+        )}
 
         {/* Top Control Buttons (Spatial Glass Pills) */}
         <div className="absolute top-6 left-6 right-6 z-20 max-w-7xl mx-auto flex justify-between items-center">
@@ -1081,12 +1089,12 @@ export default function RestaurantDetailPage() {
                   {/* Story Image with Circular Accent */}
                   <div className="lg:col-span-5 relative flex justify-center">
                     <div className="absolute -top-4 -right-4 w-48 h-48 rounded-full bg-amber-100/70 dark:bg-amber-950/30 -z-10" />
-                    <div className="relative h-72 sm:h-80 w-full rounded-2xl overflow-hidden shadow-spatial-md border border-stone-200 dark:border-stone-800">
+                    <div className={`relative h-72 sm:h-80 w-full rounded-2xl overflow-hidden shadow-spatial-md border border-stone-200 dark:border-stone-800 ${isHorizonLogo ? 'bg-[#3b2923]' : ''}`}>
                       <Image
                         src={restaurant.cover_image_url || '/hero_background.png'}
                         alt={restaurant.name}
                         fill
-                        className={hasOriginalRestaurantLogo(restaurant.slug) ? 'object-contain bg-white' : 'object-cover'}
+                        className={hasOriginalRestaurantLogo(restaurant.slug) ? 'object-contain' : 'object-cover'}
                       />
                     </div>
                   </div>
