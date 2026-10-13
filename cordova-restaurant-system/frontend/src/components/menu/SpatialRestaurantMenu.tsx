@@ -423,6 +423,12 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
 
   return (
     <div className="space-y-8">
+      {restaurant.slug === '10000-roses-cafe-and-more' && (
+        <p className="text-sm text-stone-600 dark:text-stone-400">
+          Menu and prices from branded menu photos dated February 21, 2026. Promotions and availability may change.{' '}
+          <a href="https://restaurantguru.com/10000-Roses-Cafe-and-More-Cordova/menu" target="_blank" rel="noopener noreferrer" className="underline">View menu source</a>
+        </p>
+      )}
       {/* 🍴 CATEGORIZED MENU BROWSER */}
       <section className="space-y-8">
         {/* Eat-All-You-Can Top Announcement Banner for Tita Kim's */}
