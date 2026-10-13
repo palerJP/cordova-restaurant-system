@@ -564,42 +564,8 @@ export default function RestaurantDetailPage() {
           setCategories(SUNGKA_CATEGORIES.map(c => ({ ...c, restaurant_id: found.id })));
           setItems(SUNGKA_MENU_ITEMS.map(i => ({ ...i, restaurant_id: found.id })));
         } else {
-          setCategories(menu.data?.categories?.length ? menu.data.categories : [
-            { id: 'cat-1', restaurant_id: found.id, name: 'House Specialties', sort_order: 1 },
-            { id: 'cat-2', restaurant_id: found.id, name: 'Beverages & Desserts', sort_order: 2 },
-          ]);
-          setItems(menu.data?.items?.length ? menu.data.items : [
-            {
-              id: 'item-1',
-              restaurant_id: found.id,
-              category_id: 'cat-1',
-              name: `${customFound.name} Signature Platter`,
-              description: 'Fresh local dish prepared with authentic flavors and traditional island ingredients.',
-              price: 220,
-              is_available: true,
-              dietary_tags: [],
-            },
-            {
-              id: 'item-2',
-              restaurant_id: found.id,
-              category_id: 'cat-1',
-              name: 'Special House Recipe',
-              description: 'Daily selection of grilled or cooked specialty.',
-              price: 180,
-              is_available: true,
-              dietary_tags: [],
-            },
-            {
-              id: 'item-3',
-              restaurant_id: found.id,
-              category_id: 'cat-2',
-              name: 'Iced Island Refreshment',
-              description: 'Chilled signature house beverage.',
-              price: 75,
-              is_available: true,
-              dietary_tags: ['vegetarian'],
-            }
-          ]);
+          setCategories(menu.data?.categories || []);
+          setItems(menu.data?.items || []);
         }
         setHours(hoursRes.data?.length ? hoursRes.data : [0, 1, 2, 3, 4, 5, 6].map(d => ({
           day_of_week: d,
