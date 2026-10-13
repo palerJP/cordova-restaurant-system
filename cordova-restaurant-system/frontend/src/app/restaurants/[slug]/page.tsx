@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -41,6 +41,7 @@ import { api, ApiClientError } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import { ReportReview } from '@/components/ReportReview';
+import { ReviewActions } from '@/components/ReviewActions';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { MapViewClient } from '@/components/MapViewClient';
 import type {
@@ -204,7 +205,8 @@ export default function RestaurantDetailPage() {
   const [reviewPhotos, setReviewPhotos] = useState<File[]>([]);
   const [reviewPhotoPreviews, setReviewPhotoPreviews] = useState<string[]>([]);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
-  const [userReactions, setUserReactions] = useState<Record<string, string>>({});
+  const reactionRequests=useRef(new Set<string>());
+  const [reactionBusy,setReactionBusy]=useState<Record<string,boolean>>({});
   const [submittingReview, setSubmittingReview] = useState(false);
   const [heroImgError, setHeroImgError] = useState(false);
   const [recentViews, setRecentViews] = useState<RecentlyViewedRestaurant[]>([]);
@@ -692,25 +694,16 @@ export default function RestaurantDetailPage() {
     }
   };
 
-  const reactToReview = async (reviewId: string, emoji: string) => {
-    if (!user) {
-      toast('Please log in to react to reviews', 'info');
-      return;
-    }
-    setUserReactions((prev) => ({ ...prev, [reviewId]: emoji }));
-    setReviews((prev) =>
-      prev.map((r) => {
-        if (r.id !== reviewId) return r;
-        const currentReactions = { ...(r.reactions || {}) };
-        currentReactions[emoji] = (currentReactions[emoji] || 0) + 1;
-        return { ...r, reactions: currentReactions };
-      })
-    );
-    try {
-      await api.post(`/api/reviews/${reviewId}/react`, { emoji });
-    } catch {
-      // Ignore background reaction sync errors
-    }
+  const reactToReview = async (reviewId:string,emoji:string)=>{
+    if(!user){toast('Please log in to react to reviews','info');return;}
+    if(reactionRequests.current.has(reviewId))return;
+    reactionRequests.current.add(reviewId);setReactionBusy(current=>({...current,[reviewId]:true}));
+    try{
+      const res=await api.post('/api/reviews/'+reviewId+'/react',{emoji});
+      setReviews(current=>current.map(review=>review.id===reviewId?{...review,reactions:res.data.reactions,my_reaction:res.data.my_reaction}:review));
+      void refreshReviewStats();
+    }catch(error){toast(error instanceof Error?error.message:'Unable to update reaction','error');}
+    finally{reactionRequests.current.delete(reviewId);setReactionBusy(current=>({...current,[reviewId]:false}));}
   };
 
   const submitReview = async (e: React.FormEvent) => {
@@ -1178,7 +1171,9 @@ export default function RestaurantDetailPage() {
                         .toUpperCase();
 
                       return (
-                        <div
+                        <ReviewActions
+                          review={r}
+                          onChanged={changed=>{setReviews(current=>changed ? current.map(item=>item.id===r.id?changed:item) : current.filter(item=>item.id!==r.id));if(!changed)setReviewsTotal(total=>Math.max(0,total-1));}}
                           key={r.id}
                           className="spatial-card p-5 sm:p-6 rounded-2xl bg-white/70 dark:bg-stone-900/60 border border-stone-200/80 dark:border-stone-800/80 shadow-spatial-sm space-y-4 transition-all duration-300 hover:shadow-spatial-md"
                         >
@@ -1256,11 +1251,13 @@ export default function RestaurantDetailPage() {
                             <div className="flex flex-wrap items-center gap-1.5">
                               {SPATIAL_EMOJIS.map(({ emoji, label }) => {
                                 const count = r.reactions?.[emoji] || 0;
-                                const isSelected = userReactions[r.id] === emoji;
+                                const isSelected = r.my_reaction === emoji;
                                 return (
                                   <button
                                     key={emoji}
                                     type="button"
+                                    disabled={reactionBusy[r.id]}
+                                    aria-pressed={isSelected}
                                     onClick={() => reactToReview(r.id, emoji)}
                                     title={label}
                                     className={`spatial-pill group px-2.5 sm:px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all duration-200 cursor-pointer select-none ${
@@ -1297,7 +1294,7 @@ export default function RestaurantDetailPage() {
                               {r.like_count > 0 && <span>({r.like_count})</span>}
                             </button>
                           </div>
-                        </div>
+                        </ReviewActions>
                       );
                     })
                   )}
@@ -1362,12 +1359,7 @@ export default function RestaurantDetailPage() {
                       </span>
                     </div>
                   </div>
-
-                  {/* Review Text */}
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-300 mb-1.5">
-                      Your Dining Feedback
-                    </label>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <textarea
                       rows={3}
                       value={reviewComment}

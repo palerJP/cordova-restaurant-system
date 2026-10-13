@@ -129,6 +129,8 @@ export interface Review {
   created_at: string;
   like_count: number;
   liked_by_me: boolean;
+  my_reaction?: string | null;
+  is_mine?: boolean;
   visit_type?: string;
 }
 

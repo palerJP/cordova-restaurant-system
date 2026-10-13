@@ -6,6 +6,18 @@ const createReviewValidator = [
   body('comment').optional().trim().isLength({ max: 1000 }),
 ];
 
+const editReviewValidator = [
+  param('id').isUUID(),
+  body('rating').optional().isInt({ min: 1, max: 5 }),
+  body('comment').optional().isString().trim().isLength({ min: 1, max: 1000 }),
+  body('photos').optional().isArray({ max: 5 }),
+  body('photos.*').optional().isString().isLength({ max: 2000 }),
+  body().custom((value) => value.rating !== undefined || value.comment !== undefined || value.photos !== undefined)
+    .withMessage('Provide a review change'),
+];
+const reactReviewValidator = [param('id').isUUID(), body('emoji').isIn(['❤️', '😋', '🔥', '👏', '🦞'])];
+const reviewIdValidator = [param('id').isUUID()];
+
 const reportReviewValidator = [
  param('id').isUUID(),
  body('category').isIn(['spam','harassment','hate_speech','personal_information','irrelevant','other']),
@@ -76,6 +88,9 @@ const updateWeightsValidator = [
 ];
 
 module.exports = {
+  editReviewValidator,
+  reactReviewValidator,
+  reviewIdValidator,
   reportReviewValidator,
   createReviewValidator,
   moderateReviewValidator,

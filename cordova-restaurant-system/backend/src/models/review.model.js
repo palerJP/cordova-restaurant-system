@@ -5,7 +5,9 @@ async function listForRestaurant(restaurantId, { limit = 10, offset = 0, include
   const { rows } = await query(
     `SELECT rv.*, u.full_name AS reviewer_name, u.avatar_url AS reviewer_avatar,
        COALESCE((SELECT COUNT(*) FROM review_likes rl WHERE rl.review_id = rv.id), 0) AS like_count,
-       EXISTS(SELECT 1 FROM review_likes rl WHERE rl.review_id = rv.id AND rl.user_id = $4) AS liked_by_me
+       EXISTS(SELECT 1 FROM review_likes rl WHERE rl.review_id = rv.id AND rl.user_id = $4) AS liked_by_me,
+       (SELECT emoji FROM review_reactions rr WHERE rr.review_id=rv.id AND rr.user_id=$4) AS my_reaction,
+       COALESCE(rv.user_id=$4,false) AS is_mine
      FROM reviews rv
      JOIN users u ON u.id = rv.user_id
      WHERE rv.restaurant_id = $1 ${statusFilter}
@@ -57,33 +59,35 @@ async function create({ restaurantId, userId, rating, comment, photos = [], reac
 }
 
 async function update(id, userId, { rating, comment, photos }) {
-  const { rows } = await query(
-    `UPDATE reviews SET rating = COALESCE($3, rating), comment = COALESCE($4, comment), photos = COALESCE($5, photos)
-     WHERE id = $1 AND user_id = $2 RETURNING *`,
-    [id, userId, rating, comment, photos]
-  );
-  return rows[0] || null;
+ return withTransaction(async client=>{
+  const {rows}=await client.query('SELECT * FROM reviews WHERE id=$1 AND user_id=$2 FOR UPDATE',[id,userId]);
+  if(!rows.length) return null;
+  if(photos && !photos.every(photo=>(rows[0].photos || []).includes(photo))) throw require('../utils/apiError').badRequest('Only existing review photos can be retained or removed');
+  const result=await client.query('UPDATE reviews SET rating=COALESCE($3,rating),comment=COALESCE($4,comment),photos=COALESCE($5,photos) WHERE id=$1 AND user_id=$2 RETURNING *',[id,userId,rating,comment,photos]);
+  return result.rows[0];
+ });
+}
+async function mine(userId,{limit,offset}) {
+ const {rows}=await query('SELECT rv.*,r.name AS restaurant_name,r.slug AS restaurant_slug FROM reviews rv JOIN restaurants r ON r.id=rv.restaurant_id WHERE rv.user_id=$1 ORDER BY rv.created_at DESC,rv.id DESC LIMIT $2 OFFSET $3',[userId,limit,offset]);
+ const count=await query('SELECT COUNT(*) FROM reviews WHERE user_id=$1',[userId]);
+ return {rows,totalCount:Number(count.rows[0].count)};
 }
 
-async function react(reviewId, emoji) {
-  const safeEmoji = String(emoji || '❤️').slice(0, 10);
-  const { rows } = await query(
-    `UPDATE reviews
-     SET reactions = jsonb_set(
-       COALESCE(reactions, '{}'::jsonb),
-       ARRAY[$2],
-       to_jsonb(COALESCE((reactions->>$2)::int, 0) + 1),
-       true
-     )
-     WHERE id = $1
-     RETURNING reactions`,
-    [reviewId, safeEmoji]
-  );
-  return rows[0]?.reactions || {};
+async function react(reviewId, userId, emoji) {
+ return withTransaction(async client=>{
+  const {rows}=await client.query("SELECT id FROM reviews WHERE id=$1 AND status='visible' FOR UPDATE",[reviewId]);
+  if(!rows.length) throw require('../utils/apiError').notFound('Review is unavailable');
+  await client.query('INSERT INTO review_reactions(review_id,user_id,emoji) VALUES($1,$2,$3) ON CONFLICT(review_id,user_id) DO UPDATE SET emoji=EXCLUDED.emoji,updated_at=now()',[reviewId,userId,emoji]);
+  const counts=await client.query('SELECT emoji,COUNT(*)::int AS count FROM review_reactions WHERE review_id=$1 GROUP BY emoji',[reviewId]);
+  const reactions=Object.fromEntries(counts.rows.map(row=>[row.emoji,row.count]));
+  await client.query('UPDATE reviews SET reactions=$2 WHERE id=$1',[reviewId,JSON.stringify(reactions)]);
+  return {reactions,my_reaction:emoji};
+ });
 }
 
 async function remove(id, userId) {
-  await query(`DELETE FROM reviews WHERE id = $1 AND user_id = $2`, [id, userId]);
+  const result=await query(`DELETE FROM reviews WHERE id = $1 AND user_id = $2 RETURNING id`, [id, userId]);
+  return result.rows.length > 0;
 }
 
 async function ownerReply(id, restaurantOwnerId, replyText) {
