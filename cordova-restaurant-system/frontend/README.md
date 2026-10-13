@@ -15,10 +15,10 @@ npm run dev   # http://localhost:3000
 
 The backend must be running first (see `../backend/README.md`).
 
-For Vercel, set the server-only `BACKEND_URL` in the frontend project to the
-backend project's HTTPS origin. Production browser requests use the frontend's
-`/api/*` rewrite, keeping sign-in cookies on the same origin. Do not set a
-backend URL in `NEXT_PUBLIC_API_URL` for production.
+The combined Vercel Services project routes `/api/*` to Express at the project
+level. Leave `BACKEND_URL` and `NEXT_PUBLIC_API_URL` unset there. The existing
+two-project deployment can still use a server-only `BACKEND_URL` in its frontend
+project until migration is complete. See `../docs/VERCEL_READINESS.md`.
 
 ## What's implemented
 

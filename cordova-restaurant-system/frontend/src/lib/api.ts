@@ -1,5 +1,5 @@
-// Keep production requests on the frontend origin so the refresh cookie works
-// when the API is hosted as a separate Vercel project behind a rewrite.
+// Keep production requests on the site origin so the refresh cookie works
+// with either Vercel Services routing or the legacy separate-project rewrite.
 const API_URL = process.env.NODE_ENV === 'production'
   ? ''
   : (process.env.NEXT_PUBLIC_API_URL || '');

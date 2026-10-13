@@ -1,0 +1,20 @@
+{
+  "services": {
+    "frontend": {
+      "root": "cordova-restaurant-system/frontend",
+      "framework": "nextjs"
+    },
+    "backend": {
+      "root": "cordova-restaurant-system/backend",
+      "framework": "express",
+      "entrypoint": "src/app.js"
+    }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": { "service": "backend" } },
+    { "source": "/health", "destination": { "service": "backend" } },
+    { "source": "/ready", "destination": { "service": "backend" } },
+    { "source": "/uploads/(.*)", "destination": { "service": "backend" } },
+    { "source": "/(.*)", "destination": { "service": "frontend" } }
+  ]
+}

@@ -1,18 +1,22 @@
 # Vercel deployment preparation
 
-This repository contains two applications. Create **two Vercel projects** from
-the same Git repository, with these root directories relative to the Git root:
+Deploy the repository as **one Vercel Services project**. Import the Git
+repository with its Root Directory left at the repository root. The top-level
+`vercel.json` builds these two services from the same deployment:
 
-| Project | Root directory | Runtime |
+| Service | Root directory | Runtime |
 | --- | --- | --- |
 | Backend | `cordova-restaurant-system/backend` | Express, Node.js 24 |
 | Frontend | `cordova-restaurant-system/frontend` | Next.js 16, Node.js 24 |
 
-Do not deploy the repository root as a single project. The frontend's
-server-side `BACKEND_URL` rewrite keeps browser API calls and sign-in cookies
-on the frontend origin. Set the backend URL to its HTTPS origin, without `/api`.
-The backend's `CLIENT_URL` must be the frontend HTTPS origin, without a trailing
-slash. Do not set a public backend URL in `NEXT_PUBLIC_API_URL` for production.
+The top-level routing sends `/api/*`, `/health`, `/ready`, and `/uploads/*` to
+Express and all other paths to Next.js. API requests and sign-in cookies use
+the same public origin. Leave `BACKEND_URL` and `NEXT_PUBLIC_API_URL` unset in
+the combined project. Set the backend's `CLIENT_URL` to the project's HTTPS
+origin, without a trailing slash. Existing separate Vercel projects can stay
+online during the transition; the frontend still accepts `BACKEND_URL` for
+their legacy rewrite. Vercel Services is currently in beta, so confirm the
+account can deploy a Services project before moving a production domain.
 
 ## Backend settings and data
 
@@ -47,7 +51,7 @@ run the dry run first, back up data, then apply with both Blob tokens. Check
 images and an admin permit download afterward. Local uploads are not included
 in a Vercel deployment.
 
-For Groq recommendations, set `GROQ_API_KEY` in the **backend** Vercel
+For Groq recommendations, set `GROQ_API_KEY` in the Vercel project
 environment. The hosted admin page reads its status but cannot write a local
 secret file. Without a key, the app uses its local recommendation ranker.
 To enable Google sign-in, set the matching `GOOGLE_CLIENT_ID` in the backend
@@ -57,11 +61,22 @@ origin in Google Cloud. Google Maps has a separate optional
 
 ## Frontend settings
 
-Set `BACKEND_URL` to the backend HTTPS origin and
-`NEXT_PUBLIC_REQUIRE_EMAIL_VERIFICATION=true` in the frontend project. Keep
-`NEXT_PUBLIC_API_URL` unset in production; browsers use the `/api/*` rewrite.
+Set `NEXT_PUBLIC_REQUIRE_EMAIL_VERIFICATION=true` in the combined project.
+Keep `BACKEND_URL` and `NEXT_PUBLIC_API_URL` unset in production; Vercel's
+top-level Services routing sends browser `/api/*` requests to the backend.
 Set Google client and Maps keys only if those features are enabled. The site
 fonts are bundled locally, so builds do not fetch Google Fonts.
+
+## Moving from two projects
+
+1. Create the combined project from this repository root, without changing the
+   existing frontend or backend projects yet. Add the required environment
+   variables and connect the public and private Blob stores.
+2. Apply the database migrations, then test the combined project's preview URL
+   with real restaurant and menu records, authentication, uploads, and email.
+3. Once the combined deployment passes, move the production domain to it and
+   update `CLIENT_URL` and Google OAuth origins for that domain. Retire the old
+   projects after the new deployment is verified.
 
 ## Final checks after the services exist
 
@@ -78,7 +93,8 @@ The code can be built and tested locally before this setup. A live Vercel
 round trip cannot be confirmed until the hosted database, Blob stores, mail
 service, deployment URLs, and optional provider keys are configured.
 
-Vercel references: [Express deployment](https://vercel.com/docs/frameworks/backend/express),
-[monorepo root directories](https://vercel.com/docs/monorepos),
+Vercel references: [Services](https://vercel.com/docs/services),
+[Services routing](https://vercel.com/docs/services/routing),
+[Express deployment](https://vercel.com/docs/frameworks/backend/express),
 [function limits](https://vercel.com/docs/functions/limitations), and
 [private Blob storage](https://vercel.com/docs/vercel-blob/private-storage).
