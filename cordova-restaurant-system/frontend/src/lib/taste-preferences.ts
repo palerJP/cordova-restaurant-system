@@ -84,3 +84,11 @@ export async function syncTastePreferencesToAccount(user: User): Promise<void> {
 
   saveTastePreferences(saved, user.id);
 }
+
+export async function needsTastePreferences(user: User): Promise<boolean> {
+  if (user.role !== 'customer') return false;
+  if (getTastePreferences()?.syncedUserId === user.id) return false;
+
+  const response = await api.get('/api/users/me/preferences');
+  return !response.data?.preferences;
+}

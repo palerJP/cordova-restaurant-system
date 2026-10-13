@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { CheckCircle2, AlertTriangle, ArrowRight, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { ApiClientError } from '@/lib/api';
+import { pendingClaimDestination } from '@/lib/claims';
 
 export default function VerifyEmailPage() {
   const searchParams = useSearchParams();
@@ -18,6 +19,7 @@ export default function VerifyEmailPage() {
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [continueHref, setContinueHref] = useState('/login');
 
   useEffect(() => {
     if (!token) {
@@ -30,8 +32,13 @@ export default function VerifyEmailPage() {
 
     async function executeVerification() {
       try {
-        await verifyEmail(token as string);
+        const verifiedUser = await verifyEmail(token as string);
         if (isMounted) {
+          const claimDestination = pendingClaimDestination();
+          const destination = verifiedUser?.role === 'customer'
+            ? `/preferences?firstTime=true${claimDestination ? `&returnTo=${encodeURIComponent(claimDestination)}` : ''}`
+            : claimDestination || (verifiedUser?.role === 'owner' ? '/dashboard/new' : '/');
+          setContinueHref(`/login?redirect=${encodeURIComponent(destination)}`);
           setSuccess(true);
           setLoading(false);
         }
@@ -87,10 +94,10 @@ export default function VerifyEmailPage() {
 
             <div className="pt-3 space-y-3">
               <Link
-                href="/login"
+                href={continueHref}
                 className="w-full bg-cordova-green hover:bg-cordova-greenHover text-white font-bold text-xs py-3.5 px-4 rounded-xl shadow transition-colors flex items-center justify-center gap-2 uppercase tracking-wider"
               >
-                Log in and continue <ArrowRight size={16} />
+                {continueHref.includes('preferences') ? 'Log in and set preferences' : 'Log in and continue'} <ArrowRight size={16} />
               </Link>
               <Link
                 href="/"

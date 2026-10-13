@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { MapPin, Star, Sparkles } from 'lucide-react';
 import type { Restaurant, MatchedPreferences } from '@/lib/types';
-import { applyRestaurantCustomization } from '@/data/restaurants';
+import { applyRestaurantCustomization, hasOriginalRestaurantLogo } from '@/data/restaurants';
 import { useLiveReviewStats } from '@/lib/live-review-stats';
 
 export const RestaurantCard = memo(function RestaurantCard({
@@ -21,6 +21,7 @@ export const RestaurantCard = memo(function RestaurantCard({
 }) {
   const restaurant = applyRestaurantCustomization(rawRestaurant);
   const [imgError, setImgError] = useState(false);
+  const showOriginalLogo = !imgError && hasOriginalRestaurantLogo(restaurant.slug);
   const live = useLiveReviewStats(restaurant.slug || restaurant.id);
   const reviewCount = live?.review_count ?? Number(restaurant.review_count || 0);
   const ratingVal = reviewCount > 0 ? Number(live?.avg_rating ?? restaurant.avg_rating ?? 0).toFixed(1) : '—';
@@ -82,7 +83,9 @@ export const RestaurantCard = memo(function RestaurantCard({
           fill
           unoptimized
           onError={() => setImgError(true)}
-          className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+          className={showOriginalLogo
+            ? 'object-contain bg-white p-3 transition-transform duration-700 ease-out group-hover:scale-105'
+            : 'object-cover transition-transform duration-700 ease-out group-hover:scale-105'}
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
 

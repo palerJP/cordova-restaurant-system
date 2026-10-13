@@ -10,7 +10,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import { ApiClientError } from '@/lib/api';
 import { getAuthApiFeedback, normalizeAuthEmail, validateAuthEmail } from '@/lib/auth-form';
-import { syncTastePreferencesToAccount } from '@/lib/taste-preferences';
+import { needsTastePreferences, syncTastePreferencesToAccount } from '@/lib/taste-preferences';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 
@@ -58,26 +58,30 @@ export default function LoginPage() {
       }
     }
 
-    // Honour ?redirect= param from protected-route redirects (e.g. /dashboard/new) if role is authorized
-    const destination = redirectTo !== '/' ? redirectTo : pendingClaimDestination() || '/';
-    if (destination !== '/' && destination.startsWith('/') && !destination.startsWith('//') && !destination.includes('\\')) {
-      const isRestrictedAdmin = destination.startsWith('/admin') && targetUser?.role !== 'admin';
-      const isRestrictedDashboard = destination.startsWith('/dashboard') && !/^\/dashboard\/claims(?:\/|\?|$)/.test(destination) && targetUser?.role !== 'owner' && targetUser?.role !== 'admin';
+    // Honour protected-route destinations only when they are local and authorized.
+    const requestedDestination = redirectTo !== '/' ? redirectTo : pendingClaimDestination() || '/';
+    const isLocalDestination = requestedDestination.startsWith('/')
+      && !requestedDestination.startsWith('//') && !requestedDestination.includes('\\');
+    const isRestrictedAdmin = requestedDestination.startsWith('/admin') && targetUser?.role !== 'admin';
+    const isRestrictedDashboard = requestedDestination.startsWith('/dashboard')
+      && !/^\/dashboard\/claims(?:\/|\?|$)/.test(requestedDestination)
+      && targetUser?.role !== 'owner' && targetUser?.role !== 'admin';
+    const fallback = targetUser?.role === 'admin' ? '/admin' : targetUser?.role === 'owner' ? '/dashboard' : '/';
+    const destination = isLocalDestination && !isRestrictedAdmin && !isRestrictedDashboard
+      ? requestedDestination : fallback;
 
-      if (!isRestrictedAdmin && !isRestrictedDashboard) {
-        router.replace(destination);
-        return;
+    if (targetUser?.role === 'customer' && !destination.startsWith('/preferences')) {
+      try {
+        if (await needsTastePreferences(targetUser)) {
+          const returnTo = destination === '/' ? '' : `&returnTo=${encodeURIComponent(destination)}`;
+          router.replace(`/preferences?firstTime=true${returnTo}`);
+          return;
+        }
+      } catch {
+        // A temporary preferences read failure should not block sign-in.
       }
     }
-    if (targetUser?.role === 'admin') {
-      router.replace('/admin');
-      return;
-    }
-    if (targetUser?.role === 'owner') {
-      router.replace('/dashboard');
-    } else {
-      router.replace('/');
-    }
+    router.replace(destination);
   }, [user, redirectTo, showToast, router]);
 
 

@@ -21,6 +21,14 @@ const GOOGLE_CLIENT_ID = /^[\w-]+\.apps\.googleusercontent\.com$/.test(rawClient
 const REQUIRE_EMAIL_VERIFICATION = process.env.NODE_ENV === 'production'
   || process.env.NEXT_PUBLIC_REQUIRE_EMAIL_VERIFICATION === 'true';
 
+function allowedRedirect(value: string | null, role: string): string | null {
+  if (!value || !value.startsWith('/') || value.startsWith('//') || value.includes('\\')) return null;
+  if (value.startsWith('/admin') && role !== 'admin') return null;
+  if (value.startsWith('/dashboard') && !/^\/dashboard\/claims(?:\/|\?|$)/.test(value)
+    && role !== 'owner' && role !== 'admin') return null;
+  return value;
+}
+
 type PasswordStrength = 'weak' | 'fair' | 'strong' | 'very-strong';
 
 function getPasswordStrength(pw: string): PasswordStrength {
@@ -65,13 +73,14 @@ export default function RegisterPage() {
   useEffect(() => {
     if (user && !authLoading && !loading && !oauthLoading && !hasRegistered && !redirectedRef.current) {
       redirectedRef.current = true;
-      if (redirectTo && redirectTo !== '/' && redirectTo.startsWith('/')) {
-        const isRestrictedAdmin = redirectTo.startsWith('/admin') && user.role !== 'admin';
-        const isRestrictedDashboard = redirectTo.startsWith('/dashboard') && !/^\/dashboard\/claims(?:\/|\?|$)/.test(redirectTo) && user.role !== 'owner' && user.role !== 'admin';
-        if (!isRestrictedAdmin && !isRestrictedDashboard) {
-          router.replace(redirectTo);
-          return;
-        }
+      if (REQUIRE_EMAIL_VERIFICATION && !user.email_verified) {
+        router.replace('/verify-email-required');
+        return;
+      }
+      const destination = allowedRedirect(redirectTo, user.role);
+      if (destination && destination !== '/') {
+        router.replace(destination);
+        return;
       }
       if (user.role === 'owner') router.replace('/dashboard');
       else if (user.role === 'admin') router.replace('/admin');
@@ -109,21 +118,31 @@ export default function RegisterPage() {
       });
 
       if (REQUIRE_EMAIL_VERIFICATION) {
+        setHasRegistered(true);
         showToast('Account created! Please check your email to verify your account.', 'success');
-        router.push('/verify-email-required');
+        try {
+          await login(normalizedEmail, password);
+          router.push('/verify-email-required');
+        } catch {
+          router.push('/login');
+        }
       } else {
         setHasRegistered(true);
         try {
           const loggedInUser = await login(normalizedEmail, password);
           showToast('Account created successfully! Welcome to CordovaEats.', 'success');
 
-          if (redirectTo && redirectTo !== '/' && redirectTo.startsWith('/')) {
-            router.push(redirectTo);
+          const safeRedirect = allowedRedirect(redirectTo, loggedInUser.role);
+          if (loggedInUser.role === 'customer') {
+            const returnTo = safeRedirect && safeRedirect !== '/'
+              ? `&returnTo=${encodeURIComponent(safeRedirect)}` : '';
+            router.push(`/preferences?firstTime=true${returnTo}`);
+          } else if (safeRedirect) {
+            router.push(safeRedirect);
           } else if (loggedInUser.role === 'owner') {
             router.push('/dashboard/new');
           } else {
-            // Customer: immediately take them to preferences so they can set up their taste profile!
-            router.push('/preferences?firstTime=true');
+            router.push('/admin');
           }
         } catch {
           showToast('Account created successfully! You can now log in.', 'success');
@@ -148,12 +167,17 @@ export default function RegisterPage() {
   const handleOAuthSuccess = (authUserData: any) => {
     setHasRegistered(true);
     redirectedRef.current = true;
-    if (redirectTo && redirectTo !== '/' && redirectTo.startsWith('/')) {
-      router.push(redirectTo);
+    const safeRedirect = allowedRedirect(redirectTo, authUserData?.role || 'customer');
+    if (authUserData?.role !== 'owner' && authUserData?.role !== 'admin') {
+      const returnTo = safeRedirect && safeRedirect !== '/'
+        ? `&returnTo=${encodeURIComponent(safeRedirect)}` : '';
+      router.push(`/preferences?firstTime=true${returnTo}`);
+    } else if (safeRedirect) {
+      router.push(safeRedirect);
     } else if (authUserData?.role === 'owner') {
       router.push('/dashboard/new');
     } else {
-      router.push('/preferences?firstTime=true');
+      router.push('/admin');
     }
   };
 

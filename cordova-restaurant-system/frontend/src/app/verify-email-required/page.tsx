@@ -12,9 +12,17 @@ import { ApiClientError } from '@/lib/api';
 const REQUIRE_EMAIL_VERIFICATION = process.env.NODE_ENV === 'production'
   || process.env.NEXT_PUBLIC_REQUIRE_EMAIL_VERIFICATION === 'true';
 
+function destinationAfterVerification(role: string): string {
+  const claimDestination = pendingClaimDestination();
+  if (role === 'customer') {
+    return `/preferences?firstTime=true${claimDestination ? `&returnTo=${encodeURIComponent(claimDestination)}` : ''}`;
+  }
+  return claimDestination || (role === 'admin' ? '/admin' : '/dashboard/new');
+}
+
 export default function VerifyEmailRequiredPage() {
   const router = useRouter();
-  const { user, resendVerificationEmail, devVerifyEmail, logout } = useAuth();
+  const { user, loading: authLoading, resendVerificationEmail, devVerifyEmail, logout } = useAuth();
   const { showToast } = useToast();
 
   const [cooldown, setCooldown] = useState(0);
@@ -22,6 +30,7 @@ export default function VerifyEmailRequiredPage() {
   const [devVerifying, setDevVerifying] = useState(false);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user) {
       router.push('/login');
     } else if (user.role === 'admin') {
@@ -29,10 +38,10 @@ export default function VerifyEmailRequiredPage() {
     } else if (user.email_verified || !REQUIRE_EMAIL_VERIFICATION) {
       // If already verified or verification is disabled on localhost, allow browsing
       if (user.email_verified) {
-        router.push(pendingClaimDestination() || '/');
+        router.push(destinationAfterVerification(user.role));
       }
     }
-  }, [user, router]);
+  }, [user, authLoading, router]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -48,9 +57,9 @@ export default function VerifyEmailRequiredPage() {
     if (devVerifying) return;
     setDevVerifying(true);
     try {
-      await devVerifyEmail(user?.email);
+      const verifiedUser = await devVerifyEmail(user?.email);
       showToast('Account verified (Dev Mode)! Welcome to CordovaEats.', 'success');
-      router.push(pendingClaimDestination() || '/');
+      router.push(destinationAfterVerification(verifiedUser.role));
     } catch (err) {
       if (err instanceof ApiClientError) {
         showToast(err.message, 'error');

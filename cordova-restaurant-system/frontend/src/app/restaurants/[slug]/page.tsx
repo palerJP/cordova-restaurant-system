@@ -53,7 +53,7 @@ import type {
   RestaurantImage,
   Promotion,
 } from '@/lib/types';
-import { applyRestaurantCustomization, getStaticRestaurantBySlug } from '@/data/restaurants';
+import { applyRestaurantCustomization, getStaticRestaurantBySlug, hasOriginalRestaurantLogo } from '@/data/restaurants';
 import { useLiveReviewStats, refreshReviewStats } from '@/lib/live-review-stats';
 import { MCDONALDS_CATEGORIES, MCDONALDS_MENU_ITEMS } from '@/data/mcdonaldsMenu';
 import { PAPSY_CATEGORIES, PAPSY_MENU_ITEMS } from '@/data/papsyMenu';
@@ -836,6 +836,7 @@ export default function RestaurantDetailPage() {
     restaurant.cover_image_url.trim() !== ''
       ? restaurant.cover_image_url
       : fallbackHeroImage;
+  const showOriginalLogo = !heroImgError && hasOriginalRestaurantLogo(restaurant.slug);
 
   return (
     <div className="min-h-screen bg-cordova-cream dark:bg-[#121614] pb-24 relative overflow-hidden">
@@ -852,7 +853,9 @@ export default function RestaurantDetailPage() {
           priority
           unoptimized
           onError={() => setHeroImgError(true)}
-          className="object-cover object-center opacity-85 scale-[1.02] transition-transform duration-1000"
+          className={showOriginalLogo
+            ? 'object-contain object-center opacity-85 transition-transform duration-1000'
+            : 'object-cover object-center opacity-85 scale-[1.02] transition-transform duration-1000'}
         />
 
         {/* Ambient Dark Gradient Overlay for Maximum Text Clarity */}
@@ -1083,7 +1086,7 @@ export default function RestaurantDetailPage() {
                         src={restaurant.cover_image_url || '/hero_background.png'}
                         alt={restaurant.name}
                         fill
-                        className="object-cover"
+                        className={hasOriginalRestaurantLogo(restaurant.slug) ? 'object-contain bg-white' : 'object-cover'}
                       />
                     </div>
                   </div>

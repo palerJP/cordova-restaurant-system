@@ -10,6 +10,7 @@ import {
 import Link from 'next/link';
 import { MapPin, Navigation, ExternalLink, Star } from 'lucide-react';
 import type { Restaurant } from '@/lib/types';
+import { applyRestaurantCustomization, hasOriginalRestaurantLogo } from '@/data/restaurants';
 import { Skeleton } from './ui/Skeleton';
 
 // Cordova, Cebu approximate geographical center
@@ -221,7 +222,7 @@ function MapViewContent({
               key={r.id}
               position={{ lat: r.latitude, lng: r.longitude }}
               title={r.name}
-              onClick={() => setSelectedRestaurant(r)}
+              onClick={() => setSelectedRestaurant(applyRestaurantCustomization(r))}
             />
           ))}
 
@@ -257,7 +258,9 @@ function MapViewContent({
                     <img
                       src={selectedRestaurant.cover_image_url}
                       alt={selectedRestaurant.name}
-                      className="w-full h-full object-cover"
+                      className={hasOriginalRestaurantLogo(selectedRestaurant.slug)
+                        ? 'w-full h-full object-contain bg-white'
+                        : 'w-full h-full object-cover'}
                     />
                   </div>
                 )}

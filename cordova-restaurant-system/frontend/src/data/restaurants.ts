@@ -552,9 +552,26 @@ export function isRestaurantVisible(restaurant: Restaurant): boolean {
   return true;
 }
 
+const ORIGINAL_LOGO_SLUGS = new Set([
+  'horizon-bean-cafe',
+  'barracks-grill-and-resto-bar',
+  'rca-bilao-food-station',
+]);
+
+export function hasOriginalRestaurantLogo(slug: string): boolean {
+  return ORIGINAL_LOGO_SLUGS.has(slug);
+}
+
 export function applyRestaurantCustomization(restaurant: Restaurant): Restaurant {
   if (!restaurant) return restaurant;
-  if (!restaurant.id?.startsWith('static-')) return restaurant;
+  if (!restaurant.id?.startsWith('static-')) {
+    // The database still has old stock covers for these verified businesses.
+    // Use the original brand images in cards, search, and restaurant details.
+    const logo = ORIGINAL_LOGO_SLUGS.has(restaurant.slug)
+      ? RESTAURANT_CUSTOMIZATIONS[restaurant.slug]?.coverImage
+      : null;
+    return logo ? { ...restaurant, cover_image_url: logo } : restaurant;
+  }
   const custom = getRestaurantCustomization(restaurant);
   if (!custom) {
     return {
