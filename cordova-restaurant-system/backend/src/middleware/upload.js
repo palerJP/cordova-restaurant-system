@@ -88,7 +88,10 @@ function limitUploadRequest(req, res, next) {
   return next();
 }
 
+const uploadCommunityPhoto = multer({ storage: storage('restaurant-images'), fileFilter: fileFilterFor(IMAGE_TYPES), limits: { fileSize: 3 * 1024 * 1024, files: 1, fields: 1 } });
+
 module.exports = {
+  uploadCommunityPhoto,
   uploadRestaurantImage,
   uploadAvatar,
   uploadBusinessCreation,

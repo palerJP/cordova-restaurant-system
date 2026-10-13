@@ -41,6 +41,7 @@ import { api, ApiClientError } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import { ReportReview } from '@/components/ReportReview';
+import { EstablishmentGallery } from '@/components/EstablishmentGallery';
 import { ReviewActions } from '@/components/ReviewActions';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { MapViewClient } from '@/components/MapViewClient';
@@ -198,7 +199,7 @@ export default function RestaurantDetailPage() {
   const [activePromotions, setActivePromotions] = useState<Promotion[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'menu' | 'map' | 'reviews'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'menu' | 'map' | 'reviews' | 'gallery'>('overview');
 
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
@@ -999,8 +1000,8 @@ export default function RestaurantDetailPage() {
 
           {/* TAB NAVIGATION HEADER */}
           <div className="border-t-2 border-cordova-green dark:border-emerald-500 border-b border-stone-200/80 dark:border-white/10 bg-white/50 dark:bg-white/[0.02]">
-            <div className="grid grid-cols-4 text-center">
-              {(['overview', 'menu', 'map', 'reviews'] as const).map((tab) => {
+            <div className="grid grid-cols-5 text-center">
+              {(['overview', 'menu', 'gallery', 'map', 'reviews'] as const).map((tab) => {
                 const isActive = activeTab === tab;
                 return (
                   <button
@@ -1057,35 +1058,12 @@ export default function RestaurantDetailPage() {
 
 
 
-                {/* Gallery Section */}
-                <div>
-                  <h3 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900 dark:text-white mb-6">
-                    Gallery
-                  </h3>
-                  {allPhotos.length === 0 ? (
-                    <div className="text-center py-12 text-stone-400">
-                      <ImageOff size={32} className="mx-auto mb-2 opacity-60" />
-                      <p className="text-xs">No gallery photos uploaded yet.</p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
-                      {allPhotos.map((img, i) => (
-                        <div
-                          key={img.id || i}
-                          className="relative h-48 sm:h-56 rounded-2xl overflow-hidden bg-stone-100 dark:bg-stone-800 shadow-spatial-sm border border-stone-200/60 dark:border-stone-800/60 group"
-                        >
-                          <Image
-                            src={img.image_url}
-                            alt={`${restaurant.name} gallery photo`}
-                            fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+
               </div>
+            )}
+
+            {activeTab === 'gallery' && (
+              <EstablishmentGallery restaurant={restaurant} photos={gallery} onChange={setGallery} />
             )}
 
             {/* MENU TAB */}

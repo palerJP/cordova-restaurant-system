@@ -2,21 +2,23 @@ const { query } = require('../config/db');
 
 async function listForRestaurant(restaurantId) {
   const { rows } = await query(
-    `SELECT * FROM restaurant_images WHERE restaurant_id = $1 ORDER BY sort_order, created_at`,
+    `SELECT ri.*, u.full_name AS uploader_name FROM restaurant_images ri
+     LEFT JOIN users u ON u.id=ri.uploaded_by
+     WHERE ri.restaurant_id = $1 ORDER BY ri.created_at DESC, ri.sort_order`,
     [restaurantId]
   );
   return rows;
 }
 
-async function add(restaurantId, imageUrl) {
+async function add(restaurantId, imageUrl, { uploadedBy = null, caption = '' } = {}) {
   const { rows: countRows } = await query(
     `SELECT COUNT(*) FROM restaurant_images WHERE restaurant_id = $1`,
     [restaurantId]
   );
   const sortOrder = parseInt(countRows[0].count, 10);
   const { rows } = await query(
-    `INSERT INTO restaurant_images (restaurant_id, image_url, sort_order) VALUES ($1,$2,$3) RETURNING *`,
-    [restaurantId, imageUrl, sortOrder]
+    `INSERT INTO restaurant_images (restaurant_id, image_url, sort_order, uploaded_by, caption) VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+    [restaurantId, imageUrl, sortOrder, uploadedBy, caption]
   );
   return rows[0];
 }

@@ -3,7 +3,7 @@ const path = require('node:path');
 const fs = require('node:fs');
 const crypto = require('node:crypto');
 const { Readable } = require('node:stream');
-const { put, get } = require('@vercel/blob');
+const { put, get, del } = require('@vercel/blob');
 const env = require('../config/env');
 const ApiError = require('../utils/apiError');
 const logger = require('../utils/logger');
@@ -126,4 +126,16 @@ async function openPrivatePermit(reference) {
   return { stream: Readable.fromWeb(result.stream), contentType: result.blob.contentType };
 }
 
-module.exports = { processImage, publicUrlFor, privateUrlFor, openPrivatePermit };
+async function removeGalleryPhoto(imageUrl) {
+  if (/^\/uploads\/restaurant-images\/[a-zA-Z0-9._-]+$/.test(imageUrl || '')) {
+    await fs.promises.unlink(path.join(PUBLIC_UPLOADS, imageUrl.slice('/uploads/'.length))).catch(() => {});
+    return;
+  }
+  let url;
+  try { url = new URL(imageUrl); } catch { return; }
+  if (url.protocol !== 'https:' || !url.hostname.endsWith('.public.blob.vercel-storage.com')
+      || !/^\/restaurant-images\/[a-zA-Z0-9._-]+$/.test(url.pathname)) return;
+  await del(imageUrl, { token: env.upload.publicBlobToken });
+}
+
+module.exports = { removeGalleryPhoto, processImage, publicUrlFor, privateUrlFor, openPrivatePermit };

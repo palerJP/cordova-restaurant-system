@@ -1,0 +1,40 @@
+const express = require('express');
+const request = require('supertest');
+jest.mock('../../src/config/db', () => ({ query: jest.fn() }));
+jest.mock('../../src/models/restaurantImage.model', () => ({ add: jest.fn(), remove: jest.fn() }));
+jest.mock('../../src/services/upload.service', () => ({ processImage: jest.fn(), publicUrlFor: jest.fn(), removeGalleryPhoto: jest.fn().mockResolvedValue() }));
+jest.mock('node:fs/promises', () => ({ unlink: jest.fn().mockResolvedValue() }));
+jest.mock('sharp', () => jest.fn());
+const { query } = require('../../src/config/db');
+const images = require('../../src/models/restaurantImage.model');
+const uploads = require('../../src/services/upload.service');
+const sharp = require('sharp');
+const controller = require('../../src/controllers/communityGallery.controller');
+const restaurantId = '11111111-1111-4111-8111-111111111111';
+const imageId = '22222222-2222-4222-8222-222222222222';
+const app = express(); app.use(express.json());
+app.use((req,res,next) => {req.user={id:'customer',role:'customer',fullName:'Guest'}; if(req.body.file)req.file={path:'/tmp/test-image.png',mimetype:'image/png'}; next();});
+app.post('/:restaurantId/photos', controller.requireActive, controller.post);
+app.delete('/:restaurantId/photos/:imageId', controller.requireActive, controller.remove);
+app.use((err,req,res,next) => res.status(err.statusCode || 500).json({ message:err.message }));
+beforeEach(() => {
+ jest.clearAllMocks();
+ query.mockResolvedValue({rows:[{id:restaurantId,owner_id:'owner'}]});
+ sharp.mockReturnValue({stats:jest.fn().mockResolvedValue({})});
+ uploads.processImage.mockResolvedValue({path:'/tmp/test-image.webp'});
+ uploads.publicUrlFor.mockResolvedValue('/uploads/restaurant-images/test-image.webp');
+ images.add.mockResolvedValue({id:imageId});
+});
+test('customer posts publicly with server-controlled attribution and trimmed caption', async () => {
+ const r=await request(app).post(`/${restaurantId}/photos`).send({file:true,caption:' Nice food ',uploadedBy:'other-user'});
+ expect(r.status).toBe(201);expect(images.add).toHaveBeenCalledWith(restaurantId,'/uploads/restaurant-images/test-image.webp',{uploadedBy:'customer',caption:'Nice food'});expect(r.body.data.image.uploader_name).toBe('Guest');
+});
+test('inactive or unverified establishments reject posting before processing a file', async () => {
+ query.mockResolvedValueOnce({rows:[]});const r=await request(app).post(`/${restaurantId}/photos`).send({file:true});expect(r.status).toBe(404);expect(uploads.processImage).not.toHaveBeenCalled();
+});
+test('invalid pixels never reach storage',async()=>{sharp.mockReturnValue({stats:jest.fn().mockRejectedValue(new Error('invalid'))});const r=await request(app).post(`/${restaurantId}/photos`).send({file:true});expect(r.status).toBe(400);expect(uploads.publicUrlFor).not.toHaveBeenCalled();});
+test('long captions are rejected without publishing',async()=>{const r=await request(app).post(`/${restaurantId}/photos`).send({file:true,caption:'x'.repeat(281)});expect(r.status).toBe(400);expect(images.add).not.toHaveBeenCalled();});
+test('another customer cannot delete a photo',async()=>{query.mockResolvedValueOnce({rows:[{id:restaurantId,owner_id:'owner'}]}).mockResolvedValueOnce({rows:[{id:imageId,uploaded_by:'someone-else'}]});const r=await request(app).delete(`/${restaurantId}/photos/${imageId}`);expect(r.status).toBe(403);expect(images.remove).not.toHaveBeenCalled();});
+test('uploader can remove their own photo',async()=>{query.mockResolvedValueOnce({rows:[{id:restaurantId,owner_id:'owner'}]}).mockResolvedValueOnce({rows:[{id:imageId,uploaded_by:'customer'}]});const r=await request(app).delete(`/${restaurantId}/photos/${imageId}`);expect(r.status).toBe(200);expect(images.remove).toHaveBeenCalledWith(imageId,restaurantId);});
+test('cross-establishment photo IDs are not found',async()=>{query.mockResolvedValueOnce({rows:[{id:restaurantId,owner_id:'owner'}]}).mockResolvedValueOnce({rows:[]});const r=await request(app).delete(`/${restaurantId}/photos/${imageId}`);expect(r.status).toBe(404);expect(images.remove).not.toHaveBeenCalled();});
+test('invalid identifiers never reach the database',async()=>{const r=await request(app).post('/invalid/photos').send({file:true});expect(r.status).toBe(400);expect(query).not.toHaveBeenCalled();});

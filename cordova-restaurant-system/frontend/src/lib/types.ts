@@ -80,6 +80,10 @@ export interface RestaurantImage {
   image_url: string;
   is_cover: boolean;
   sort_order: number;
+  uploaded_by?: string | null;
+  uploader_name?: string | null;
+  caption?: string;
+  created_at?: string;
 }
 
 export interface Attraction {
