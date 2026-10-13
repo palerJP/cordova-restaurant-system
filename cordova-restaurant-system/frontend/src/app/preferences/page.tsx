@@ -85,11 +85,13 @@ export default function PreferencesPage() {
         return;
       }
 
-      if (guestPreferences) {
+      if (guestPreferences && (!guestPreferences.syncedUserId || guestPreferences.syncedUserId === user.id)) {
         setSelectedCuisines(guestPreferences.preferredCuisines);
         setSelectedDietary(guestPreferences.dietaryRestrictions);
         setSelectedServices(guestPreferences.preferredServices);
         setSelectedBudget(guestPreferences.budgetRange);
+      } else if (guestPreferences?.syncedUserId) {
+        clearTastePreferences();
       }
 
       try {
@@ -306,13 +308,15 @@ export default function PreferencesPage() {
                 {loading ? 'Saving...' : isFirstTime ? 'Save tastes & continue' : 'Save Preferences'}
               </button>
 
-              <button
-                type="button"
-                onClick={() => router.push(returnTo)}
-                className="w-full bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 font-semibold py-3 px-6 rounded-2xl text-xs transition-colors"
-              >
-                {isFirstTime ? 'Skip for now' : 'Back to Home'}
-              </button>
+              {!isFirstTime && (
+                <button
+                  type="button"
+                  onClick={() => router.push(returnTo)}
+                  className="w-full bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 font-semibold py-3 px-6 rounded-2xl text-xs transition-colors"
+                >
+                  Back to Home
+                </button>
+              )}
             </div>
           </form>
         )}

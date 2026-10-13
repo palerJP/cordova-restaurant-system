@@ -1,17 +1,22 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { CheckCircle2, AlertTriangle, ArrowRight, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { ApiClientError } from '@/lib/api';
 import { pendingClaimDestination } from '@/lib/claims';
+import { destinationAfterEmailVerification } from '@/lib/onboarding';
+import type { User } from '@/lib/types';
+
+// The verification token is single-use. Share its request across effect replays
+// and an auth-provider remount while the session is loading.
+const verificationRequests = new Map<string, Promise<User>>();
 
 export default function VerifyEmailPage() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const { verifyEmail } = useAuth();
 
   const token = searchParams.get('token');
@@ -32,15 +37,21 @@ export default function VerifyEmailPage() {
 
     async function executeVerification() {
       try {
-        const verifiedUser = await verifyEmail(token as string);
+        let request = verificationRequests.get(token as string);
+        if (!request) {
+          request = verifyEmail(token as string);
+          verificationRequests.set(token as string, request);
+        }
+        const verifiedUser = await request;
         if (isMounted) {
-          const claimDestination = pendingClaimDestination();
-          const destination = verifiedUser?.role === 'customer'
-            ? `/preferences?firstTime=true${claimDestination ? `&returnTo=${encodeURIComponent(claimDestination)}` : ''}`
-            : claimDestination || (verifiedUser?.role === 'owner' ? '/dashboard/new' : '/');
-          setContinueHref(`/login?redirect=${encodeURIComponent(destination)}`);
+          const destination = destinationAfterEmailVerification(verifiedUser.role, pendingClaimDestination());
+          const nextPage = `/login?redirect=${encodeURIComponent(destination)}`;
+          setContinueHref(nextPage);
           setSuccess(true);
           setLoading(false);
+          // Reload the session so an already signed-in, previously unverified
+          // account picks up its new verified status before routing onward.
+          window.location.replace(nextPage);
         }
       } catch (err) {
         if (isMounted) {

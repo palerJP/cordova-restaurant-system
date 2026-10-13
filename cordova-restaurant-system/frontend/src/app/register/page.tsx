@@ -11,6 +11,7 @@ import { ApiClientError } from '@/lib/api';
 import { getAuthApiFeedback, normalizeAuthEmail, validateAuthEmail, validateRegistrationPassword } from '@/lib/auth-form';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { preferencesOnboardingDestination } from '@/lib/onboarding';
 
 const rawClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_ID = /^[\w-]+\.apps\.googleusercontent\.com$/.test(rawClientId.trim())
@@ -133,14 +134,10 @@ export default function RegisterPage() {
           showToast('Account created successfully! Welcome to CordovaEats.', 'success');
 
           const safeRedirect = allowedRedirect(redirectTo, loggedInUser.role);
-          if (loggedInUser.role === 'customer') {
-            const returnTo = safeRedirect && safeRedirect !== '/'
-              ? `&returnTo=${encodeURIComponent(safeRedirect)}` : '';
-            router.push(`/preferences?firstTime=true${returnTo}`);
+          if (loggedInUser.role !== 'admin') {
+            router.push(preferencesOnboardingDestination(safeRedirect));
           } else if (safeRedirect) {
             router.push(safeRedirect);
-          } else if (loggedInUser.role === 'owner') {
-            router.push('/dashboard/new');
           } else {
             router.push('/admin');
           }
@@ -168,14 +165,10 @@ export default function RegisterPage() {
     setHasRegistered(true);
     redirectedRef.current = true;
     const safeRedirect = allowedRedirect(redirectTo, authUserData?.role || 'customer');
-    if (authUserData?.role !== 'owner' && authUserData?.role !== 'admin') {
-      const returnTo = safeRedirect && safeRedirect !== '/'
-        ? `&returnTo=${encodeURIComponent(safeRedirect)}` : '';
-      router.push(`/preferences?firstTime=true${returnTo}`);
+    if (authUserData?.role !== 'admin') {
+      router.push(preferencesOnboardingDestination(safeRedirect));
     } else if (safeRedirect) {
       router.push(safeRedirect);
-    } else if (authUserData?.role === 'owner') {
-      router.push('/dashboard/new');
     } else {
       router.push('/admin');
     }

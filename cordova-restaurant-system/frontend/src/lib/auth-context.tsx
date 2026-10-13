@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useRef, useState, useCallback, ReactNode, Fragment } from 'react';
-import { api, API_URL, getAccessToken, setAccessToken, onSessionExpired, ApiClientError } from './api';
+import { api, API_URL, setAccessToken, onSessionExpired, ApiClientError } from './api';
 import type { User } from './types';
 import { setActivityAccount } from './activity-history';
 import { clearTastePreferences, getTastePreferences } from './taste-preferences';
@@ -143,13 +143,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [setUser]);
 
   const verifyEmail = useCallback(async (token: string) => {
-    const revision = sessionRevision.current;
     const res = await api.post('/api/auth/verify-email', { token }, { auth: false });
-    if (res.data?.user && getAccessToken() && revision === sessionRevision.current) {
-      setUser(res.data.user);
-    }
+    // Verification is followed by a fresh session load. Updating the user here
+    // can remount this one-time-token page before it finishes routing.
     return res.data?.user as User;
-  }, [setUser]);
+  }, []);
 
   const devVerifyEmail = useCallback(async (email?: string) => {
     const revision = sessionRevision.current;

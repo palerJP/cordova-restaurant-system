@@ -11,6 +11,7 @@ import { useToast } from '@/lib/toast-context';
 import { ApiClientError } from '@/lib/api';
 import { getAuthApiFeedback, normalizeAuthEmail, validateAuthEmail } from '@/lib/auth-form';
 import { needsTastePreferences, syncTastePreferencesToAccount } from '@/lib/taste-preferences';
+import { preferencesOnboardingDestination } from '@/lib/onboarding';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 
@@ -70,15 +71,16 @@ export default function LoginPage() {
     const destination = isLocalDestination && !isRestrictedAdmin && !isRestrictedDashboard
       ? requestedDestination : fallback;
 
-    if (targetUser?.role === 'customer' && !destination.startsWith('/preferences')) {
+    if (targetUser && targetUser.role !== 'admin' && !destination.startsWith('/preferences')) {
       try {
         if (await needsTastePreferences(targetUser)) {
-          const returnTo = destination === '/' ? '' : `&returnTo=${encodeURIComponent(destination)}`;
-          router.replace(`/preferences?firstTime=true${returnTo}`);
+          router.replace(preferencesOnboardingDestination(destination));
           return;
         }
       } catch {
-        // A temporary preferences read failure should not block sign-in.
+        // Offer onboarding if the preferences service cannot confirm it was completed.
+        router.replace(preferencesOnboardingDestination(destination));
+        return;
       }
     }
     router.replace(destination);
