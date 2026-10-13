@@ -41,6 +41,7 @@ import { api, ApiClientError } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import { ReportReview } from '@/components/ReportReview';
+import { EstablishmentGallery } from '@/components/EstablishmentGallery';
 import { ReviewActions } from '@/components/ReviewActions';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { MapViewClient } from '@/components/MapViewClient';
@@ -564,42 +565,8 @@ export default function RestaurantDetailPage() {
           setCategories(SUNGKA_CATEGORIES.map(c => ({ ...c, restaurant_id: found.id })));
           setItems(SUNGKA_MENU_ITEMS.map(i => ({ ...i, restaurant_id: found.id })));
         } else {
-          setCategories(menu.data?.categories?.length ? menu.data.categories : [
-            { id: 'cat-1', restaurant_id: found.id, name: 'House Specialties', sort_order: 1 },
-            { id: 'cat-2', restaurant_id: found.id, name: 'Beverages & Desserts', sort_order: 2 },
-          ]);
-          setItems(menu.data?.items?.length ? menu.data.items : [
-            {
-              id: 'item-1',
-              restaurant_id: found.id,
-              category_id: 'cat-1',
-              name: `${customFound.name} Signature Platter`,
-              description: 'Fresh local dish prepared with authentic flavors and traditional island ingredients.',
-              price: 220,
-              is_available: true,
-              dietary_tags: [],
-            },
-            {
-              id: 'item-2',
-              restaurant_id: found.id,
-              category_id: 'cat-1',
-              name: 'Special House Recipe',
-              description: 'Daily selection of grilled or cooked specialty.',
-              price: 180,
-              is_available: true,
-              dietary_tags: [],
-            },
-            {
-              id: 'item-3',
-              restaurant_id: found.id,
-              category_id: 'cat-2',
-              name: 'Iced Island Refreshment',
-              description: 'Chilled signature house beverage.',
-              price: 75,
-              is_available: true,
-              dietary_tags: ['vegetarian'],
-            }
-          ]);
+          setCategories(menu.data?.categories || []);
+          setItems(menu.data?.items || []);
         }
         setHours(hoursRes.data?.length ? hoursRes.data : [0, 1, 2, 3, 4, 5, 6].map(d => ({
           day_of_week: d,
@@ -1091,34 +1058,8 @@ export default function RestaurantDetailPage() {
 
 
 
-                {/* Gallery Section */}
-                <div>
-                  <h3 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900 dark:text-white mb-6">
-                    Gallery
-                  </h3>
-                  {allPhotos.length === 0 ? (
-                    <div className="text-center py-12 text-stone-400">
-                      <ImageOff size={32} className="mx-auto mb-2 opacity-60" />
-                      <p className="text-xs">No gallery photos uploaded yet.</p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
-                      {allPhotos.map((img, i) => (
-                        <div
-                          key={img.id || i}
-                          className="relative h-48 sm:h-56 rounded-2xl overflow-hidden bg-stone-100 dark:bg-stone-800 shadow-spatial-sm border border-stone-200/60 dark:border-stone-800/60 group"
-                        >
-                          <Image
-                            src={img.image_url}
-                            alt={`${restaurant.name} gallery photo`}
-                            fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+
+                <EstablishmentGallery restaurant={restaurant} photos={gallery} onChange={setGallery} />
               </div>
             )}
 

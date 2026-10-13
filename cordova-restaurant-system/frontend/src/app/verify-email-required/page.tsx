@@ -1,5 +1,5 @@
 'use client';
-import { pendingClaimDestination } from '@/lib/claims';
+import { postAuthDestination } from '@/lib/auth-routing';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -14,7 +14,7 @@ const REQUIRE_EMAIL_VERIFICATION = process.env.NODE_ENV === 'production'
 
 export default function VerifyEmailRequiredPage() {
   const router = useRouter();
-  const { user, resendVerificationEmail, devVerifyEmail, logout } = useAuth();
+  const { user, loading: authLoading, refreshUser, resendVerificationEmail, devVerifyEmail, logout } = useAuth();
   const { showToast } = useToast();
 
   const [cooldown, setCooldown] = useState(0);
@@ -22,17 +22,22 @@ export default function VerifyEmailRequiredPage() {
   const [devVerifying, setDevVerifying] = useState(false);
 
   useEffect(() => {
-    if (!user) {
-      router.push('/login');
-    } else if (user.role === 'admin') {
-      router.push('/admin');
-    } else if (user.email_verified || !REQUIRE_EMAIL_VERIFICATION) {
-      // If already verified or verification is disabled on localhost, allow browsing
-      if (user.email_verified) {
-        router.push(pendingClaimDestination() || '/');
-      }
-    }
-  }, [user, router]);
+    if (authLoading) return;
+    if (!user) router.replace('/login');
+    else if (user.role === 'admin' || user.email_verified) router.replace(postAuthDestination(user));
+  }, [authLoading, user, router]);
+
+  // The verification link may be opened in another tab. Refresh on return.
+  useEffect(() => {
+    if (!user || user.email_verified) return;
+    const refresh = () => { if (document.visibilityState === 'visible') void refreshUser(); };
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', refresh);
+    };
+  }, [user, refreshUser]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -48,9 +53,9 @@ export default function VerifyEmailRequiredPage() {
     if (devVerifying) return;
     setDevVerifying(true);
     try {
-      await devVerifyEmail(user?.email);
+      const verifiedUser = await devVerifyEmail(user?.email);
       showToast('Account verified (Dev Mode)! Welcome to CordovaEats.', 'success');
-      router.push(pendingClaimDestination() || '/');
+      router.replace(postAuthDestination(verifiedUser));
     } catch (err) {
       if (err instanceof ApiClientError) {
         showToast(err.message, 'error');

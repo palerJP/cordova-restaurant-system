@@ -375,9 +375,8 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Merge API items with curated default items if API items are sparse
+  // Display only supplied menu data; missing photos and menus stay empty.
   const allMenuItems = useMemo(() => {
-    if (items.length >= 4 || (isSuppliedMenu && items.length > 0)) {
       return items.map((it) => ({
         id: it.id,
         name: it.name,
@@ -386,56 +385,20 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
         priceLabel: it.price_label || '',
         startingPrice: it.description?.startsWith('Starting price') || false,
         priceUnit: isBurandat ? getBurandatPriceUnit(it) : '',
-        description: isBurandat || isCascadja ? '' : it.description || (isRca || isMavericks || isEatNRepeat || isEntoys ? '' : 'Crafted fresh with traditional Cordova flavors.'),
-        image: it.image_url || (isEatNRepeat || isEntoys ? '' : defaultData.heroDish.image),
+        description: it.description || '',
+        image: it.image_url || '',
         tag: isMavericks && hasMavericksFoundationCoffeePhoto(it, categories)
           ? 'Representative photo'
           : isCascadja && CASCADJA_REPRESENTATIVE_IMAGES.get(it.name) === it.image_url
           ? 'Representative photo'
-          : isSuppliedMenu ? '' : '✨ Chef Special',
+          : '',
         photoAttribution: isCascadja && CASCADJA_IMAGE_ATTRIBUTIONS.get(it.name)?.imageUrl === it.image_url
           ? CASCADJA_IMAGE_ATTRIBUTIONS.get(it.name)
           : undefined,
         popular: true,
       }));
-    }
 
-    // Combine any existing with default items
-    const defaults = defaultData.menuItems.map((it, idx) => ({
-      id: `curated-${idx}`,
-      priceLabel: '',
-      startingPrice: false,
-      priceUnit: '',
-      photoAttribution: undefined,
-      ...it,
-    }));
-
-    if (items.length > 0) {
-      const customOnes = items.map((it) => ({
-        id: it.id,
-        name: it.name,
-        category: categories.find((c) => c.id === it.category_id)?.name || 'House Specialties',
-        price: Number(it.price),
-        priceLabel: it.price_label || '',
-        startingPrice: it.description?.startsWith('Starting price') || false,
-        priceUnit: isBurandat ? getBurandatPriceUnit(it) : '',
-        description: isBurandat || isCascadja ? '' : it.description || (isRca || isMavericks || isEatNRepeat || isEntoys ? '' : 'Special house recipe prepared daily.'),
-        image: it.image_url || (isEatNRepeat || isEntoys ? '' : defaultData.heroDish.image),
-        tag: isMavericks && hasMavericksFoundationCoffeePhoto(it, categories)
-          ? 'Representative photo'
-          : isCascadja && CASCADJA_REPRESENTATIVE_IMAGES.get(it.name) === it.image_url
-          ? 'Representative photo'
-          : isSuppliedMenu ? '' : '⭐ Signature',
-        photoAttribution: isCascadja && CASCADJA_IMAGE_ATTRIBUTIONS.get(it.name)?.imageUrl === it.image_url
-          ? CASCADJA_IMAGE_ATTRIBUTIONS.get(it.name)
-          : undefined,
-        popular: true,
-      }));
-      return [...customOnes, ...defaults];
-    }
-
-    return defaults;
-  }, [items, categories, defaultData, isRca, isBurandat, isCascadja, isMavericks, isEatNRepeat, isEntoys, isSuppliedMenu]);
+  }, [items, categories, isBurandat, isCascadja, isMavericks]);
 
   // List of unique categories for tabs
   const categoryTabs = useMemo(() => {
@@ -460,6 +423,12 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
 
   return (
     <div className="space-y-8">
+      {restaurant.slug === '10000-roses-cafe-and-more' && (
+        <p className="text-sm text-stone-600 dark:text-stone-400">
+          Menu and prices from branded menu photos dated February 21, 2026. Promotions and availability may change.{' '}
+          <a href="https://restaurantguru.com/10000-Roses-Cafe-and-More-Cordova/menu" target="_blank" rel="noopener noreferrer" className="underline">View menu source</a>
+        </p>
+      )}
       {/* 🍴 CATEGORIZED MENU BROWSER */}
       <section className="space-y-8">
         {/* Eat-All-You-Can Top Announcement Banner for Tita Kim's */}

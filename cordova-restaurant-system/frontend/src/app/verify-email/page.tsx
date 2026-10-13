@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { CheckCircle2, AlertTriangle, ArrowRight, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { ApiClientError } from '@/lib/api';
+import { postAuthDestination } from '@/lib/auth-routing';
 
 export default function VerifyEmailPage() {
   const searchParams = useSearchParams();
@@ -30,10 +31,11 @@ export default function VerifyEmailPage() {
 
     async function executeVerification() {
       try {
-        await verifyEmail(token as string);
+        const verifiedUser = await verifyEmail(token as string);
         if (isMounted) {
           setSuccess(true);
           setLoading(false);
+          router.replace(postAuthDestination(verifiedUser));
         }
       } catch (err) {
         if (isMounted) {
@@ -53,7 +55,7 @@ export default function VerifyEmailPage() {
     return () => {
       isMounted = false;
     };
-  }, [token, verifyEmail]);
+  }, [token, verifyEmail, router]);
 
   return (
     <div className="min-h-screen bg-cordova-cream dark:bg-[#121614] flex items-center justify-center p-4">

@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Eye, EyeOff, CheckCircle2, XCircle } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
+import { postAuthDestination } from '@/lib/auth-routing';
 import { useToast } from '@/lib/toast-context';
 import { ApiClientError } from '@/lib/api';
 import { getAuthApiFeedback, normalizeAuthEmail, validateAuthEmail, validateRegistrationPassword } from '@/lib/auth-form';
@@ -18,8 +19,6 @@ const GOOGLE_CLIENT_ID = /^[\w-]+\.apps\.googleusercontent\.com$/.test(rawClient
   ? rawClientId.trim()
   : null;
 
-const REQUIRE_EMAIL_VERIFICATION = process.env.NODE_ENV === 'production'
-  || process.env.NEXT_PUBLIC_REQUIRE_EMAIL_VERIFICATION === 'true';
 
 type PasswordStrength = 'weak' | 'fair' | 'strong' | 'very-strong';
 
@@ -40,7 +39,7 @@ const strengthConfig: Record<PasswordStrength, { label: string; color: string; w
 };
 
 export default function RegisterPage() {
-  const { user, loading: authLoading, register, login, loginWithGoogle } = useAuth();
+  const { user, loading: authLoading, register, loginWithGoogle } = useAuth();
   const { showToast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -65,6 +64,10 @@ export default function RegisterPage() {
   useEffect(() => {
     if (user && !authLoading && !loading && !oauthLoading && !hasRegistered && !redirectedRef.current) {
       redirectedRef.current = true;
+      if (user.role !== 'admin' && (!user.email_verified || user.onboarding_required)) {
+        router.replace(postAuthDestination(user));
+        return;
+      }
       if (redirectTo && redirectTo !== '/' && redirectTo.startsWith('/')) {
         const isRestrictedAdmin = redirectTo.startsWith('/admin') && user.role !== 'admin';
         const isRestrictedDashboard = redirectTo.startsWith('/dashboard') && !/^\/dashboard\/claims(?:\/|\?|$)/.test(redirectTo) && user.role !== 'owner' && user.role !== 'admin';
@@ -108,28 +111,9 @@ export default function RegisterPage() {
         acceptsMarketing,
       });
 
-      if (REQUIRE_EMAIL_VERIFICATION) {
-        showToast('Account created! Please check your email to verify your account.', 'success');
-        router.push('/verify-email-required');
-      } else {
-        setHasRegistered(true);
-        try {
-          const loggedInUser = await login(normalizedEmail, password);
-          showToast('Account created successfully! Welcome to CordovaEats.', 'success');
-
-          if (redirectTo && redirectTo !== '/' && redirectTo.startsWith('/')) {
-            router.push(redirectTo);
-          } else if (loggedInUser.role === 'owner') {
-            router.push('/dashboard/new');
-          } else {
-            // Customer: immediately take them to preferences so they can set up their taste profile!
-            router.push('/preferences?firstTime=true');
-          }
-        } catch {
-          showToast('Account created successfully! You can now log in.', 'success');
-          router.push('/login');
-        }
-      }
+      setHasRegistered(true);
+      showToast('Account created! Please check your email to verify your account.', 'success');
+      router.replace('/verify-email-required');
     } catch (err) {
       if (err instanceof ApiClientError) {
         const feedback = getAuthApiFeedback(err, {
@@ -148,13 +132,7 @@ export default function RegisterPage() {
   const handleOAuthSuccess = (authUserData: any) => {
     setHasRegistered(true);
     redirectedRef.current = true;
-    if (redirectTo && redirectTo !== '/' && redirectTo.startsWith('/')) {
-      router.push(redirectTo);
-    } else if (authUserData?.role === 'owner') {
-      router.push('/dashboard/new');
-    } else {
-      router.push('/preferences?firstTime=true');
-    }
+    router.replace(postAuthDestination(authUserData));
   };
 
   const handleGoogleSignUp = async () => {

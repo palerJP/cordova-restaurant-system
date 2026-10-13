@@ -14,6 +14,7 @@ export interface User {
   is_active: boolean;
   accepts_marketing?: boolean;
   email_verified?: boolean;
+  onboarding_required?: boolean;
   email_verified_at?: string | null;
   google_id?: string | null;
   facebook_id?: string | null;
@@ -79,6 +80,10 @@ export interface RestaurantImage {
   image_url: string;
   is_cover: boolean;
   sort_order: number;
+  uploaded_by?: string | null;
+  uploader_name?: string | null;
+  caption?: string;
+  created_at?: string;
 }
 
 export interface Attraction {

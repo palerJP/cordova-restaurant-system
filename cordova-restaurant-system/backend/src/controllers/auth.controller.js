@@ -20,10 +20,12 @@ function requestMeta(req) {
 
 const register = asyncHandler(async (req, res) => {
   const user = await authService.register(req.body);
+  const { accessToken, refreshToken } = await authService.issueTokenPair(user, requestMeta(req));
+  res.cookie(REFRESH_COOKIE_NAME, refreshToken, refreshCookieOptions());
   res.status(201).json({
     success: true,
     message: 'Registration successful! Please check your email to verify your account.',
-    data: { user },
+    data: { user, accessToken },
   });
 });
 
@@ -35,11 +37,14 @@ const login = asyncHandler(async (req, res) => {
 
 const verifyEmail = asyncHandler(async (req, res) => {
   const token = req.query.token || req.body.token;
-  const user = await authService.verifyEmail(token);
+  const verifiedUser = await authService.verifyEmail(token);
+  const { password_hash, ...user } = verifiedUser;
+  const { accessToken, refreshToken } = await authService.issueTokenPair(user, requestMeta(req));
+  res.cookie(REFRESH_COOKIE_NAME, refreshToken, refreshCookieOptions());
   res.json({
     success: true,
     message: 'Your email has been verified successfully! You now have full access.',
-    data: { user },
+    data: { user, accessToken },
   });
 });
 

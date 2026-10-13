@@ -10,6 +10,8 @@ const favoriteController = require('../controllers/favorite.controller');
 const { requireAuth, optionalAuth } = require('../middleware/auth');
 const { requireRole } = require('../middleware/rbac');
 const validate = require('../middleware/validate');
+const { uploadCommunityPhoto } = require('../middleware/upload');
+const communityGallery = require('../controllers/communityGallery.controller');
 const { uploadRestaurantImage, uploadBusinessCreation } = require('../middleware/upload');
 
 const {
@@ -139,6 +141,8 @@ router.post('/:restaurantId/favorite', requireAuth, requireRole('customer'), fav
 router.delete('/:restaurantId/favorite', requireAuth, requireRole('customer'), favoriteController.remove);
 
 // ---- Photo gallery (nested) ----
+router.post('/:restaurantId/community-photos', requireAuth, communityGallery.requireActive, uploadCommunityPhoto.single('image'), communityGallery.post);
+router.delete('/:restaurantId/community-photos/:imageId', requireAuth, communityGallery.requireActive, communityGallery.remove);
 router.get('/:restaurantId/images', restaurantController.listImages);
 router.post(
   '/:restaurantId/images',
