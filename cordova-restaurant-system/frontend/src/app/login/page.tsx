@@ -10,6 +10,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import { ApiClientError } from '@/lib/api';
 import { getAuthApiFeedback, normalizeAuthEmail, validateAuthEmail } from '@/lib/auth-form';
+import { needsOnboarding, postAuthDestination } from '@/lib/auth-routing';
 import { syncTastePreferencesToAccount } from '@/lib/taste-preferences';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -20,8 +21,6 @@ const GOOGLE_CLIENT_ID = /^[\w-]+\.apps\.googleusercontent\.com$/.test(rawClient
   ? rawClientId.trim()
   : null;
 
-const REQUIRE_EMAIL_VERIFICATION = process.env.NODE_ENV === 'production'
-  || process.env.NEXT_PUBLIC_REQUIRE_EMAIL_VERIFICATION === 'true';
 
 export default function LoginPage() {
   const { user, loading: authLoading, login, loginWithGoogle } = useAuth();
@@ -44,12 +43,16 @@ export default function LoginPage() {
     redirectedRef.current = true;
 
     const targetUser = authUserData || user;
-    if (REQUIRE_EMAIL_VERIFICATION && targetUser && !targetUser.email_verified) {
+    if (targetUser && targetUser.role !== 'admin' && !targetUser.email_verified) {
       showToast('Please verify your email address to unlock all features.', 'warning');
       router.replace('/verify-email-required');
       return;
     }
 
+    if (targetUser && needsOnboarding(targetUser)) {
+      router.replace(postAuthDestination(targetUser));
+      return;
+    }
     if (targetUser) {
       try {
         await syncTastePreferencesToAccount(targetUser);

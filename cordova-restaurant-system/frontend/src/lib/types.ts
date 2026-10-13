@@ -14,6 +14,7 @@ export interface User {
   is_active: boolean;
   accepts_marketing?: boolean;
   email_verified?: boolean;
+  onboarding_required?: boolean;
   email_verified_at?: string | null;
   google_id?: string | null;
   facebook_id?: string | null;

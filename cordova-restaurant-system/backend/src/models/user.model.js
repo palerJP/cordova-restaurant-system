@@ -1,7 +1,7 @@
 const { query } = require('../config/db');
 
 const PUBLIC_FIELDS = `id, email, full_name, phone, role, avatar_url, is_active, accepts_marketing,
-  email_verified, google_id, facebook_id, email_verified_at, last_login_at, created_at`;
+  email_verified, onboarding_required, google_id, facebook_id, email_verified_at, last_login_at, created_at`;
 
 async function findById(id) {
   const { rows } = await query(`SELECT * FROM users WHERE id = $1`, [id]);
@@ -178,7 +178,7 @@ async function upsertPreferences(userId, prefs) {
   } = prefs;
 
   const { rows } = await query(
-    `INSERT INTO user_preferences
+    `WITH saved AS (INSERT INTO user_preferences
        (user_id, preferred_cuisines, dietary_restrictions, budget_range, preferred_services,
         home_latitude, home_longitude, max_distance_km, updated_at)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8, now())
@@ -191,7 +191,9 @@ async function upsertPreferences(userId, prefs) {
        home_longitude = EXCLUDED.home_longitude,
        max_distance_km = EXCLUDED.max_distance_km,
        updated_at = now()
-     RETURNING *`,
+     RETURNING *), completed AS (
+       UPDATE users SET onboarding_required = FALSE WHERE id = $1
+     ) SELECT * FROM saved`,
     [userId, preferredCuisines, dietaryRestrictions, budgetRange, preferredServices,
       homeLatitude, homeLongitude, maxDistanceKm]
   );

@@ -40,7 +40,6 @@ async function register({ email, password, fullName, role = 'customer', phone, a
   }
 
   const passwordHash = await hashPassword(password);
-  const requireVerification = env.auth.requireEmailVerification;
   const user = await userModel.create({
     email,
     passwordHash,
@@ -48,7 +47,7 @@ async function register({ email, password, fullName, role = 'customer', phone, a
     role,
     phone,
     acceptsMarketing,
-    emailVerified: !requireVerification,
+    emailVerified: false,
   });
 
   // Generate a single-use verification token and dispatch the email.
@@ -78,7 +77,7 @@ async function login({ email, password }, meta = {}) {
   if (!user.is_active) throw ApiError.forbidden('This account has been deactivated');
 
   // Auto-verify on login when email verification is disabled in dev/localhost
-  if (!env.auth.requireEmailVerification && !user.email_verified) {
+  if (!env.auth.requireEmailVerification && !user.email_verified && !user.onboarding_required) {
     await userModel.updateEmailVerified(user.id, true);
     user.email_verified = true;
   }
@@ -371,6 +370,7 @@ async function devVerifyEmail({ email, userId }) {
 }
 
 module.exports = {
+  issueTokenPair,
   register,
   login,
   verifyEmail,

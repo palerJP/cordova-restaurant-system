@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { api, ApiClientError } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
+import { dashboardDestination } from '@/lib/auth-routing';
 import { useToast } from '@/lib/toast-context';
 import { clearTastePreferences, getTastePreferences, saveTastePreferences, type TastePreferences } from '@/lib/taste-preferences';
 import type { PriceRange } from '@/lib/types';
@@ -56,8 +57,14 @@ export default function PreferencesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isFirstTime = searchParams.get('firstTime') === 'true';
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, refreshUser } = useAuth();
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (!isFirstTime || authLoading) return;
+    if (!user) router.replace('/login?redirect=%2Fpreferences%3FfirstTime%3Dtrue');
+    else if (!user.email_verified) router.replace('/verify-email-required');
+  }, [isFirstTime, authLoading, user, router]);
 
   const [selectedCuisines, setSelectedCuisines] = useState<string[]>([]);
   const [selectedDietary, setSelectedDietary] = useState<string[]>([]);
@@ -128,7 +135,7 @@ export default function PreferencesPage() {
     );
   };
 
-  const returnTo = safeReturnTo(searchParams.get('returnTo'), isFirstTime ? '/#recommendations' : '/');
+  const returnTo = safeReturnTo(searchParams.get('returnTo'), isFirstTime && user ? dashboardDestination(user) : '/');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -155,6 +162,7 @@ export default function PreferencesPage() {
     try {
       await api.put('/api/users/me/preferences', preferences);
       saveTastePreferences(preferences, user.id);
+      await refreshUser();
       toast('Preferences saved successfully! Welcome to CordovaEats.', 'success');
       router.push(returnTo);
     } catch (err) {
@@ -306,13 +314,13 @@ export default function PreferencesPage() {
                 {loading ? 'Saving...' : isFirstTime ? 'Save tastes & continue' : 'Save Preferences'}
               </button>
 
-              <button
+              {!isFirstTime && <button
                 type="button"
                 onClick={() => router.push(returnTo)}
                 className="w-full bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 font-semibold py-3 px-6 rounded-2xl text-xs transition-colors"
               >
-                {isFirstTime ? 'Skip for now' : 'Back to Home'}
-              </button>
+                Back to Home
+              </button>}
             </div>
           </form>
         )}

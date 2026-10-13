@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useRef, useState, useCallback, ReactNode, Fragment } from 'react';
-import { api, API_URL, getAccessToken, setAccessToken, onSessionExpired, ApiClientError } from './api';
+import { api, API_URL, setAccessToken, onSessionExpired, ApiClientError } from './api';
 import type { User } from './types';
 import { setActivityAccount } from './activity-history';
 import { clearTastePreferences, getTastePreferences } from './taste-preferences';
@@ -30,7 +30,7 @@ interface AuthContextValue {
     role?: 'customer' | 'owner';
     phone?: string;
     acceptsMarketing?: boolean;
-  }) => Promise<void>;
+  }) => Promise<User>;
   loginWithGoogle: (credential: string) => Promise<User>;
   loginWithFacebook: (accessToken: string) => Promise<User>;
   verifyEmail: (token: string) => Promise<User>;
@@ -117,9 +117,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       phone?: string;
       acceptsMarketing?: boolean;
     }) => {
-      await api.post('/api/auth/register', data, { auth: false });
+      const revision = sessionRevision.current;
+      const res = await api.post('/api/auth/register', data, { auth: false });
+      if (revision !== sessionRevision.current) throw new Error('Registration cancelled because the session ended.');
+      sessionRevision.current += 1;
+      setAccessToken(res.data.accessToken);
+      setUser(res.data.user);
+      return res.data.user as User;
     },
-    []
+    [setUser]
   );
 
   const loginWithGoogle = useCallback(async (credential: string) => {
@@ -142,13 +148,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return res.data.user as User;
   }, [setUser]);
 
-  const verifyEmail = useCallback(async (token: string) => {
+  // A verification link is single-use. Share its request across StrictMode and
+  // the child remount caused when verification establishes the account session.
+  const verificationRequest = useRef<{ token: string; promise: Promise<User> } | null>(null);
+  const verifyEmail = useCallback((token: string): Promise<User> => {
+    if (verificationRequest.current?.token === token) return verificationRequest.current.promise;
     const revision = sessionRevision.current;
-    const res = await api.post('/api/auth/verify-email', { token }, { auth: false });
-    if (res.data?.user && getAccessToken() && revision === sessionRevision.current) {
+    const promise = api.post('/api/auth/verify-email', { token }, { auth: false }).then(res => {
+      if (revision !== sessionRevision.current) throw new Error('Verification cancelled because the session ended.');
+      sessionRevision.current += 1;
+      setAccessToken(res.data.accessToken);
       setUser(res.data.user);
-    }
-    return res.data?.user as User;
+      return res.data.user as User;
+    });
+    verificationRequest.current = { token, promise };
+    return promise;
   }, [setUser]);
 
   const devVerifyEmail = useCallback(async (email?: string) => {
