@@ -199,7 +199,7 @@ export default function RestaurantDetailPage() {
   const [activePromotions, setActivePromotions] = useState<Promotion[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'menu' | 'map' | 'reviews' | 'gallery'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'menu' | 'map' | 'reviews'>('overview');
 
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
@@ -1000,8 +1000,8 @@ export default function RestaurantDetailPage() {
 
           {/* TAB NAVIGATION HEADER */}
           <div className="border-t-2 border-cordova-green dark:border-emerald-500 border-b border-stone-200/80 dark:border-white/10 bg-white/50 dark:bg-white/[0.02]">
-            <div className="grid grid-cols-5 text-center">
-              {(['overview', 'menu', 'gallery', 'map', 'reviews'] as const).map((tab) => {
+            <div className="grid grid-cols-4 text-center">
+              {(['overview', 'menu', 'map', 'reviews'] as const).map((tab) => {
                 const isActive = activeTab === tab;
                 return (
                   <button
@@ -1059,11 +1059,8 @@ export default function RestaurantDetailPage() {
 
 
 
+                <EstablishmentGallery restaurant={restaurant} photos={gallery} onChange={setGallery} />
               </div>
-            )}
-
-            {activeTab === 'gallery' && (
-              <EstablishmentGallery restaurant={restaurant} photos={gallery} onChange={setGallery} />
             )}
 
             {/* MENU TAB */}
