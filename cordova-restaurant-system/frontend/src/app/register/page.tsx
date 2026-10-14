@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, FormEvent } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -12,6 +12,7 @@ import { getAuthApiFeedback, normalizeAuthEmail, validateAuthEmail, validateRegi
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { preferencesOnboardingDestination } from '@/lib/onboarding';
+import { needsTastePreferences } from '@/lib/taste-preferences';
 
 const rawClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
 const GOOGLE_CLIENT_ID = /^[\w-]+\.apps\.googleusercontent\.com$/.test(rawClientId.trim())
@@ -69,24 +70,41 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<'google' | null>(null);
   const [hasRegistered, setHasRegistered] = useState(false);
-  const redirectedRef = useRef(false);
 
   useEffect(() => {
-    if (user && !authLoading && !loading && !oauthLoading && !hasRegistered && !redirectedRef.current) {
-      redirectedRef.current = true;
-      if (REQUIRE_EMAIL_VERIFICATION && !user.email_verified) {
+    if (!user || authLoading || loading || oauthLoading || hasRegistered) return;
+
+    let cancelled = false;
+    const authenticatedUser = user;
+
+    async function routeAuthenticatedUser() {
+      if (REQUIRE_EMAIL_VERIFICATION && !authenticatedUser.email_verified) {
         router.replace('/verify-email-required');
         return;
       }
-      const destination = allowedRedirect(redirectTo, user.role);
-      if (destination && destination !== '/') {
-        router.replace(destination);
-        return;
+
+      const destination = allowedRedirect(redirectTo, authenticatedUser.role);
+      if (authenticatedUser.role !== 'admin') {
+        try {
+          if (await needsTastePreferences(authenticatedUser)) {
+            if (!cancelled) router.replace(preferencesOnboardingDestination(destination));
+            return;
+          }
+        } catch {
+          if (!cancelled) router.replace(preferencesOnboardingDestination(destination));
+          return;
+        }
       }
-      if (user.role === 'owner') router.replace('/dashboard');
-      else if (user.role === 'admin') router.replace('/admin');
+
+      if (cancelled) return;
+      if (destination && destination !== '/') router.replace(destination);
+      else if (authenticatedUser.role === 'owner') router.replace('/dashboard');
+      else if (authenticatedUser.role === 'admin') router.replace('/admin');
       else router.replace('/');
     }
+
+    void routeAuthenticatedUser();
+    return () => { cancelled = true; };
   }, [user, authLoading, loading, oauthLoading, redirectTo, router, hasRegistered]);
 
   const strength = password.length > 0 ? getPasswordStrength(password) : null;
@@ -163,7 +181,6 @@ export default function RegisterPage() {
 
   const handleOAuthSuccess = (authUserData: any) => {
     setHasRegistered(true);
-    redirectedRef.current = true;
     const safeRedirect = allowedRedirect(redirectTo, authUserData?.role || 'customer');
     if (authUserData?.role !== 'admin') {
       router.push(preferencesOnboardingDestination(safeRedirect));
