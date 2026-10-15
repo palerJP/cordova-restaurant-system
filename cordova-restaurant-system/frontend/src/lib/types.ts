@@ -134,6 +134,22 @@ export interface Review {
   visit_type?: string;
 }
 
+export interface VisitHighlight {
+  id: string;
+  customer_id: string;
+  restaurant_id: string;
+  customer_name: string;
+  restaurant_name: string;
+  restaurant_slug: string;
+  caption: string;
+  category: 'Food' | 'Ambience' | 'Service' | 'Overall Experience';
+  status: 'pending' | 'approved' | 'rejected' | 'removed';
+  moderation_reason?: string | null;
+  images: Array<{ id: string; url: string }>;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Promotion {
   id: string;
   restaurant_id: string;

@@ -60,6 +60,12 @@ const uploadAvatar = multer({
   limits: fileLimit(2),
 });
 
+const uploadHighlightImages = multer({
+  storage: multer.memoryStorage(),
+  fileFilter: fileFilterFor(IMAGE_TYPES),
+  limits: { fileSize: 2 * 1024 * 1024, files: 5, fields: 4, parts: 9 },
+});
+
 const uploadBusinessCreation = multer({
   storage: env.isProduction ? multer.memoryStorage() : multer.diskStorage({
     destination: (req, file, cb) => {
@@ -91,6 +97,7 @@ function limitUploadRequest(req, res, next) {
 module.exports = {
   uploadRestaurantImage,
   uploadAvatar,
+  uploadHighlightImages,
   uploadBusinessCreation,
   limitUploadRequest,
 };

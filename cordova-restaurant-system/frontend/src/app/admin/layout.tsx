@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ArrowLeft, LayoutDashboard, Building2, MessageSquare, Users, Sliders, Tag, Menu, X, Sun, Moon, LogOut, ChevronRight } from 'lucide-react';
+import { ArrowLeft, LayoutDashboard, Building2, MessageSquare, Camera, Users, Sliders, Tag, Menu, X, Sun, Moon, LogOut, ChevronRight } from 'lucide-react';
 import { RequireRole } from '@/components/RequireRole';
 import { useAuth } from '@/lib/auth-context';
 import { useTheme } from '@/lib/theme-context';
@@ -14,6 +14,7 @@ const navLinks = [
   { href: '/admin', label: 'Overview', icon: LayoutDashboard },
   { href: '/admin/businesses', label: 'Business Verification', icon: Building2 },
   { href: '/admin/reviews', label: 'Review Moderation', icon: MessageSquare },
+  { href: '/admin/highlights', label: 'Gallery Photos', icon: Camera },
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/promotions', label: 'Promotions', icon: Tag },
   { href: '/admin/ai-model', label: 'AI Recommendations', icon: Sliders },

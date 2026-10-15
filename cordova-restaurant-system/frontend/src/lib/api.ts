@@ -70,6 +70,11 @@ async function tryRefresh(): Promise<boolean> {
   return refreshPromise;
 }
 
+/** Let progress-aware uploads retry through the same session refresh as API requests. */
+export async function refreshAccessToken(): Promise<boolean> {
+  return tryRefresh();
+}
+
 async function request<T = any>(path: string, options: RequestOptions = {}, isRetry = false): Promise<T> {
   const { auth = true, isFormData = false, responseType = 'json', headers, ...rest } = options;
 

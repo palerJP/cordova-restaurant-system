@@ -2,6 +2,7 @@ const router = require('express').Router();
 const restaurantController = require('../controllers/restaurant.controller');
 const menuController = require('../controllers/menu.controller');
 const reviewController = require('../controllers/review.controller');
+const highlightController = require('../controllers/highlight.controller');
 const promotionController = require('../controllers/promotion.controller');
 const hoursController = require('../controllers/operatingHours.controller');
 const analyticsController = require('../controllers/analytics.controller');
@@ -10,7 +11,7 @@ const favoriteController = require('../controllers/favorite.controller');
 const { requireAuth, optionalAuth } = require('../middleware/auth');
 const { requireRole } = require('../middleware/rbac');
 const validate = require('../middleware/validate');
-const { uploadRestaurantImage, uploadBusinessCreation } = require('../middleware/upload');
+const { uploadRestaurantImage, uploadBusinessCreation, uploadHighlightImages } = require('../middleware/upload');
 
 const {
   createRestaurantValidator, updateRestaurantValidator, searchValidator,
@@ -98,6 +99,9 @@ router.patch(
 router.delete('/:restaurantId/menu/items/:itemId', requireAuth, requireRole('owner', 'admin'), menuController.deleteItem);
 
 // ---- Reviews (nested) ----
+router.get('/:restaurantId/highlights', highlightController.publicList);
+router.get('/:restaurantId/highlights/submissions', requireAuth, requireRole('owner'), highlightController.ownerList);
+router.post('/:restaurantId/highlights', requireAuth, requireRole('customer'), uploadHighlightImages.array('photos', 5), highlightController.create);
 router.get('/:restaurantId/reviews', optionalAuth, reviewController.listForRestaurant);
 router.post(
   '/:restaurantId/reviews',

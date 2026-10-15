@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const restaurantController = require('../controllers/restaurant.controller');
 const reviewController = require('../controllers/review.controller');
+const highlightController = require('../controllers/highlight.controller');
 const analyticsController = require('../controllers/analytics.controller');
 const userController = require('../controllers/user.controller');
 const promotionController = require('../controllers/promotion.controller');
@@ -29,6 +30,8 @@ router.patch('/users/:id/active', userController.setUserActive);
 router.delete('/users/:id', userController.deleteUser);
 
 // Content & review moderation
+router.get('/highlights', highlightController.adminList);
+router.patch('/highlights/:id/moderate', highlightController.moderate);
 router.get('/reviews', reviewController.listAdminReviews);
 router.get('/reviews/flagged', reviewController.listFlagged);
 router.patch('/reviews/:id/moderate', validate(moderateReviewValidator), reviewController.moderate);

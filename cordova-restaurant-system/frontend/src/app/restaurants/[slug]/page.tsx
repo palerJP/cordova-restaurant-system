@@ -44,6 +44,7 @@ import { ReportReview } from '@/components/ReportReview';
 import { ReviewActions } from '@/components/ReviewActions';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { MapViewClient } from '@/components/MapViewClient';
+import { VisitHighlights } from '@/components/VisitHighlights';
 import type {
   Restaurant,
   MenuItem,
@@ -1103,10 +1104,11 @@ export default function RestaurantDetailPage() {
 
 
                 {/* Gallery Section */}
-                <div>
-                  <h3 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900 dark:text-white mb-6">
+                <section className="space-y-6">
+                  <h3 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900 dark:text-white">
                     Gallery
                   </h3>
+                  <p className="text-sm text-stone-600 dark:text-stone-300">Explore food, ambiance, and moments shared by the community. Select a photo to view it full size.</p>
                   {allPhotos.length === 0 ? (
                     <div className="text-center py-12 text-stone-400">
                       <ImageOff size={32} className="mx-auto mb-2 opacity-60" />
@@ -1115,9 +1117,12 @@ export default function RestaurantDetailPage() {
                   ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
                       {allPhotos.map((img, i) => (
-                        <div
+                        <button
+                          type="button"
                           key={img.id || i}
-                          className="relative h-48 sm:h-56 rounded-2xl overflow-hidden bg-stone-100 dark:bg-stone-800 shadow-spatial-sm border border-stone-200/60 dark:border-stone-800/60 group"
+                          onClick={() => setLightboxImage(img.image_url)}
+                          aria-label={`View ${restaurant.name} gallery photo ${i + 1} full size`}
+                          className="relative h-48 sm:h-56 rounded-2xl overflow-hidden bg-stone-100 dark:bg-stone-800 shadow-spatial-sm border border-stone-200/60 dark:border-stone-800/60 group focus:outline-none focus:ring-2 focus:ring-cordova-gold"
                         >
                           <Image
                             src={img.image_url}
@@ -1125,11 +1130,12 @@ export default function RestaurantDetailPage() {
                             fill
                             className="object-cover group-hover:scale-105 transition-transform duration-300"
                           />
-                        </div>
+                        </button>
                       ))}
                     </div>
                   )}
-                </div>
+                  <VisitHighlights restaurant={restaurant} />
+                </section>
               </div>
             )}
 
