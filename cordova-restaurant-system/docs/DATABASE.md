@@ -6,92 +6,8 @@ included at the bottom for teams that must use MySQL per the proposal's
 
 ## Entity Relationship Diagram
 
-```mermaid
-erDiagram
-    USERS ||--o| USER_PREFERENCES : has
-    USERS ||--o{ REFRESH_TOKENS : owns
-    USERS ||--o{ RESTAURANTS : owns
-    USERS ||--o{ REVIEWS : writes
-    USERS ||--o{ FAVORITES : saves
-    USERS ||--o{ NOTIFICATIONS : receives
-    USERS ||--o{ AUDIT_LOGS : performs
-
-    RESTAURANTS ||--o{ RESTAURANT_CUISINES : tagged
-    CUISINES ||--o{ RESTAURANT_CUISINES : tags
-    RESTAURANTS ||--o{ RESTAURANT_DIETARY_OPTIONS : offers
-    RESTAURANTS ||--o{ RESTAURANT_IMAGES : has
-    RESTAURANTS ||--o{ OPERATING_HOURS : defines
-    RESTAURANTS ||--o{ MENU_CATEGORIES : groups
-    RESTAURANTS ||--o{ MENU_ITEMS : lists
-    MENU_CATEGORIES ||--o{ MENU_ITEMS : contains
-    RESTAURANTS ||--o{ REVIEWS : receives
-    RESTAURANTS ||--o{ FAVORITES : saved_by
-    USERS ||--o{ RECOMMENDATION_FEEDBACK : rates
-    RESTAURANTS ||--o{ RECOMMENDATION_FEEDBACK : receives
-    USERS ||--o{ RECOMMENDATION_MODEL_VERSIONS : trains
-    RESTAURANTS ||--o{ PROMOTIONS : runs
-    RESTAURANTS ||--o{ RESTAURANT_VIEW_LOGS : tracked_by
-    RESTAURANTS ||--o{ RECOMMENDATION_LOGS : appears_in
-
-    USERS {
-        uuid id PK
-        string email UK
-        string password_hash
-        string full_name
-        enum role "customer|owner|admin"
-        boolean is_active
-    }
-
-    RESTAURANTS {
-        uuid id PK
-        uuid owner_id FK
-        string name
-        string slug UK
-        float latitude
-        float longitude
-        enum price_range
-        enum status "pending|verified|rejected|suspended"
-        numeric avg_rating
-        int review_count
-    }
-
-    MENU_ITEMS {
-        uuid id PK
-        uuid restaurant_id FK
-        uuid category_id FK
-        string name
-        numeric price
-        boolean is_available
-    }
-
-    REVIEWS {
-        uuid id PK
-        uuid restaurant_id FK
-        uuid user_id FK
-        smallint rating "1-5"
-        enum status "visible|flagged|removed"
-    }
-
-    RECOMMENDATION_WEIGHTS {
-        int id PK
-        numeric cuisine_weight
-        numeric budget_weight
-        numeric proximity_weight
-        numeric dietary_weight
-        numeric rating_weight
-    }
-
-    RECOMMENDATION_MODEL_VERSIONS {
-        uuid id PK
-        jsonb model
-        int training_examples
-        int positive_examples
-        int negative_examples
-        uuid trained_by FK
-        boolean is_active
-        timestamptz created_at
-    }
-```
+See the [simple ERD](ERD.md) for the main entities and the
+[complete ERD](ERD_FULL.md) for all tables, based on migrations 001–016.
 
 ## Design Notes & Rationale
 
@@ -128,20 +44,15 @@ erDiagram
 
 ## Migrations
 
-| File | Purpose |
-|---|---|
-| `migrations/001_initial_schema.sql` | All extensions, enums, tables, indexes, triggers |
-| `migrations/002_reference_data.sql` | Cuisine lookup values + default AI weight profile (idempotent) |
-| `migrations/009_recommendation_feedback.sql` | Customer feedback labels for recommendation model training |
-| `migrations/010_recommendation_model_training.sql` | Versioned global recommendation models and active-model index |
+The migration runner applies all numbered files in `database/migrations/`
+in filename order. The current sequence is `001` through `016`; later files
+add review interactions, subscriptions, recommendation training, account
+tokens, business claims, and review reporting to the initial schema.
 
-Run with the Node `pg` client via `npm run db:migrate` (see backend README),
-or directly:
+From `backend/`, run:
 
 ```bash
-psql "$DATABASE_URL" -f database/migrations/001_initial_schema.sql
-psql "$DATABASE_URL" -f database/migrations/002_reference_data.sql
-psql "$DATABASE_URL" -f database/seed.sql   # optional, dev/demo only
+npm run db:migrate
 ```
 
 ## MySQL compatibility notes
