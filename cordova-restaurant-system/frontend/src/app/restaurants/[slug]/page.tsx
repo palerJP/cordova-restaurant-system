@@ -38,6 +38,7 @@ import {
   type RecentlyViewedRestaurant,
 } from '@/lib/activity-history';
 import { api, ApiClientError } from '@/lib/api';
+import { ReservationForm } from '@/components/reservations/ReservationForm';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import { ReportReview } from '@/components/ReportReview';
@@ -199,7 +200,10 @@ export default function RestaurantDetailPage() {
   const [activePromotions, setActivePromotions] = useState<Promotion[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'menu' | 'map' | 'reviews'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'menu' | 'map' | 'reviews' | 'reservations'>('overview');
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('tab') === 'reservations') setActiveTab('reservations');
+  }, [slug]);
 
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
@@ -1045,8 +1049,8 @@ export default function RestaurantDetailPage() {
 
           {/* TAB NAVIGATION HEADER */}
           <div className="border-t-2 border-cordova-green dark:border-emerald-500 border-b border-stone-200/80 dark:border-white/10 bg-white/50 dark:bg-white/[0.02]">
-            <div className="grid grid-cols-4 text-center">
-              {(['overview', 'menu', 'map', 'reviews'] as const).map((tab) => {
+            <div className="grid grid-cols-5 text-center">
+              {(['overview', 'menu', 'reservations', 'map', 'reviews'] as const).map((tab) => {
                 const isActive = activeTab === tab;
                 return (
                   <button
@@ -1058,7 +1062,7 @@ export default function RestaurantDetailPage() {
                         : 'text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white hover:bg-black/[0.02] dark:hover:bg-white/[0.03]'
                     }`}
                   >
-                    {tab}
+                    {tab === 'reservations' ? 'Reserve' : tab}
                   </button>
                 );
               })}
@@ -1138,6 +1142,8 @@ export default function RestaurantDetailPage() {
                 </section>
               </div>
             )}
+
+            {activeTab === 'reservations' && <ReservationForm restaurant={restaurant} />}
 
             {/* MENU TAB */}
             {activeTab === 'menu' && (

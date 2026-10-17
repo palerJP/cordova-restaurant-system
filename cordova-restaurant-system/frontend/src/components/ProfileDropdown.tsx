@@ -56,6 +56,7 @@ export function ProfileDropdown() {
   const menuItems: { href: string; label: string; icon: any }[] = [
     { href: '/profile', label: 'My Profile', icon: UserCircle },
     { href: '/my-reviews', label: 'My Reviews', icon: MessageSquare },
+    { href: '/reservations', label: 'My Reservations', icon: History },
   ];
 
   if (user.role === 'admin') {

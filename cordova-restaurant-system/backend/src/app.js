@@ -67,6 +67,7 @@ app.get('/ready', async (req, res) => {
     const { rows } = await query('SELECT filename FROM _migrations WHERE filename = $1', ['016_reconcile_review_statistics.sql']);
     if (!rows.length) return res.status(503).json({ status: 'not_ready' });
     await require('./models/businessAnalytics.model').ensureSchema();
+    await require('./models/reservation.model').ensureSchema();
     await query('SELECT 1 FROM subscription_transactions, favorites, reviews, promotions, cuisines LIMIT 0');
     res.json({ status: 'ready' });
   } catch {
@@ -78,6 +79,7 @@ app.get('/ready', async (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/claims', require('./routes/claims.routes'));
+app.use('/api', require('./routes/reservations.routes'));
 app.use('/api/restaurants', restaurantRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/highlights', highlightRoutes);

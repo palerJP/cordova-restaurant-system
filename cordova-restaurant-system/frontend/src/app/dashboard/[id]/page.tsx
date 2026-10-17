@@ -5,6 +5,7 @@ import { useParams, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { api, ApiClientError } from '@/lib/api';
 import { useLiveAnalytics } from '@/hooks/useLiveAnalytics';
+import { OwnerReservations } from '@/components/reservations/OwnerReservations';
 import { useToast } from '@/lib/toast-context';
 import { RequireRole } from '@/components/RequireRole';
 import { Badge } from '@/components/ui/Badge';
@@ -18,7 +19,7 @@ import type { Restaurant, MenuItem, MenuCategory, Promotion, OperatingHour, Rest
 import { PaymentPortalModal, PaymentTier } from '@/components/payments/PaymentPortalModal';
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const TABS = ['overview', 'menu', 'hours', 'promotions', 'subscription', 'analytics'] as const;
+const TABS = ['overview', 'menu', 'hours', 'promotions', 'subscription', 'reservations', 'analytics'] as const;
 type Tab = (typeof TABS)[number];
 
 export default function ManageBusinessPage() {
@@ -91,6 +92,7 @@ export default function ManageBusinessPage() {
           {tab === 'hours' && <HoursTab restaurantId={restaurant.id} />}
           {tab === 'promotions' && <PromotionsTab restaurantId={restaurant.id} />}
           {tab === 'subscription' && <SubscriptionTab restaurant={restaurant} onUpdated={load} />}
+          {tab === 'reservations' && <OwnerReservations restaurantId={restaurant.id} />}
           {tab === 'analytics' && <AnalyticsTab restaurantId={restaurant.id} />}
         </div>
       )}
