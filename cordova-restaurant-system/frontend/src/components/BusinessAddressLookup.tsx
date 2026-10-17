@@ -5,13 +5,8 @@ import { api, ApiClientError } from '@/lib/api';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 
-export interface BusinessLocation {
-  id: string;
-  label: string;
-  latitude: number;
-  longitude: number;
-  approximate: boolean;
-}
+export type { BusinessLocation } from '@/lib/business-address-server';
+import type { BusinessLocation } from '@/lib/business-address-server';
 
 interface Props {
   address: string;
@@ -41,7 +36,8 @@ export function BusinessAddressLookup({ address, barangay, onAddressChange, onBa
     setBusy(true);
     const timer = setTimeout(async () => {
       try {
-        const res = await api.post('/api/restaurants/location-search', { address, barangay }, { signal: controller.signal });
+        // This route belongs to Next.js rather than the separate backend project.
+        const res = await api.post('/api/business-location', { address, barangay }, { signal: controller.signal, sameOrigin: true });
         if (cancelled) return;
         const matches: BusinessLocation[] = res.data.results;
         setResults(matches);

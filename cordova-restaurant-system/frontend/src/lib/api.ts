@@ -35,6 +35,7 @@ export function onSessionExpired(listener: () => void) {
 }
 
 interface RequestOptions extends RequestInit {
+  sameOrigin?: boolean;
   auth?: boolean; // attach the bearer token (default true)
   isFormData?: boolean;
   responseType?: 'json' | 'blob';
@@ -76,13 +77,13 @@ export async function refreshAccessToken(): Promise<boolean> {
 }
 
 async function request<T = any>(path: string, options: RequestOptions = {}, isRetry = false): Promise<T> {
-  const { auth = true, isFormData = false, responseType = 'json', headers, ...rest } = options;
+  const { auth = true, isFormData = false, responseType = 'json', sameOrigin = false, headers, ...rest } = options;
 
   const finalHeaders: Record<string, string> = { ...(headers as Record<string, string>) };
   if (!isFormData) finalHeaders['Content-Type'] = 'application/json';
   if (auth && accessToken) finalHeaders['Authorization'] = `Bearer ${accessToken}`;
 
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await fetch(`${sameOrigin ? '' : API_URL}${path}`, {
     ...rest,
     headers: finalHeaders,
     credentials: 'include',

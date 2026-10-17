@@ -10,7 +10,6 @@ const favoriteController = require('../controllers/favorite.controller');
 
 const { requireAuth, optionalAuth } = require('../middleware/auth');
 const { requireRole } = require('../middleware/rbac');
-const addressLookup = require('../controllers/addressLookup.controller');
 const validate = require('../middleware/validate');
 const { uploadRestaurantImage, uploadBusinessCreation, uploadHighlightImages } = require('../middleware/upload');
 
@@ -22,7 +21,6 @@ const {
 } = require('../validators/misc.validator');
 
 // ---- Public browse/search ----
-router.post('/location-search', requireAuth, requireRole('customer', 'owner', 'admin'), addressLookup.limiter, addressLookup.search);
 const claimController = require('../controllers/claim.controller');
 const { evidenceUpload } = require('../middleware/claimEvidence');
 const { claimLimiter, reviewStatsLimiter } = require('../middleware/rateLimiter');
