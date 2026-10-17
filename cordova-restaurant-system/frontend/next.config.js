@@ -28,9 +28,10 @@ const nextConfig = {
   async rewrites() {
     // Vercel Services routes /api and /uploads before requests reach Next.js.
     // Keep rewrites for local development and the existing two-project deployment.
-    const rawApi = process.env.BACKEND_URL || (
-      process.env.VERCEL ? null : process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
-    );
+    const rawApi = process.env.BACKEND_URL
+      || process.env.INTERNAL_API_URL
+      || process.env.NEXT_PUBLIC_API_URL
+      || (process.env.VERCEL ? null : 'http://localhost:4000');
     if (!rawApi) return [];
     const backendBase = rawApi.replace(/\/api\/?$/, '');
     return [
