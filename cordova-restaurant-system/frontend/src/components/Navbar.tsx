@@ -99,7 +99,7 @@ export function Navbar() {
                 </Link>
                 <Link
                   href="/register"
-                  className="bg-gradient-to-r from-cordova-gold via-amber-500 to-amber-600 hover:from-cordova-goldHover hover:to-amber-700 text-white text-xs font-extrabold px-5 py-2.5 rounded-full shadow-spatial-sm hover:shadow-spatial-gold-glow transition-all duration-200 tracking-wide uppercase active:scale-95 border border-white/20"
+                  className="bg-cta-500 hover:bg-cta-600 text-white text-xs font-extrabold px-5 py-2.5 rounded-full shadow-spatial-sm hover:shadow-card-hover transition-all duration-200 tracking-wide uppercase active:scale-95 border border-white/20"
                 >
                   Sign Up
                 </Link>
@@ -166,7 +166,7 @@ export function Navbar() {
                 </Link>
                 <Link
                   href="/register"
-                  className="w-full text-center py-2.5 text-sm font-bold text-white bg-gradient-to-r from-cordova-gold to-amber-600 hover:from-cordova-goldHover hover:to-amber-700 rounded-xl shadow-spatial-sm transition-all uppercase tracking-wide"
+                  className="w-full text-center py-2.5 text-sm font-bold text-white bg-cta-500 hover:bg-cta-600 rounded-xl shadow-spatial-sm transition-all uppercase tracking-wide"
                   onClick={() => setMenuOpen(false)}
                 >
                   Sign Up

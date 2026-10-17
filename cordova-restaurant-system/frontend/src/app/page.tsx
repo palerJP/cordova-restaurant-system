@@ -503,7 +503,7 @@ export default function HomePage() {
           {/* Search Action Button */}
           <button
             type="submit"
-            className="bg-gradient-to-r from-cordova-gold via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-600 text-white p-3 sm:px-5 sm:py-3 rounded-xl transition-all duration-200 shrink-0 shadow-spatial-md active:scale-95 border border-white/30 flex items-center justify-center gap-1.5 font-bold"
+            className="bg-cta-500 hover:bg-cta-600 text-white p-3 sm:px-5 sm:py-3 rounded-xl transition-all duration-200 shrink-0 shadow-spatial-md active:scale-95 border border-white/30 flex items-center justify-center gap-1.5 font-bold"
             aria-label="Search"
           >
             <Search size={18} />

@@ -43,7 +43,7 @@ export default function DashboardPage() {
             </p>
           </div>
           <Link href="/dashboard/new">
-            <Button className="bg-gradient-to-r from-cordova-gold to-amber-600 hover:from-cordova-goldHover hover:to-amber-700 text-white font-bold text-xs uppercase tracking-wider px-5 py-2.5 rounded-xl shadow-spatial-sm hover:shadow-spatial-gold-glow transition-all active:scale-95 border border-white/20">
+            <Button className="bg-cta-500 hover:bg-cta-600 text-white font-bold text-xs uppercase tracking-wider px-5 py-2.5 rounded-xl shadow-spatial-sm hover:shadow-card-hover transition-all active:scale-95 border border-white/20">
               + Register New Establishment
             </Button>
           </Link>

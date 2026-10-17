@@ -135,7 +135,7 @@ export default function VerifyEmailPage() {
             <div className="pt-3 space-y-3">
               <Link
                 href="/login"
-                className="w-full bg-cordova-gold hover:bg-cordova-goldHover text-white font-bold text-xs py-3.5 px-4 rounded-xl shadow transition-colors flex items-center justify-center gap-2 uppercase tracking-wider"
+                className="w-full bg-cta-500 hover:bg-cta-600 text-white font-bold text-xs py-3.5 px-4 rounded-xl shadow transition-colors flex items-center justify-center gap-2 uppercase tracking-wider"
               >
                 Go to Sign In
               </Link>

@@ -173,7 +173,7 @@ function mergeSuppliedMenu(
 
   return {
     categories,
-    items: [...retainedLiveItems.filter((item) => item.is_available !== false), ...newStaticItems],
+    items: [...retainedLiveItems, ...newStaticItems],
   };
 }
 
@@ -432,10 +432,8 @@ export default function RestaurantDetailPage() {
           || found.slug?.includes('mavericks')
           || customFound.name.toLowerCase().includes('maverick');
         const liveMenuItems: MenuItem[] = Array.isArray(menu.data?.items) ? menu.data.items : [];
-        // The owner can still recover unavailable rows in the admin menu editor.
-        const publicMenuItems = isBurandat
-          ? liveMenuItems.filter((item) => item.is_available !== false)
-          : liveMenuItems;
+        // Keep out-of-stock dishes visible to customers.
+        const publicMenuItems = liveMenuItems;
 
         if (isMavericks) {
           const mergedMenu = mergeSuppliedMenu(

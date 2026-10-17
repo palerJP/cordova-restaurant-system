@@ -381,6 +381,7 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
       return items.map((it) => ({
         id: it.id,
         name: it.name,
+        outOfStock: it.is_available === false,
         category: categories.find((c) => c.id === it.category_id)?.name || (it as any).category_name || 'Main Dishes',
         price: Number(it.price),
         priceLabel: it.price_label || '',
@@ -403,6 +404,7 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
     // Combine any existing with default items
     const defaults = defaultData.menuItems.map((it, idx) => ({
       id: `curated-${idx}`,
+      outOfStock: false,
       priceLabel: '',
       startingPrice: false,
       priceUnit: '',
@@ -414,6 +416,7 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
       const customOnes = items.map((it) => ({
         id: it.id,
         name: it.name,
+        outOfStock: it.is_available === false,
         category: categories.find((c) => c.id === it.category_id)?.name || 'House Specialties',
         price: Number(it.price),
         priceLabel: it.price_label || '',
@@ -508,7 +511,7 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
                   ? 'Browse Burandat’s seafood, soups, vegetables, noodles, fish, chicken, and pork dishes.'
                 : isCascadja
                   ? <>Prices and Cascadja photos follow its <a href="https://www.foodpanda.ph/restaurant/laiy/cascadja-food-and-beverage-house-calan-cordova-laiy" target="_blank" rel="noopener noreferrer" className="underline">Foodpanda menu</a> checked October 7, 2026. Other photos are representative.</>
-                : 'Freshly crafted delicacies and island favorites ready for your order.'}
+                : 'Browse dishes and check availability before your visit.'}
             </p>
           </div>
 
@@ -637,6 +640,11 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
                     <h4 className="font-serif text-base font-bold text-stone-900 dark:text-white group-hover:text-cordova-green dark:group-hover:text-emerald-400 transition-colors mt-0.5">
                       {item.name}
                     </h4>
+                    {item.outOfStock && (
+                      <p className="mt-2 inline-block rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-800 dark:bg-red-950 dark:text-red-200">
+                        Out of stock
+                      </p>
+                    )}
                     {item.description && <p className="text-xs text-stone-500 dark:text-stone-400 mt-1.5 line-clamp-2 leading-relaxed">
                       {item.description}
                     </p>}

@@ -300,7 +300,7 @@ export default function LoginPage() {
 
           <Button
             type="submit"
-            className="w-full bg-cordova-gold hover:bg-cordova-goldHover text-white py-3.5 rounded-xl uppercase font-bold text-xs tracking-wider shadow transition-colors"
+            className="w-full bg-cta-500 hover:bg-cta-600 text-white py-3.5 rounded-xl uppercase font-bold text-xs tracking-wider shadow transition-colors"
             loading={loading}
           >
             Log in

@@ -244,6 +244,7 @@ function MenuTab({ restaurant }: { restaurant: Restaurant }) {
   const isVerified = restaurant.status === 'verified';
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [items, setItems] = useState<MenuItem[]>([]);
+  const [updatingStock, setUpdatingStock] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
@@ -343,6 +344,22 @@ function MenuTab({ restaurant }: { restaurant: Restaurant }) {
     }
   };
 
+  const toggleStock = async (item: MenuItem) => {
+    setUpdatingStock(item.id);
+    try {
+      const res = await api.patch(`/api/restaurants/${restaurantId}/menu/items/${item.id}`, {
+        isAvailable: item.is_available === false,
+      });
+      setItems((current) => current.map((row) => row.id === item.id
+        ? { ...row, ...res.data.item } : row));
+      toast(res.data.item.is_available ? 'Item is back in stock' : 'Customers will see this item as out of stock', 'success');
+    } catch (err) {
+      toast(err instanceof ApiClientError ? err.message : 'Failed to update availability', 'error');
+    } finally {
+      setUpdatingStock(null);
+    }
+  };
+
   const deleteItem = async (itemId: string) => {
     try {
       await api.delete(`/api/restaurants/${restaurantId}/menu/items/${itemId}`);
@@ -375,7 +392,7 @@ function MenuTab({ restaurant }: { restaurant: Restaurant }) {
         <div>
           <h3 className="font-serif font-bold text-lg text-stone-900 dark:text-white">Establishment Menu</h3>
           <p className="text-xs text-stone-500 dark:text-stone-400">
-            Add dishes, manage prices, and showcase mouthwatering food photos.
+            Mark dishes out of stock so customers can plan ahead. Mark them back in stock when available again.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -411,6 +428,16 @@ function MenuTab({ restaurant }: { restaurant: Restaurant }) {
                   )}
                 </div>
                 <p className="text-sm text-emerald-600 dark:text-emerald-400 font-bold mt-0.5">₱{Number(item.price).toFixed(0)}</p>
+                <p className="text-xs font-semibold mt-1">{item.is_available === false ? 'Out of stock' : 'Available'}</p>
+                <button
+                  type="button"
+                  disabled={updatingStock !== null}
+                  onClick={() => toggleStock(item)}
+                  aria-label={`${item.is_available === false ? 'Mark back in stock' : 'Mark out of stock'}: ${item.name}`}
+                  className="mt-2 rounded-lg border border-stone-300 dark:border-stone-600 px-3 py-2 text-xs font-semibold text-stone-800 dark:text-stone-100 disabled:opacity-50"
+                >
+                  {updatingStock === item.id ? 'Saving…' : item.is_available === false ? 'Mark back in stock' : 'Mark out of stock'}
+                </button>
                 {item.description && (
                   <p className="text-xs text-stone-500 dark:text-stone-400 mt-1 line-clamp-2">{item.description}</p>
                 )}

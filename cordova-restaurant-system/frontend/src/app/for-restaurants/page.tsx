@@ -109,7 +109,7 @@ export default function ForRestaurantsPage() {
           </div>
           <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-stone-100 dark:border-stone-800/60">
             <Link href="/portal/payment">
-              <Button className="bg-gradient-to-r from-cordova-gold to-amber-600 hover:from-cordova-goldHover hover:to-amber-700 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wider shadow-spatial-sm hover:shadow-spatial-gold-glow transition-all active:scale-95 border border-white/20">
+              <Button className="bg-cta-500 hover:bg-cta-600 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wider shadow-spatial-sm hover:shadow-card-hover transition-all active:scale-95 border border-white/20">
                 View Boost Plans &amp; Portal (₱499 - ₱1,999)
               </Button>
             </Link>

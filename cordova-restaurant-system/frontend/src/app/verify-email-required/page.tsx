@@ -152,7 +152,7 @@ export default function VerifyEmailRequiredPage() {
           <button
             onClick={handleResend}
             disabled={cooldown > 0 || sending}
-            className="w-full bg-cordova-gold hover:bg-cordova-goldHover disabled:bg-stone-300 dark:disabled:bg-stone-800 text-white disabled:text-stone-500 font-bold text-sm py-3.5 px-4 rounded-xl shadow transition-all duration-200 flex items-center justify-center gap-2 uppercase tracking-wider"
+            className="w-full bg-cta-500 hover:bg-cta-600 disabled:bg-stone-300 dark:disabled:bg-stone-800 text-white disabled:text-stone-500 font-bold text-sm py-3.5 px-4 rounded-xl shadow transition-all duration-200 flex items-center justify-center gap-2 uppercase tracking-wider"
           >
             <RefreshCw size={16} className={sending ? 'animate-spin' : ''} />
             {cooldown > 0 ? `Resend Email (${cooldown}s)` : sending ? 'Sending...' : 'Resend Verification Email'}

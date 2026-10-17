@@ -35,7 +35,7 @@ export default function NotFound() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link
             href="/"
-            className="w-full sm:w-auto bg-gradient-to-r from-cordova-gold to-amber-600 hover:from-cordova-goldHover hover:to-amber-700 text-white font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-xl shadow-spatial-sm hover:shadow-spatial-gold-glow transition-all active:scale-95 flex items-center justify-center gap-2 border border-white/20"
+            className="w-full sm:w-auto bg-cta-500 hover:bg-cta-600 text-white font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-xl shadow-spatial-sm hover:shadow-card-hover transition-all active:scale-95 flex items-center justify-center gap-2 border border-white/20"
           >
             <Home size={16} />
             <span>Return to Home</span>

@@ -118,9 +118,9 @@ body {
     @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 font-semibold text-sm
       transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
   }
-  /* Warm orange, reserved for primary calls-to-action only — solid fill, restrained shadow, no glow */
+  /* Deep green primary actions with white labels and visible keyboard focus. */
   .btn-primary {
-    @apply btn text-white bg-cta-500 hover:bg-cta-600 shadow-card hover:shadow-card-hover;
+    @apply btn text-white bg-cta-500 hover:bg-cta-600 shadow-card hover:shadow-card-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta-500;
   }
   .btn-secondary {
     @apply btn bg-transparent border border-[var(--border)] text-[var(--text)]

@@ -26,11 +26,11 @@ module.exports = {
           400: '#c7a250',
           500: '#b3903f',
         },
-        // Warm orange — reserved ONLY for primary call-to-action buttons
+        // Deep green — primary call-to-action buttons
         cta: {
-          400: '#e2884f',
-          500: '#cf6d34',
-          600: '#b25726',
+          400: '#15803d',
+          500: '#166534',
+          600: '#14532D',
         },
         // Warm neutral grays for text/borders (not cold blue-grays)
         stone: {
@@ -51,8 +51,8 @@ module.exports = {
           800: '#26302b',
         },
         cordova: {
-          green: '#1B5232',
-          greenHover: '#143E26',
+          green: '#166534',
+          greenHover: '#14532D',
           gold: '#D4A017',
           goldHover: '#B8860B',
           cream: '#FAF6F0',

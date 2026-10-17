@@ -282,7 +282,7 @@ function ProfileContent() {
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="absolute -bottom-1 -right-1 bg-gradient-to-r from-cordova-gold to-amber-600 hover:from-cordova-goldHover hover:to-amber-700 text-white rounded-full p-2 shadow-spatial-sm transition-all duration-200 active:scale-95 border border-white/30"
+            className="absolute -bottom-1 -right-1 bg-cta-500 hover:bg-cta-600 text-white rounded-full p-2 shadow-spatial-sm transition-all duration-200 active:scale-95 border border-white/30"
             title="Change profile picture"
           >
             <Camera size={14} />
@@ -458,7 +458,7 @@ function ProfileContent() {
                         onClick={() => togglePreferenceItem(prefDietary, setPrefDietary, item.id)}
                         className={`py-2 px-3.5 rounded-full border text-xs font-semibold tracking-wider transition-all duration-200 ${
                           selected
-                            ? 'border-cordova-gold bg-gradient-to-r from-cordova-gold to-amber-600 text-white shadow-spatial-sm font-bold scale-105'
+                            ? 'border-cordova-gold bg-cta-500 hover:bg-cta-600 text-white shadow-spatial-sm font-bold scale-105'
                             : 'border-stone-200 dark:border-white/10 bg-white/70 dark:bg-white/5 text-stone-800 dark:text-stone-200 hover:border-cordova-gold/50'
                         }`}
                       >
@@ -550,7 +550,7 @@ function ProfileContent() {
               <div className="pt-2">
                 <Button
                   type="submit"
-                  className="bg-gradient-to-r from-cordova-gold to-amber-600 hover:from-cordova-goldHover hover:to-amber-700 text-white px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider shadow-spatial-sm hover:shadow-spatial-gold-glow active:scale-95 border border-white/20"
+                  className="bg-cta-500 hover:bg-cta-600 text-white px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider shadow-spatial-sm hover:shadow-card-hover active:scale-95 border border-white/20"
                   loading={prefSaving}
                 >
                   Save Taste Preferences
@@ -633,7 +633,7 @@ function ProfileContent() {
 
             <Button
               type="submit"
-              className="bg-cordova-gold hover:bg-cordova-goldHover text-white px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider"
+              className="bg-cta-500 hover:bg-cta-600 text-white px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider"
               loading={passwordSaving}
             >
               Change Password
