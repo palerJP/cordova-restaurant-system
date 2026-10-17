@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { PwaControls } from '@/components/PwaControls';
 import '@fontsource-variable/inter/wght.css';
 import '@fontsource-variable/playfair-display/wght.css';
 import '@/styles/globals.css';
@@ -10,6 +11,10 @@ import { PublicSiteChrome } from '@/components/PublicSiteChrome';
 import { CookieBanner } from '@/components/cookies/CookieBanner';
 
 export const metadata: Metadata = {
+  manifest: '/manifest.webmanifest',
+  applicationName: 'CordovaEats',
+  appleWebApp: { capable: true, title: 'CordovaEats', statusBarStyle: 'default' },
+  icons: { apple: '/icons/apple-touch-icon.png' },
   title: 'CordovaEats - Cordova Local Restaurant Recommendation System',
   description:
     'Discover authentic seafood, traditional Filipino cuisine, and artisan cafes in the Municipality of Cordova.',
@@ -44,6 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <main className="min-h-[70vh]">{children}</main>
                 <PublicSiteChrome position="footer" />
                 <CookieBanner />
+                <PwaControls />
               </CookieConsentProvider>
             </AuthProvider>
           </ToastProvider>
