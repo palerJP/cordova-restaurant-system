@@ -51,6 +51,19 @@ test('business address lookup and session protection', async (t) => {
       const res = await POST(new Request('https://frontend.example/api/business-location', { method: 'POST', headers: { Authorization: 'Bearer expired' }, body: '{}' }));
       assert.equal(res.status, 401);
     });
+    await t.test('malformed input is rejected after session verification', async () => {
+      global.fetch = async () => Response.json({ data: { user: { id: 'invalid-body-user', role: 'owner' } } });
+      const res = await POST(new Request('https://frontend.example/api/business-location', { method: 'POST', headers: { Authorization: 'Bearer test-token' }, body: '{' }));
+      assert.equal(res.status, 400);
+    });
+    await t.test('limits address lookups per signed-in account', async () => {
+      global.fetch = async (input) => new URL(String(input)).pathname === '/api/auth/me'
+        ? Response.json({ data: { user: { id: 'quota-user', role: 'owner' } } })
+        : Response.json({ features: [] });
+      const request = () => new Request('https://frontend.example/api/business-location', { method: 'POST', headers: { Authorization: 'Bearer test-token' }, body: JSON.stringify({ address: 'Quota Test Street' }) });
+      for (let i = 0; i < 15; i++) assert.equal((await POST(request())).status, 200);
+      assert.equal((await POST(request())).status, 429);
+    });
     await t.test('provider failures report an error rather than a default pin', async () => {
       global.fetch = async () => { throw new Error('timeout'); };
       await assert.rejects(lookupAddress('Provider Failure Road'), { status: 503 });
