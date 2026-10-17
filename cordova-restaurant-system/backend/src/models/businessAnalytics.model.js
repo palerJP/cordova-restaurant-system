@@ -77,7 +77,7 @@ async function ownerStats(restaurantId, days) {
     'verifiedPayments', (SELECT count(*) FROM subscription_transactions s WHERE s.restaurant_id=$1
       AND s.status='verified' AND s.verified_at IS NOT NULL AND s.verified_by IS NOT NULL AND s.verified_at >= b.start_at AND s.verified_at <= b.as_of),
     'activePaidSubscription', EXISTS(SELECT 1 FROM restaurants r JOIN subscription_transactions s ON s.restaurant_id=r.id
-      WHERE r.id=$1 AND r.subscription_tier=s.tier AND r.subscription_tier <> 'none' AND r.subscription_expires_at>b.as_of
+      WHERE r.id=$1 AND r.subscription_tier::text=s.tier::text AND r.subscription_tier <> 'none' AND r.subscription_expires_at>b.as_of
       AND s.status='verified' AND s.verified_at IS NOT NULL AND s.verified_at<=b.as_of AND s.verified_by IS NOT NULL AND s.expires_at>b.as_of),
     'dailyViews', (SELECT jsonb_agg(jsonb_build_object('day', d.day::date::text, 'views',
       (SELECT count(*) FROM events e WHERE e.kind='view' AND (e.created_at AT TIME ZONE 'Asia/Manila')::date=d.day::date)) ORDER BY d.day)
@@ -111,7 +111,7 @@ async function adminStats() {
       WHERE NOT (restaurant_id='44444444-4444-4444-a444-444444444441' AND title='Weekend Seafood Feast'
         AND description IS NOT DISTINCT FROM 'Get a free side dish with any order above ₱500 on weekends.')),
     'subscriptions', jsonb_build_object('activePaidBusinesses', (SELECT count(*) FROM restaurants r WHERE r.subscription_tier<>'none' AND r.subscription_expires_at>b.as_of
-      AND EXISTS(SELECT 1 FROM subscription_transactions s WHERE s.restaurant_id=r.id AND s.tier=r.subscription_tier AND s.status='verified'
+      AND EXISTS(SELECT 1 FROM subscription_transactions s WHERE s.restaurant_id=r.id AND s.tier::text=r.subscription_tier::text AND s.status='verified'
         AND s.verified_at IS NOT NULL AND s.verified_at<=b.as_of AND s.verified_by IS NOT NULL AND s.expires_at>b.as_of)),
       'pendingPayments',(SELECT count(*) FROM subscription_transactions WHERE status='pending_verification')),
     'topCuisineDemand',COALESCE((SELECT jsonb_agg(to_jsonb(demand)) FROM demand),'[]'::jsonb),

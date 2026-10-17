@@ -18,10 +18,11 @@ beforeAll(async () => {
   const schema = `analytics_test_${randomUUID().replaceAll('-', '')}`;
   await client.query(`CREATE SCHEMA ${schema}; SET LOCAL search_path TO ${schema}, public;
     CREATE TABLE users(id uuid primary key, role text, is_active boolean default true, created_at timestamptz default now());
-    CREATE TABLE restaurants(id uuid primary key, owner_id uuid, status text default 'verified', subscription_tier text default 'none', subscription_expires_at timestamptz);
+    CREATE TYPE analytics_subscription_tier AS ENUM ('none','basic','premium');
+    CREATE TABLE restaurants(id uuid primary key, owner_id uuid, status text default 'verified', subscription_tier analytics_subscription_tier default 'none', subscription_expires_at timestamptz);
     CREATE TABLE favorites(user_id uuid, restaurant_id uuid);
     CREATE TABLE reviews(restaurant_id uuid, user_id uuid, rating int, status text);
-    CREATE TABLE subscription_transactions(restaurant_id uuid, tier text, status text, verified_at timestamptz, verified_by uuid, expires_at timestamptz);
+    CREATE TABLE subscription_transactions(restaurant_id uuid, tier varchar(20), status text, verified_at timestamptz, verified_by uuid, expires_at timestamptz);
     CREATE TABLE promotions(restaurant_id uuid, title text, description text, status text, start_date date, end_date date);
     CREATE TABLE cuisines(name text);
     CREATE TABLE recommendation_logs(id uuid);`);
