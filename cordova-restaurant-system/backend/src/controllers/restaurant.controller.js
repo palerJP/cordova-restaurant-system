@@ -311,129 +311,14 @@ const deleteImage = asyncHandler(async (req, res) => {
   res.json({ success: true, message: 'Photo removed' });
 });
 
-/** GET /api/restaurants/:id/subscription — owner or admin gets subscription & payment history */
-const getSubscriptionStatus = asyncHandler(async (req, res) => {
-  const existing = await restaurantModel.findById(req.params.id);
-  if (!existing) throw ApiError.notFound('Restaurant not found');
-  if (existing.owner_id !== req.user.id && req.user.role !== 'admin') {
-    throw ApiError.forbidden('You do not own this restaurant');
-  }
-
-  const { rows: txRows } = await query(
-    `SELECT * FROM subscription_transactions 
-     WHERE restaurant_id = $1 
-     ORDER BY created_at DESC 
-     LIMIT 5`,
-    [req.params.id]
-  );
-
-  res.json({
-    success: true,
-    data: {
-      current_tier: existing.subscription_tier || 'none',
-      subscription_expires_at: existing.subscription_expires_at,
-      transactions: txRows,
-      pending_transaction: txRows.find((t) => t.status === 'pending_verification') || null,
-    },
-  });
+const subscriptionModel = require('../models/subscription.model');
+const getSubscriptionStatus = asyncHandler(async (req,res) => {
+  const data=await subscriptionModel.get(req.params.id,req.user);
+  res.set('Cache-Control','private, no-store');res.json({success:true,data});
 });
-
-/** PATCH /api/restaurants/:id/subscription — owner or admin updates subscription tier */
-const updateSubscription = asyncHandler(async (req, res) => {
-  const existing = await restaurantModel.findById(req.params.id);
-  if (!existing) throw ApiError.notFound('Restaurant not found');
-  if (existing.owner_id !== req.user.id && req.user.role !== 'admin') {
-    throw ApiError.forbidden('You do not own this restaurant');
-  }
-
-  const { subscription_tier, subscription_expires_at, durationDays = 30, payment_method = 'gcash', payment_reference, referenceNo } = req.body;
-  const validTiers = ['none', 'basic', 'premium', 'featured'];
-  const tier = (subscription_tier || 'none').toLowerCase();
-
-  if (!validTiers.includes(tier)) {
-    throw ApiError.badRequest(`Invalid subscription tier. Must be one of: ${validTiers.join(', ')}`);
-  }
-
-  const isAdmin = req.user.role === 'admin';
-  const ref = (payment_reference || referenceNo || '').trim();
-
-  // If downgrading to free tier
-  if (tier === 'none') {
-    const updated = await restaurantModel.updateSubscription(req.params.id, {
-      tier: 'none',
-      expiresAt: null,
-    });
-    return res.json({
-      success: true,
-      data: updated,
-      message: 'Downgraded to free plan successfully',
-    });
-  }
-
-  // If Admin is making the change, immediately activate
-  if (isAdmin) {
-    let expiresAt = null;
-    if (subscription_expires_at) {
-      expiresAt = new Date(subscription_expires_at).toISOString();
-    } else {
-      const d = new Date();
-      d.setDate(d.getDate() + Number(durationDays || 30));
-      expiresAt = d.toISOString();
-    }
-
-    const updated = await restaurantModel.updateSubscription(req.params.id, {
-      tier,
-      expiresAt,
-    });
-
-    if (ref) {
-      const tierPrices = {
-        basic: '₱499 / month',
-        premium: '₱999 / month',
-        featured: '₱1,999 / month',
-      };
-      await query(
-        `INSERT INTO subscription_transactions (restaurant_id, tier, price, payment_method, payment_reference, status, verified_at, verified_by, expires_at, duration_days)
-         VALUES ($1, $2, $3, $4, $5, 'verified', NOW(), $6, $7, $8)`,
-        [req.params.id, tier, tierPrices[tier] || '₱0', payment_method, ref, req.user.id, expiresAt, durationDays]
-      );
-    }
-
-    return res.json({
-      success: true,
-      data: updated,
-      message: 'Subscription updated and activated successfully',
-    });
-  }
-
-  // If Owner is requesting a paid tier, require transaction reference and create pending transaction
-  if (!ref) {
-    throw ApiError.badRequest('Please enter your GCash / Maya transaction or reference number');
-  }
-
-  const tierPrices = {
-    basic: '₱499 / month',
-    premium: '₱999 / month',
-    featured: '₱1,999 / month',
-  };
-
-  const { rows: txRows } = await query(
-    `INSERT INTO subscription_transactions (restaurant_id, tier, price, payment_method, payment_reference, status, duration_days)
-     VALUES ($1, $2, $3, $4, $5, 'pending_verification', $6)
-     RETURNING *`,
-    [req.params.id, tier, tierPrices[tier] || '₱0', payment_method, ref, durationDays]
-  );
-
-  res.json({
-    success: true,
-    data: {
-      pending: true,
-      transaction: txRows[0],
-      current_tier: existing.subscription_tier || 'none',
-      requested_tier: tier,
-    },
-    message: 'Subscription payment submitted! Awaiting administrator verification.',
-  });
+const updateSubscription = asyncHandler(async (req,res) => {
+  const data=await subscriptionModel.submit(req.params.id,req.body,req.user);
+  res.set('Cache-Control','private, no-store');res.json({success:true,data,message:data.pending?'Payment reference submitted; awaiting administrator verification.':'Downgraded to free plan.'});
 });
 
 /** DELETE /api/admin/restaurants/:id — admin permanently removes an establishment */

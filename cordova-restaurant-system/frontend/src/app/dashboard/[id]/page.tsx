@@ -1542,21 +1542,29 @@ function SubscriptionTab({ restaurant, onUpdated }: { restaurant: Restaurant; on
   const [referenceNo, setReferenceNo] = useState('');
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [subData, setSubData] = useState<any>(null);
+  const [subscriptionError, setSubscriptionError] = useState(false);
 
   const fetchSubscriptionData = useCallback(async () => {
     try {
       const res = await api.get(`/api/restaurants/${restaurant.id}/subscription`);
       setSubData(res.data);
+      setSubscriptionError(false);
     } catch {
-      // Non-critical
+      setSubscriptionError(true);
     }
   }, [restaurant.id]);
 
   useEffect(() => {
     fetchSubscriptionData();
+    const refresh = () => { if (!document.hidden) fetchSubscriptionData(); };
+    const timer = window.setInterval(refresh, 15000);
+    window.addEventListener('focus', refresh);
+    return () => { window.clearInterval(timer); window.removeEventListener('focus', refresh); };
   }, [fetchSubscriptionData]);
 
-  const currentTier = (restaurant.subscription_tier || 'none').toLowerCase();
+  const expiresAt = subData?.subscription_expires_at ?? restaurant.subscription_expires_at;
+  const currentTier = expiresAt && new Date(expiresAt).getTime() > Date.now()
+    ? (subData?.current_tier || restaurant.subscription_tier || 'none').toLowerCase() : 'none';
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -1654,12 +1662,17 @@ function SubscriptionTab({ restaurant, onUpdated }: { restaurant: Restaurant; on
     }
   };
 
-  const daysRemaining = restaurant.subscription_expires_at
-    ? Math.max(0, Math.ceil((new Date(restaurant.subscription_expires_at).getTime() - renderedAt) / (1000 * 60 * 60 * 24)))
+  const daysRemaining = expiresAt
+    ? Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
     : null;
 
   return (
     <div className="space-y-8">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+        <p>Manual GCash/Maya verification. A reference submission does not confirm payment.</p>
+        <Button variant="secondary" onClick={fetchSubscriptionData}>Refresh status</Button>
+      </div>
+      {subscriptionError && <p role="alert" className="text-red-600">Subscription status could not be refreshed. Try Refresh status.</p>}
       {/* Pending Verification Banner */}
       {subData?.pending_transaction && (
         <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 sm:p-5 flex items-start gap-3.5 text-xs text-amber-900 dark:text-amber-100 shadow-sm">
@@ -1682,6 +1695,7 @@ function SubscriptionTab({ restaurant, onUpdated }: { restaurant: Restaurant; on
         </div>
       )}
 
+      {subData?.transactions?.length > 0 && <div className="card p-4 overflow-x-auto"><h3 className="font-semibold mb-2">Recent payment requests</h3><table className="w-full text-sm text-left"><thead><tr><th>Reference</th><th>Plan</th><th>Status</th></tr></thead><tbody>{subData.transactions.map((tx: {id:string;payment_reference:string;tier:string;status:string}) => <tr key={tx.id}><td className="py-2 pr-3 break-all">{tx.payment_reference}</td><td className="pr-3 capitalize">{tx.tier}</td><td>{tx.status === 'pending_verification' ? 'Awaiting verification' : tx.status === 'verified' ? 'Payment verified' : tx.status === 'rejected' ? 'Rejected / cancelled' : 'Ended'}</td></tr>)}</tbody></table></div>}
       {/* Current Status Banner */}
       <div className="bg-white dark:bg-[#1a211c] border border-stone-200 dark:border-stone-800 rounded-xl p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -1696,11 +1710,11 @@ function SubscriptionTab({ restaurant, onUpdated }: { restaurant: Restaurant; on
               {currentTier === 'featured' ? '1.5x Boost' : currentTier === 'premium' ? '1.3x Boost' : currentTier === 'basic' ? '1.1x Boost' : '1.0x Base'}
             </Badge>
           </div>
-          {restaurant.subscription_expires_at ? (
+          {currentTier !== 'none' && expiresAt ? (
             <div className="mt-2 space-y-0.5">
               <p className="text-xs font-semibold text-cordova-green dark:text-emerald-400 flex items-center gap-1.5">
                 <Calendar size={13} />
-                <span>Active until: {new Date(restaurant.subscription_expires_at).toLocaleDateString()}</span>
+                <span>Active until: {new Date(expiresAt).toLocaleDateString()}</span>
               </p>
               <p className="text-[11px] text-stone-400">
                 {daysRemaining} {daysRemaining === 1 ? 'day' : 'days'} remaining in current billing period
@@ -1768,14 +1782,14 @@ function SubscriptionTab({ restaurant, onUpdated }: { restaurant: Restaurant; on
                     onClick={() => handleSelectTier(tier)}
                     loading={updating}
                     variant={isCurrent ? 'secondary' : tier.id === 'featured' ? 'primary' : 'secondary'}
-                    disabled={isCurrent || updating}
+                    disabled={(isCurrent && tier.id === 'none') || updating || !!subData?.pending_transaction}
                     className={`w-full text-xs font-bold uppercase tracking-wider ${
                       tier.id === 'featured' && !isCurrent
                         ? 'bg-amber-500 hover:bg-amber-600 text-white'
                         : ''
                     }`}
                   >
-                    {isCurrent ? 'Current Plan' : tier.id === 'none' ? 'Downgrade to Free' : 'Upgrade Plan'}
+                    {isCurrent ? tier.id === 'none' ? 'Current Plan' : 'Renew Plan' : tier.id === 'none' ? 'Downgrade to Free' : 'Upgrade Plan'}
                   </Button>
                 </div>
               </div>

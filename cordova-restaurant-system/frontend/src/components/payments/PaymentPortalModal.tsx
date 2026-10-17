@@ -83,7 +83,7 @@ export function PaymentPortalModal({
       });
 
       if (res.data?.pending) {
-        toast('Payment submitted! Platform administrator is verifying your transaction.', 'success');
+        toast('Reference submitted. Your plan starts only after administrator verification.', 'success');
       } else {
         toast(`Subscription updated to ${tier.name}`, 'success');
       }
@@ -110,7 +110,7 @@ export function PaymentPortalModal({
           <div className="space-y-1 relative z-10">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                <ShieldCheck size={12} /> Secure Payment
+                <ShieldCheck size={12} /> Manual Payment Review
               </span>
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-500/20 text-blue-300 border border-blue-500/30">
                 <QrCode size={11} /> QR Ph &bull; InstaPay
@@ -290,11 +290,14 @@ export function PaymentPortalModal({
           <form onSubmit={handleSubmit} className="space-y-3">
             <div>
               <Input
+                id="subscription-payment-reference"
                 label="Transaction / Reference Number *"
                 placeholder="e.g. 1029384756 (from your receipt)"
                 value={referenceNo}
                 onChange={(e) => setReferenceNo(e.target.value)}
                 required
+                minLength={6}
+                maxLength={100}
               />
               <p className="text-[11px] text-stone-400 mt-1 flex items-center gap-1">
                 <Clock size={12} /> Enter the reference number from your GCash or Maya confirmation to verify.
@@ -318,7 +321,7 @@ export function PaymentPortalModal({
                 className="w-2/3 bg-cordova-green hover:bg-cordova-greenHover text-white text-xs font-bold uppercase tracking-wider py-3 shadow-sm"
               >
                 <Check size={14} className="mr-1.5" />
-                Submit Payment (₱{tier.amount.toLocaleString()})
+                Submit Reference (₱{tier.amount.toLocaleString()})
               </Button>
             </div>
           </form>

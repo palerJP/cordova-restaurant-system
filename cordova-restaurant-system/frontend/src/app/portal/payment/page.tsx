@@ -76,10 +76,10 @@ export default function PaymentPortalPage() {
     async function loadRestaurants() {
       try {
         const res = await api.get('/api/restaurants/mine');
-        if (res.data?.restaurants && res.data.restaurants.length > 0) {
-          setMyRestaurants(res.data.restaurants);
-          setSelectedRestaurantId(res.data.restaurants[0].id);
-          setRestaurantName(res.data.restaurants[0].name);
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          setMyRestaurants(res.data);
+          setSelectedRestaurantId(res.data[0].id);
+          setRestaurantName(res.data[0].name);
         }
       } catch {
         // Guest or non-owner visiting portal
@@ -110,6 +110,10 @@ export default function PaymentPortalPage() {
       return;
     }
 
+    if (!selectedRestaurantId || selectedPlan.id === 'promotion') {
+      toast('Open your business dashboard to choose a business and submit the correct subscription or promotion request.', 'error');
+      return;
+    }
     setSubmitting(true);
     try {
       if (selectedRestaurantId && selectedPlan.id !== 'promotion') {
@@ -123,8 +127,7 @@ export default function PaymentPortalPage() {
       setSubmitted(true);
       toast('Payment details submitted successfully! Awaiting administrator verification.', 'success');
     } catch (err) {
-      toast(err instanceof ApiClientError ? err.message : 'Submitted reference logged for verification', 'info');
-      setSubmitted(true);
+      toast(err instanceof ApiClientError ? err.message : 'Could not submit your payment reference. Please try again.', 'error');
     } finally {
       setSubmitting(false);
     }

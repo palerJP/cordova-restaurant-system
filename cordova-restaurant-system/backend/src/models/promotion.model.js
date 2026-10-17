@@ -241,80 +241,9 @@ async function getLatestSubscriptionTransactionForRestaurant(restaurantId) {
   return rows[0] || null;
 }
 
-async function updateSubscriptionTransactionStatus(id, { status, verifiedBy, durationDays = 30 }) {
-  if (status === 'verified') {
-    const { rows: txRows } = await query(`SELECT * FROM subscription_transactions WHERE id = $1`, [id]);
-    const tx = txRows[0];
-    if (!tx) return null;
-
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + Number(durationDays || 30));
-
-    const { rows } = await query(
-      `UPDATE subscription_transactions 
-       SET status = 'verified', verified_at = NOW(), verified_by = $2, expires_at = $3, duration_days = $4
-       WHERE id = $1 RETURNING *`,
-      [id, verifiedBy || null, expiresAt.toISOString(), durationDays]
-    );
-
-    await query(
-      `UPDATE restaurants 
-       SET subscription_tier = $1, subscription_expires_at = $2
-       WHERE id = $3`,
-      [tx.tier, expiresAt.toISOString(), tx.restaurant_id]
-    );
-
-    return rows[0] || null;
-  } else if (status === 'rejected') {
-    const { rows } = await query(
-      `UPDATE subscription_transactions 
-       SET status = 'rejected', verified_at = NOW(), verified_by = $2
-       WHERE id = $1 RETURNING *`,
-      [id, verifiedBy || null]
-    );
-    return rows[0] || null;
-  } else if (status === 'expired' || status === 'terminated') {
-    const { rows: txRows } = await query(`SELECT * FROM subscription_transactions WHERE id = $1`, [id]);
-    const tx = txRows[0];
-    if (tx) {
-      await query(
-        `UPDATE restaurants 
-         SET subscription_tier = 'none', subscription_expires_at = NULL 
-         WHERE id = $1`,
-        [tx.restaurant_id]
-      );
-    }
-    const { rows } = await query(
-      `UPDATE subscription_transactions 
-       SET status = 'expired', expires_at = NOW() 
-       WHERE id = $1 RETURNING *`,
-      [id]
-    );
-    return rows[0] || null;
-  } else {
-    const { rows } = await query(
-      `UPDATE subscription_transactions 
-       SET status = $2
-       WHERE id = $1 RETURNING *`,
-      [id, status]
-    );
-    return rows[0] || null;
-  }
-}
-
-async function deleteSubscriptionTransaction(id) {
-  const { rows: txRows } = await query(`SELECT * FROM subscription_transactions WHERE id = $1`, [id]);
-  const tx = txRows[0];
-  if (tx && tx.status === 'verified') {
-    await query(
-      `UPDATE restaurants 
-       SET subscription_tier = 'none', subscription_expires_at = NULL 
-       WHERE id = $1`,
-      [tx.restaurant_id]
-    );
-  }
-  await query(`DELETE FROM subscription_transactions WHERE id = $1`, [id]);
-}
+const subscriptionModel = require('./subscription.model');
+const updateSubscriptionTransactionStatus = (id,options) => subscriptionModel.change(id,options);
+const deleteSubscriptionTransaction = id => subscriptionModel.remove(id);
 
 module.exports = {
   listActive, listForRestaurant, findById, create, update, remove,

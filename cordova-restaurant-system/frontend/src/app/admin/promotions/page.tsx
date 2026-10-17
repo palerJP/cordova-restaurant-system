@@ -170,10 +170,11 @@ function AdminPromotionsContent() {
           Promotions
         </h1>
         <p className="text-xs sm:text-sm text-stone-500 mt-1">
-          Offers, payment verification, and subscription boosts
+          Offers, payment verification, and subscription boosts. Verify transfers in your payment account before approving.
         </p>
       </div>
 
+      <Button variant="secondary" onClick={load}>Refresh records</Button>
       {/* Filter and Search Bar */}
       <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3 bg-white dark:bg-[#1a211c] p-3 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-sm">
         {/* Status Tabs */}
@@ -295,7 +296,7 @@ function AdminPromotionsContent() {
                           </span>
                         ) : isVerified ? (
                           <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                            <ShieldCheck size={12} /> Verified & Active
+                            <ShieldCheck size={12} /> Payment Verified
                           </span>
                         ) : isRejected ? (
                           <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-600 dark:text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-full border border-rose-500/20">
@@ -380,20 +381,13 @@ function AdminPromotionsContent() {
                         >
                           Mark Expired
                         </Button>
-                      ) : (
-                        <Button
-                          size="sm"
-                          onClick={() => updateSubscriptionStatus(tx.id, 'verified')}
-                          className="bg-cordova-green hover:bg-cordova-greenHover text-white text-xs font-bold"
-                        >
-                          <CheckCircle2 size={12} className="mr-1" /> Reactivate
-                        </Button>
-                      )}
+                      ) : null}
 
                       <Button
                         variant="secondary"
                         size="sm"
                         onClick={() => setDeleteSubTarget(tx)}
+                        disabled={isVerified}
                         className="text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30"
                         title="Delete Subscription Record"
                       >
