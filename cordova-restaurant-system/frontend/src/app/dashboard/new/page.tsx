@@ -14,6 +14,7 @@ import { Input, Textarea } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { BusinessAddressLookup, type BusinessLocation } from '@/components/BusinessAddressLookup';
 
 const SERVICE_OPTIONS = [
   { value: 'dine_in', label: 'Dine-in' },
@@ -32,8 +33,7 @@ export default function NewBusinessPage() {
   const [description, setDescription] = useState('');
   const [address, setAddress] = useState('');
   const [barangay, setBarangay] = useState('');
-  const [latitude, setLatitude] = useState('10.2531');
-  const [longitude, setLongitude] = useState('123.9494');
+  const [location, setLocation] = useState<BusinessLocation | null>(null);
   const [phone, setPhone] = useState('');
   const [priceRange, setPriceRange] = useState('moderate');
   const [services, setServices] = useState<string[]>(['dine_in']);
@@ -74,7 +74,7 @@ export default function NewBusinessPage() {
     const e: Record<string, string> = {};
     if (name.trim().length < 2) e.name = 'Business name is required (at least 2 characters)';
     if (address.trim().length < 5) e.address = 'Address is required (at least 5 characters)';
-    if (!latitude || !longitude) e.location = 'Map coordinates are required';
+    if (!location) e.location = 'Find your address and confirm its location on the map.';
     if (services.length === 0) e.services = 'Select at least one service type';
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -90,8 +90,8 @@ export default function NewBusinessPage() {
       if (description.trim()) formData.append('description', description.trim());
       formData.append('address', address.trim());
       if (barangay.trim()) formData.append('barangay', barangay.trim());
-      formData.append('latitude', latitude);
-      formData.append('longitude', longitude);
+      formData.append('latitude', String(location!.latitude));
+      formData.append('longitude', String(location!.longitude));
       if (phone.trim()) formData.append('phone', phone.trim());
       formData.append('priceRange', priceRange);
       formData.append('servicesOffered', JSON.stringify(services));
@@ -230,14 +230,9 @@ export default function NewBusinessPage() {
             <h2 className="text-sm font-bold uppercase tracking-wider text-cordova-green dark:text-emerald-400">
               3. Location & Contact Details
             </h2>
-            <Input label="Street Address" value={address} onChange={(e) => setAddress(e.target.value)} error={errors.address} placeholder="e.g. Day-as Port Road, Cordova, Cebu" required />
-            <Input label="Barangay" value={barangay} onChange={(e) => setBarangay(e.target.value)} placeholder="e.g. Day-as, Gabi, Poblacion, San Miguel, Ibabao..." />
-
-            <div className="grid grid-cols-2 gap-3">
-              <Input label="Latitude" type="number" step="any" value={latitude} onChange={(e) => setLatitude(e.target.value)} />
-              <Input label="Longitude" type="number" step="any" value={longitude} onChange={(e) => setLongitude(e.target.value)} />
-            </div>
-            {errors.location && <p className="text-sm text-red-500">{errors.location}</p>}
+            <BusinessAddressLookup address={address} barangay={barangay}
+              onAddressChange={setAddress} onBarangayChange={setBarangay}
+              value={location} onChange={setLocation} error={errors.address || (!location ? errors.location : undefined)} />
 
             <Input label="Phone Number" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+63 9XX XXX XXXX" />
           </div>
