@@ -44,10 +44,7 @@ const getBySlug = asyncHandler(async (req, res) => {
   const restaurant = await restaurantModel.findBySlug(req.params.slug);
   if (!restaurant) throw ApiError.notFound('Restaurant not found');
 
-  restaurantModel.incrementViewCount(restaurant.id).catch(() => {});
-  analyticsModel
-    .logRestaurantView({ restaurantId: restaurant.id, userId: req.user?.id, source: req.query.source || 'browse' })
-    .catch(() => {});
+  await analyticsModel.logRestaurantView({ restaurantId: restaurant.id, userId: req.user?.id, source: req.query.source || 'browse' });
 
   res.json({ success: true, data: { restaurant } });
 });
@@ -59,11 +56,7 @@ const getById = asyncHandler(async (req, res) => {
   const restaurant = await restaurantModel.findById(req.params.id, { userLat: lat, userLng: lng });
   if (!restaurant) throw ApiError.notFound('Restaurant not found');
 
-  // fire-and-forget view logging; don't block the response on it
-  restaurantModel.incrementViewCount(restaurant.id).catch(() => {});
-  analyticsModel
-    .logRestaurantView({ restaurantId: restaurant.id, userId: req.user?.id, source: req.query.source || 'browse' })
-    .catch(() => {});
+  await analyticsModel.logRestaurantView({ restaurantId: restaurant.id, userId: req.user?.id, source: req.query.source || 'browse' });
 
   res.json({ success: true, data: { restaurant } });
 });

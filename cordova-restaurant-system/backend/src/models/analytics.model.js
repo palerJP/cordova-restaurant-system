@@ -1,109 +1,33 @@
 const { query } = require('../config/db');
+const businessAnalytics = require('./businessAnalytics.model');
 
 async function logRestaurantView({ restaurantId, userId, source = 'browse' }) {
+  source = ['browse', 'recommendation', 'search'].includes(source) ? source : 'browse';
+  await businessAnalytics.record({ restaurantIds: [restaurantId], userId, kind: 'view', source });
   await query(
     `INSERT INTO restaurant_view_logs (restaurant_id, user_id, source) VALUES ($1,$2,$3)`,
     [restaurantId, userId || null, source]
   );
 }
 
-async function logRecommendationQuery({ userId, sessionId, queryParams, resultIds, topResultId }) {
+async function logRecommendationQuery({ userId, sessionId, queryParams, resultIds, topResultId, eventType = 'search' }) {
   await query(
     `INSERT INTO recommendation_logs (user_id, session_id, query_params, result_ids, top_result_id)
      VALUES ($1,$2,$3,$4,$5)`,
-    [userId || null, sessionId || null, queryParams, resultIds, topResultId || null]
+    [userId || null, sessionId || null, { ...queryParams, eventType }, resultIds, topResultId || null]
   );
+  if (eventType === 'recommendation') {
+    await businessAnalytics.record({ restaurantIds: resultIds, userId, kind: 'recommendation', source: 'recommendation', metadata: { cuisines: queryParams.cuisines || [] } });
+  }
 }
 
 /** Owner-facing: views/clicks/recommendation-appearance stats for one restaurant. */
 async function ownerRestaurantStats(restaurantId, { days = 30 } = {}) {
-  const [{ rows: viewRows }, { rows: recRows }, { rows: dailyRows }] = await Promise.all([
-    query(
-      `SELECT COUNT(*) AS total_views,
-              COUNT(*) FILTER (WHERE source = 'recommendation') AS views_from_recommendation
-       FROM restaurant_view_logs
-       WHERE restaurant_id = $1 AND created_at >= now() - ($2 || ' days')::interval`,
-      [restaurantId, days]
-    ),
-    query(
-      `SELECT COUNT(*) AS times_recommended,
-              COUNT(*) FILTER (WHERE top_result_id = $1) AS times_top_result
-       FROM recommendation_logs
-       WHERE $1 = ANY(result_ids) AND created_at >= now() - ($2 || ' days')::interval`,
-      [restaurantId, days]
-    ),
-    query(
-      `SELECT date_trunc('day', created_at)::date AS day, COUNT(*) AS views
-       FROM restaurant_view_logs
-       WHERE restaurant_id = $1 AND created_at >= now() - ($2 || ' days')::interval
-       GROUP BY 1 ORDER BY 1`,
-      [restaurantId, days]
-    ),
-  ]);
-
-  return {
-    totalViews: parseInt(viewRows[0].total_views, 10),
-    viewsFromRecommendation: parseInt(viewRows[0].views_from_recommendation, 10),
-    timesRecommended: parseInt(recRows[0].times_recommended, 10),
-    timesTopResult: parseInt(recRows[0].times_top_result, 10),
-    dailyViews: dailyRows.map((r) => ({ day: r.day, views: parseInt(r.views, 10) })),
-  };
+  return businessAnalytics.ownerStats(restaurantId, days);
 }
 
-/** Admin-facing: system-wide dashboard numbers. */
 async function adminOverview() {
-  const [{ rows: userStats }, { rows: restaurantStats }, { rows: reviewStats }, { rows: promotionStats }, { rows: cuisineTrend }, { rows: peakHours }] =
-    await Promise.all([
-      query(
-        `SELECT
-           COUNT(*) FILTER (WHERE role = 'customer') AS customers,
-           COUNT(*) FILTER (WHERE role = 'owner') AS owners,
-           COUNT(*) FILTER (WHERE created_at >= now() - interval '30 days') AS new_last_30d
-         FROM users`
-      ),
-      query(
-        `SELECT
-           COUNT(*) FILTER (WHERE status = 'verified') AS verified,
-           COUNT(*) FILTER (WHERE status = 'pending') AS pending,
-           COUNT(*) FILTER (WHERE status = 'rejected') AS rejected,
-           COUNT(*) FILTER (WHERE status = 'suspended') AS suspended
-         FROM restaurants`
-      ),
-      query(
-        `SELECT COUNT(*) FILTER (WHERE status = 'flagged') AS flagged,
-                COUNT(*) FILTER (WHERE status = 'visible') AS visible
-         FROM reviews`
-      ),
-      query(
-        `SELECT
-           COUNT(*) FILTER (WHERE status = 'active' AND end_date >= CURRENT_DATE) AS active,
-           COUNT(*) FILTER (WHERE status = 'expired' OR end_date < CURRENT_DATE) AS expired,
-           COUNT(*) AS total
-         FROM promotions`
-      ),
-      query(
-        `SELECT c.name, COUNT(*) AS search_count
-         FROM recommendation_logs rl, jsonb_array_elements_text(COALESCE(rl.query_params->'cuisines', '[]'::jsonb)) cuisine_name
-         JOIN cuisines c ON c.name = cuisine_name
-         WHERE rl.created_at >= now() - interval '30 days'
-         GROUP BY c.name ORDER BY search_count DESC LIMIT 10`
-      ),
-      query(
-        `SELECT EXTRACT(HOUR FROM created_at)::int AS hour, COUNT(*) AS searches
-         FROM recommendation_logs
-         WHERE created_at >= now() - interval '30 days'
-         GROUP BY 1 ORDER BY 1`
-      ),
-    ]);
-
-  return {
-    users: userStats[0],
-    restaurants: restaurantStats[0],
-    reviews: reviewStats[0],
-    promotions: promotionStats[0] || { active: 0, expired: 0, total: 0 },
-    topCuisineDemand: cuisineTrend,
-    peakSearchHours: peakHours.map((r) => ({ hour: r.hour, searches: parseInt(r.searches, 10) })),
-  };
+  return businessAnalytics.adminStats();
 }
 
 /**

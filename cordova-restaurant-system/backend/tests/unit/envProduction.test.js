@@ -25,7 +25,7 @@ function bootEnv(overrides) {
   });
 }
 
-test.each(['DATABASE_URL', 'JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET', 'COOKIE_SECRET', 'CLIENT_URL', 'EMAIL_FROM', 'BLOB_READ_WRITE_TOKEN', 'BLOB_PRIVATE_READ_WRITE_TOKEN'])(
+test.each(['DATABASE_URL', 'JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET', 'COOKIE_SECRET', 'CLIENT_URL', 'EMAIL_FROM', 'BLOB_READ_WRITE_TOKEN'])(
   'production boot rejects missing %s', (name) => {
     const result = bootEnv({ [name]: '' });
     expect(result.status).not.toBe(0);
@@ -45,4 +45,8 @@ test('production boot requires delivery, strong distinct secrets, and verified e
   expect(bootEnv({ COOKIE_SECURE: 'false' }).status).toBe(0);
   expect(bootEnv({ BLOB_PRIVATE_READ_WRITE_TOKEN: productionEnv.BLOB_READ_WRITE_TOKEN }).stderr)
     .toContain('Public and private Blob stores must use different credentials');
+});
+
+test('missing private storage does not prevent read-only services from booting', () => {
+  expect(bootEnv({ BLOB_PRIVATE_READ_WRITE_TOKEN: '' }).status).toBe(0);
 });

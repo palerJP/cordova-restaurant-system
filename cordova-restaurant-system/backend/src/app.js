@@ -66,6 +66,8 @@ app.get('/ready', async (req, res) => {
     const { query } = require('./config/db');
     const { rows } = await query('SELECT filename FROM _migrations WHERE filename = $1', ['016_reconcile_review_statistics.sql']);
     if (!rows.length) return res.status(503).json({ status: 'not_ready' });
+    await require('./models/businessAnalytics.model').ensureSchema();
+    await query('SELECT 1 FROM subscription_transactions, favorites, reviews, promotions, cuisines LIMIT 0');
     res.json({ status: 'ready' });
   } catch {
     res.status(503).json({ status: 'not_ready' });

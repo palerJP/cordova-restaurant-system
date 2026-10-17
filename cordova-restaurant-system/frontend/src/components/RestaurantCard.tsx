@@ -13,11 +13,13 @@ export const RestaurantCard = memo(function RestaurantCard({
   matchScore,
   matchedPreferences,
   suggestionReason,
+  source = 'browse',
 }: {
   restaurant: Restaurant;
   matchScore?: number;
   matchedPreferences?: MatchedPreferences;
   suggestionReason?: string;
+  source?: 'browse' | 'recommendation' | 'search';
 }) {
   const restaurant = applyRestaurantCustomization(rawRestaurant);
   const [imgError, setImgError] = useState(false);
@@ -255,7 +257,7 @@ export const RestaurantCard = memo(function RestaurantCard({
 
         {/* Action Button */}
         <Link
-          href={`/restaurants/${restaurant.slug}`}
+          href={`/restaurants/${restaurant.slug}?source=${source}`}
           className="w-full bg-cordova-green hover:bg-cordova-greenHover dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white font-extrabold text-xs uppercase tracking-wider py-3 rounded-2xl text-center transition-all duration-200 shadow-spatial-sm hover:shadow-spatial-glow active:scale-[0.98] block mt-1 border border-white/15"
         >
           View Details

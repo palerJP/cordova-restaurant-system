@@ -516,6 +516,7 @@ async function getRecommendationsAndLog(params, { userId, sessionId }) {
   const output = await getRecommendations(params, userId);
 
   await analyticsModel.logRecommendationQuery({
+    eventType: 'recommendation',
     userId,
     sessionId,
     queryParams: {

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { api, ApiClientError } from '@/lib/api';
+import { useLiveAnalytics } from '@/hooks/useLiveAnalytics';
 import { useToast } from '@/lib/toast-context';
 import { RequireRole } from '@/components/RequireRole';
 import { Badge } from '@/components/ui/Badge';
@@ -1487,25 +1488,40 @@ function PromotionsTab({ restaurantId }: { restaurantId: string }) {
 
 // ---------------- Analytics tab ----------------
 function AnalyticsTab({ restaurantId }: { restaurantId: string }) {
-  const [stats, setStats] = useState<any>(null);
-
-  useEffect(() => {
-    api.get(`/api/restaurants/${restaurantId}/analytics?days=30`).then((res) => setStats(res.data)).catch(() => {});
-  }, [restaurantId]);
-
-  if (!stats) return <Skeleton className="h-40 w-full" />;
-
-  return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-      <StatCard label="Total views (30d)" value={stats.totalViews} />
-      <StatCard label="Views from recommendations" value={stats.viewsFromRecommendation} />
-      <StatCard label="Times recommended" value={stats.timesRecommended} />
-      <StatCard label="Times top result" value={stats.timesTopResult} />
+  const { data: stats, error, refresh } = useLiveAnalytics(`/api/restaurants/${restaurantId}/analytics?days=30`, 'owner');
+  return <div className="space-y-5">
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <div><h3 className="font-semibold">Database analytics</h3><p className="text-xs text-stone-500">Refreshes every 5 seconds while this tab is visible. Times use Philippine time.</p></div>
+      <Button variant="secondary" onClick={refresh}>Refresh now</Button>
     </div>
-  );
+    {error && <div role="alert" className="rounded-xl border border-red-300 p-4 text-sm">Live analytics could not be refreshed. {stats ? 'The figures below are from the last successful update.' : 'No numbers are shown until the database can be checked.'} <button className="underline" onClick={refresh}>Try again</button></div>}
+    {!stats ? (!error && <Skeleton className="h-40 w-full" />) : <>
+      <p className="text-xs text-stone-500">Last database update: {new Date(stats.asOf).toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}. Activity tracking began {new Date(stats.trackingSince).toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}. Earlier demo/history logs are excluded.</p>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <StatCard label="Profile requests (30 days)" value={stats.totalViews} />
+        <StatCard label="Requests from recommendation links (30 days)" value={stats.viewsFromRecommendation} />
+        <StatCard label="Included in recommendation results (30 days)" value={stats.timesRecommended} />
+        <StatCard label="Ranked first in recommendations (30 days)" value={stats.timesTopResult} />
+        <StatCard label="Accounts saving this business (current)" value={stats.favorites} />
+        <StatCard label="Visible reviews (current)" value={stats.visibleReviews} />
+        <StatCard label="Average visible review rating" value={stats.averageRating === null ? 'No ratings' : stats.averageRating} />
+        <StatCard label="Admin-verified payments (30 days)" value={stats.verifiedPayments} />
+      </div>
+      <p className="text-sm">Active paid boost supported by a verified payment: <strong>{stats.activePaidSubscription ? 'Yes' : 'No'}</strong></p>
+      <div className="card p-4 text-sm space-y-2">
+        <p>Profile requests count recorded detail-page requests, not unique people. Your own signed-in visits and admin visits are excluded.</p>
+        <p>Recommendation counts record inclusion in generated API results, not proof that a person saw or clicked the card. Normal searches and admin previews are excluded.</p>
+        <p>Saved businesses are favorites, not paying subscribers. Payment counts require an administrator verification record; pending or sample tiers are not counted.</p>
+      </div>
+      <details className="card p-4"><summary className="cursor-pointer text-sm font-semibold">Daily profile requests</summary>
+        <table className="mt-3 w-full text-sm"><thead><tr><th className="text-left">Date (Philippines)</th><th className="text-right">Recorded requests</th></tr></thead>
+          <tbody>{stats.dailyViews.map((row: { day: string; views: number }) => <tr key={row.day}><td>{row.day}</td><td className="text-right">{row.views}</td></tr>)}</tbody></table>
+      </details>
+    </>}
+  </div>;
 }
 
-function StatCard({ label, value }: { label: string; value: number }) {
+function StatCard({ label, value }: { label: string; value: number | string }) {
   return (
     <div className="card p-4">
       <p className="text-2xl font-bold">{value}</p>

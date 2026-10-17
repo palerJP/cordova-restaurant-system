@@ -76,3 +76,10 @@ test('migration accepts only known upload folders and simple file names', () => 
   expect(localSource('/uploads/business-permits/../secret.txt')).toBeNull();
   expect(localSource('https://example.com/file.jpg')).toBeNull();
 });
+
+test('missing private storage never falls back to a public upload', async () => {
+  env.isProduction = true;
+  env.upload.privateBlobToken = null;
+  await expect(service.privateUrlFor({ buffer: Buffer.from('test'), mimetype: 'application/pdf' })).rejects.toThrow('Private document storage is not configured');
+  expect(put).not.toHaveBeenCalled();
+});

@@ -1,6 +1,5 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   Users,
@@ -15,20 +14,11 @@ import {
   ArrowUpRight,
   Sparkles,
 } from 'lucide-react';
-import { api } from '@/lib/api';
+import { useLiveAnalytics } from '@/hooks/useLiveAnalytics';
 import { Skeleton } from '@/components/ui/Skeleton';
 
 export default function AdminOverviewPage() {
-  const [data, setData] = useState<any>(null);
-  const [error, setError] = useState(false);
-  const load = useCallback(() => {
-    setError(false);
-    api.get('/api/admin/analytics/overview').then((res) => setData(res.data)).catch(() => setError(true));
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  const { data, error, refresh: load } = useLiveAnalytics('/api/admin/analytics/overview', 'admin');
 
   return (
     <div className="space-y-8">
@@ -37,7 +27,7 @@ export default function AdminOverviewPage() {
           Overview
         </h1>
         <p className="text-xs sm:text-sm text-stone-500 mt-1">
-          Municipality of Cordova
+          Database records · Automatically refreshes every 5 seconds while visible
         </p>
       </div>
 
@@ -60,21 +50,21 @@ export default function AdminOverviewPage() {
             <StatCard
               href="/admin/users?role=customer"
               label="Customers"
-              value={data.users?.customers ?? 0}
+              value={data.users?.customers ?? '—'}
               icon={Users}
               colorClass="text-sky-500 bg-sky-500/10 border-sky-500/20"
             />
             <StatCard
               href="/admin/users?role=owner"
               label="Restaurant owners"
-              value={data.users?.owners ?? 0}
+              value={data.users?.owners ?? '—'}
               icon={Store}
               colorClass="text-emerald-500 bg-emerald-500/10 border-emerald-500/20"
             />
             <StatCard
               href="/admin/users"
               label="New users (30d)"
-              value={data.users?.new_last_30d ?? 0}
+              value={data.users?.new_last_30d ?? '—'}
               icon={UserPlus}
               colorClass="text-indigo-500 bg-indigo-500/10 border-indigo-500/20"
             />
@@ -83,14 +73,14 @@ export default function AdminOverviewPage() {
             <StatCard
               href="/admin/businesses?status=verified"
               label="Verified restaurants"
-              value={data.restaurants?.verified ?? 0}
+              value={data.restaurants?.verified ?? '—'}
               icon={ShieldCheck}
               colorClass="text-emerald-500 bg-emerald-500/10 border-emerald-500/20"
             />
             <StatCard
               href="/admin/businesses?status=pending"
               label="Pending verification"
-              value={data.restaurants?.pending ?? 0}
+              value={data.restaurants?.pending ?? '—'}
               icon={Clock}
               colorClass="text-amber-500 bg-amber-500/10 border-amber-500/20"
               highlight={Number(data.restaurants?.pending || 0) > 0}
@@ -99,7 +89,7 @@ export default function AdminOverviewPage() {
             <StatCard
               href="/admin/businesses?status=suspended"
               label="Suspended"
-              value={data.restaurants?.suspended ?? 0}
+              value={data.restaurants?.suspended ?? '—'}
               icon={Ban}
               colorClass="text-rose-500 bg-rose-500/10 border-rose-500/20"
             />
@@ -108,7 +98,7 @@ export default function AdminOverviewPage() {
             <StatCard
               href="/admin/reviews?status=flagged"
               label="Flagged reviews"
-              value={data.reviews?.flagged ?? 0}
+              value={data.reviews?.flagged ?? '—'}
               icon={Flag}
               colorClass="text-rose-500 bg-rose-500/10 border-rose-500/20"
               highlight={Number(data.reviews?.flagged || 0) > 0}
@@ -117,7 +107,7 @@ export default function AdminOverviewPage() {
             <StatCard
               href="/admin/reviews?status=visible"
               label="Visible reviews"
-              value={data.reviews?.visible ?? 0}
+              value={data.reviews?.visible ?? '—'}
               icon={CheckCircle}
               colorClass="text-teal-500 bg-teal-500/10 border-teal-500/20"
             />
@@ -126,32 +116,37 @@ export default function AdminOverviewPage() {
             <StatCard
               href="/admin/promotions?status=active"
               label="Active promotions"
-              value={data.promotions?.active ?? 0}
+              value={data.promotions?.active ?? '—'}
               icon={Sparkles}
               colorClass="text-amber-500 bg-amber-500/10 border-amber-500/20"
             />
             <StatCard
               href="/admin/promotions"
               label="Total promotions"
-              value={data.promotions?.total ?? 0}
+              value={data.promotions?.total ?? '—'}
               icon={Tag}
               colorClass="text-purple-500 bg-purple-500/10 border-purple-500/20"
             />
           </div>
 
+          <div className="card p-4 space-y-2 text-sm">
+            <p>Last database update: {new Date(data.asOf).toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}.</p>
+            <p>Activity tracking began {new Date(data.trackingSince).toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}. Earlier demo/history records are excluded from activity charts. Charts count requests that produced tracked recommendation results. Account and content totals reflect current database rows, not unique active people.</p>
+            <p>Active paid businesses with admin-verified payment records: <strong>{data.subscriptions.activePaidBusinesses}</strong>. Pending payments: <strong>{data.subscriptions.pendingPayments}</strong>.</p>
+          </div>
           {/* Demand & Search Visualizations */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Top Cuisine Demand */}
             <div className="spatial-card bg-white dark:bg-[#1a211c] rounded-2xl border border-stone-200 dark:border-stone-800 p-6 shadow-sm">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-serif text-lg font-bold text-stone-900 dark:text-white">
-                  Top Cuisine Demand (30d)
+                  Requested cuisines in recommendations (30d)
                 </h2>
-                <span className="text-xs text-stone-500 font-mono">Diner Taste Preferences</span>
+                <span className="text-xs text-stone-500 font-mono">Recorded recommendation requests</span>
               </div>
               <div className="space-y-3">
                 {(!data.topCuisineDemand || data.topCuisineDemand.length === 0) ? (
-                  <p className="text-sm text-stone-500">No search logs recorded yet.</p>
+                  <p className="text-sm text-stone-500">No matching recommendation activity has been recorded since tracking began.</p>
                 ) : (
                   data.topCuisineDemand.map((c: any) => (
                     <div key={c.name} className="flex items-center gap-3">
@@ -180,20 +175,20 @@ export default function AdminOverviewPage() {
             <div className="spatial-card bg-white dark:bg-[#1a211c] rounded-2xl border border-stone-200 dark:border-stone-800 p-6 shadow-sm flex flex-col justify-between">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-serif text-lg font-bold text-stone-900 dark:text-white">
-                  Peak Search Hours (30d)
+                  Recommendation request hours (30d)
                 </h2>
-                <span className="text-xs text-stone-500 font-mono">24h Distribution</span>
+                <span className="text-xs text-stone-500 font-mono">Philippine time (UTC+8)</span>
               </div>
               <div className="flex items-end gap-1.5 h-44 pt-4">
                 {Array.from({ length: 24 }).map((_, hour) => {
                   const entry = data.peakSearchHours?.find((h: any) => h.hour === hour);
                   const max = Math.max(...(data.peakSearchHours?.map((h: any) => h.searches) || [1]), 1);
-                  const height = entry ? Math.max((entry.searches / max) * 100, 6) : 4;
+                  const height = entry ? (entry.searches / max) * 100 : 0;
                   return (
                     <div
                       key={hour}
                       className="flex-1 flex flex-col items-center justify-end h-full group relative"
-                      title={`${hour}:00 — ${entry?.searches || 0} searches`}
+                      title={`${hour}:00 — ${entry?.searches || 0} recorded requests`}
                     >
                       <div
                         className="w-full bg-cordova-gold/80 group-hover:bg-cordova-gold rounded-t transition-all"

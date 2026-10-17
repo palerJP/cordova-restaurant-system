@@ -257,7 +257,9 @@ export default function RestaurantDetailPage() {
     try {
       let found: Restaurant | null = null;
       try {
-        const detail = await api.get(`/api/restaurants/by-slug/${encodeURIComponent(slug)}?source=browse`, {
+        const requestedSource = new URLSearchParams(window.location.search).get('source');
+        const viewSource = requestedSource === 'recommendation' || requestedSource === 'search' ? requestedSource : 'browse';
+        const detail = await api.get(`/api/restaurants/by-slug/${encodeURIComponent(slug)}?source=${viewSource}`, {
           auth: !!user,
         });
         found = detail.data.restaurant;

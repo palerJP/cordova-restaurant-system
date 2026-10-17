@@ -2,7 +2,7 @@ const rateLimit = require('express-rate-limit');
 const env = require('../config/env');
 
 /** General API rate limit — generous, protects against abuse/DoS. */
-const apiLimiter = rateLimit({
+const standardApiLimiter = rateLimit({
   windowMs: env.rateLimit.windowMs,
   max: env.rateLimit.max,
   // Public statistics polling has its own budget so it cannot exhaust normal API requests.
@@ -11,6 +11,19 @@ const apiLimiter = rateLimit({
   legacyHeaders: false,
   message: { success: false, message: 'Too many requests, please try again later.' },
 });
+
+// Visible analytics dashboards refresh every five seconds using a separate IP budget.
+const analyticsReadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, max: process.env.NODE_ENV === 'test' ? 10000 : 400,
+  standardHeaders: true, legacyHeaders: false,
+  message: { success: false, message: 'Analytics refresh is temporarily rate limited. Please retry shortly.' },
+});
+const apiLimiter = (req, res, next) => {
+  const path = req.originalUrl.split('?')[0];
+  const analyticsRead = req.method === 'GET' && (path === '/api/admin/analytics/overview'
+    || /^\/api\/restaurants\/[0-9a-f-]+\/analytics$/i.test(path));
+  return (analyticsRead ? analyticsReadLimiter : standardApiLimiter)(req, res, next);
+};
 
 /** Stricter limit on auth endpoints to blunt credential-stuffing / brute force. */
 const authLimiter = rateLimit({

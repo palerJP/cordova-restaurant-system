@@ -20,7 +20,6 @@ const REQUIRED_IN_PRODUCTION = [
   'CLIENT_URL',
   'EMAIL_FROM',
   'BLOB_READ_WRITE_TOKEN',
-  'BLOB_PRIVATE_READ_WRITE_TOKEN',
 ];
 
 function required(name, fallback) {
@@ -71,7 +70,7 @@ const env = {
     dir: process.env.UPLOAD_DIR || 'uploads',
     maxMb: parseInt(process.env.MAX_UPLOAD_MB || '5', 10),
     publicBlobToken: required('BLOB_READ_WRITE_TOKEN', null),
-    privateBlobToken: required('BLOB_PRIVATE_READ_WRITE_TOKEN', null),
+    privateBlobToken: process.env.BLOB_PRIVATE_READ_WRITE_TOKEN?.trim() || null,
   },
 
   logLevel: process.env.LOG_LEVEL || 'info',

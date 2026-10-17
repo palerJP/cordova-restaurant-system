@@ -123,7 +123,7 @@ export default function DashboardPage() {
 
                     {isVerified && (
                       <div className="flex items-center gap-4 mt-4 pt-3 border-t border-stone-100 dark:border-stone-800/60 text-xs text-stone-500 dark:text-stone-400 font-medium">
-                        <span>👁️ {r.view_count || 0} views</span>
+                        <span>Open Analytics for live activity totals</span>
                         <LiveReviewSummary slug={r.slug || r.id} count={r.review_count} rating={r.avg_rating} />
                       </div>
                     )}

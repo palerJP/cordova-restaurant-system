@@ -675,6 +675,7 @@ export default function HomePage() {
               >
                 <RestaurantCard
                   restaurant={restaurant}
+                  source="recommendation"
                   matchScore={score}
                   matchedPreferences={matchedPreferences}
                   suggestionReason={reason}

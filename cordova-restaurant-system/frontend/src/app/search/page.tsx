@@ -173,7 +173,7 @@ export default function SearchPage() {
               {recentlyViewed.map((item) => (
                 <Link
                   key={item.id}
-                  href={`/restaurants/${item.slug}`}
+                  href={`/restaurants/${item.slug}?source=search`}
                   className="group flex items-center gap-3 min-w-[240px] max-w-[280px] p-2.5 rounded-xl bg-stone-50 dark:bg-stone-900/60 hover:bg-stone-100 dark:hover:bg-stone-800/80 border border-stone-200/60 dark:border-white/5 transition-all duration-200 hover:shadow-sm shrink-0"
                 >
                   <div className="relative h-14 w-14 rounded-lg overflow-hidden shrink-0 bg-stone-200 dark:bg-stone-800">

@@ -2,6 +2,7 @@ require('dotenv').config();
 const { query } = require('../config/db');
 
 async function run() {
+  if (require('../config/env').isProduction) throw new Error('Sample subscriptions are disabled in production.');
   await query(`UPDATE restaurants SET subscription_tier = 'featured', subscription_expires_at = NOW() + INTERVAL '30 days' WHERE slug = 'lantaw-floating-native-restaurant'`);
   await query(`UPDATE restaurants SET subscription_tier = 'featured', subscription_expires_at = NOW() + INTERVAL '30 days' WHERE slug = 'solea-mactan-restaurant' OR slug = 'solea-mactan-resort'`);
   await query(`UPDATE restaurants SET subscription_tier = 'premium', subscription_expires_at = NOW() + INTERVAL '30 days' WHERE slug = 'parola-seaview-restaurant'`);

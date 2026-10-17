@@ -81,7 +81,7 @@ export function RestaurantResultsList({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: Math.min(idx, 9) * 0.05 }}
           >
-            <RestaurantCard restaurant={restaurant} />
+            <RestaurantCard restaurant={restaurant} source="search" />
           </motion.div>
         ))}
       </div>
