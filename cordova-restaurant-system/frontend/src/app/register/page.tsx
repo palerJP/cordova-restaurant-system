@@ -55,7 +55,6 @@ export default function RegisterPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirect') || searchParams.get('returnTo');
-  const roleParam = searchParams.get('role');
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -64,7 +63,6 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
-  const [role, setRole] = useState<'customer' | 'owner'>(roleParam === 'owner' ? 'owner' : 'customer');
   const [acceptsMarketing, setAcceptsMarketing] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
@@ -132,7 +130,7 @@ export default function RegisterPage() {
         email: normalizedEmail,
         password,
         fullName: `${firstName.trim()} ${lastName.trim()}`,
-        role,
+        role: 'customer',
         acceptsMarketing,
       });
 
@@ -287,30 +285,6 @@ export default function RegisterPage() {
         )}
 
         <form onSubmit={onSubmit} className="space-y-4" noValidate>
-          {/* Account Type Toggle */}
-          <div>
-            <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wider mb-1.5">
-              I am joining as:
-            </label>
-            <div className="grid grid-cols-2 gap-2 bg-stone-100 dark:bg-stone-800 p-1 rounded-xl">
-              {(['customer', 'owner'] as const).map((r) => (
-                <button
-                  key={r}
-                  type="button"
-                  onClick={() => setRole(r)}
-                  className={`py-2.5 text-xs font-bold rounded-lg transition-all ${
-                    role === r
-                      ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-white shadow'
-                      : 'text-stone-500 hover:text-stone-800 dark:hover:text-stone-200'
-                  }`}
-                >
-                  {r === 'customer' ? '🍽️ Diner / Customer' : '🏬 Business Owner'}
-                </button>
-              ))}
-            </div>
-            {errors.role && <p className="mt-1 text-sm text-red-500">{errors.role}</p>}
-          </div>
-
           {/* First + Last Name */}
           <div className="grid grid-cols-2 gap-3">
             <Input
@@ -456,7 +430,7 @@ export default function RegisterPage() {
             loading={loading}
             disabled={loading}
           >
-            {role === 'owner' ? 'Create Business Owner Account' : 'Create account'}
+            Create account
           </Button>
         </form>
 
