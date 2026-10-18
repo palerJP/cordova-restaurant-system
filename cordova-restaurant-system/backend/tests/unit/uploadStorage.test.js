@@ -12,11 +12,13 @@ const app = require('../../src/app');
 const originalProduction = env.isProduction;
 const originalPrivateToken = env.upload.privateBlobToken;
 const originalPublicToken = env.upload.publicBlobToken;
+const originalImageAccess = env.upload.imageAccess;
 
 afterEach(() => {
   env.isProduction = originalProduction;
   env.upload.privateBlobToken = originalPrivateToken;
   env.upload.publicBlobToken = originalPublicToken;
+  env.upload.imageAccess = originalImageAccess;
   jest.clearAllMocks();
 });
 
@@ -105,7 +107,44 @@ test('migration accepts only known upload folders and simple file names', () => 
 
 test('missing private storage never falls back to a public upload', async () => {
   env.isProduction = true;
+  env.upload.imageAccess = 'public';
   env.upload.privateBlobToken = null;
   await expect(service.privateUrlFor({ buffer: Buffer.from('test'), mimetype: 'application/pdf' })).rejects.toThrow('Private document storage is not configured');
   expect(put).not.toHaveBeenCalled();
+});
+
+test('private-store photo uploads return a durable public image route and permits remain private', async () => {
+  env.isProduction = true;
+  env.upload.imageAccess = 'private';
+  env.upload.privateBlobToken = null;
+  env.upload.publicBlobToken = 'legacy-private-store-token';
+  put.mockResolvedValue({ url: 'https://store.private.blob.vercel-storage.com/file' });
+  const image = { buffer: Buffer.from('image'), mimetype: 'image/png', originalname: 'photo.png' };
+  expect(await service.publicUrlFor(image)).toMatch(/^\/uploads\/restaurant-images\/[a-f0-9-]+\.png$/);
+  expect(put.mock.calls[0][2]).toMatchObject({ access: 'private', token: 'legacy-private-store-token' });
+  await service.privateUrlFor({ ...image, originalname: 'permit.png' });
+  expect(put.mock.calls[1][0]).toMatch(/^business-permits\//);
+  expect(put.mock.calls[1][2]).toMatchObject({ access: 'private', token: 'legacy-private-store-token' });
+});
+
+test.each(['/uploads', '/api/uploads'])('%s serves stored photos with correct bytes and caching', async (prefix) => {
+  env.isProduction = true;
+  get.mockResolvedValue({
+    statusCode: 200,
+    stream: new ReadableStream({ start(controller) { controller.enqueue(Buffer.from('photo-bytes')); controller.close(); } }),
+    blob: { contentType: 'image/png' },
+  });
+  const response = await supertest(app).get(`${prefix}/restaurant-images/photo-123.png`).expect(200);
+  expect(response.body.toString()).toBe('photo-bytes');
+  expect(response.headers['content-type']).toMatch(/^image\/png/);
+  expect(response.headers['cache-control']).toContain('immutable');
+  expect(get).toHaveBeenCalledWith('restaurant-images/photo-123.png', expect.objectContaining({ access: 'private' }));
+});
+
+test('photo routes never expose permits, other folders, or executable files', async () => {
+  env.isProduction = true;
+  for (const path of ['/uploads/business-permits/permit.png', '/uploads/secrets/photo.png', '/uploads/restaurant-images/file.svg']) {
+    await supertest(app).get(path).expect(404);
+  }
+  expect(get).not.toHaveBeenCalled();
 });

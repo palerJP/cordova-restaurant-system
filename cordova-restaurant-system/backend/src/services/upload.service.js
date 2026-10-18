@@ -55,26 +55,30 @@ async function publicUrlFor(file) {
   if (!env.isProduction) return safeLocalUrl(file, PUBLIC_UPLOADS, '/uploads');
   if (!file.buffer) throw ApiError.internal('Upload data is unavailable.');
   const subdir = file.fieldname === 'avatar' ? 'avatars' : 'restaurant-images';
-  const blob = await put(`${subdir}/${generatedName(file)}`, file.buffer, {
-    access: 'public',
+  const pathname = `${subdir}/${generatedName(file)}`;
+  const access = env.upload.imageAccess || 'public';
+  const blob = await put(pathname, file.buffer, {
+    access,
     contentType: file.mimetype,
     addRandomSuffix: false,
     token: env.upload.publicBlobToken,
   });
-  return blob.url;
+  return access === 'private' ? `/uploads/${pathname}` : blob.url;
 }
 
 async function privateUrlFor(file) {
   if (!env.isProduction) return safeLocalUrl(file, PRIVATE_UPLOADS, 'local-private:');
   if (!file.buffer) throw ApiError.internal('Upload data is unavailable.');
-  if (!env.upload.privateBlobToken) {
+  const token = env.upload.privateBlobToken
+    || (env.upload.imageAccess === 'private' ? env.upload.publicBlobToken : null);
+  if (!token) {
     throw ApiError.internal('Private document storage is not configured.');
   }
   const blob = await put(`${PERMIT_PREFIX}${generatedName(file)}`, file.buffer, {
     access: 'private',
     contentType: file.mimetype,
     addRandomSuffix: false,
-    token: env.upload.privateBlobToken,
+    token,
   });
   return blob.url;
 }
@@ -134,4 +138,19 @@ async function openPrivatePermit(reference) {
   return { stream: Readable.fromWeb(result.stream), contentType: result.blob.contentType };
 }
 
-module.exports = { processImage, publicUrlFor, privateUrlFor, openPrivatePermit };
+async function openPublicImage(directory, filename) {
+  if (!['restaurant-images', 'avatars'].includes(directory)
+      || !/^[A-Za-z0-9_-]+\.(?:jpe?g|png|webp)$/i.test(filename)) {
+    throw ApiError.notFound('Image not found');
+  }
+  const result = await get(`${directory}/${filename}`, {
+    access: 'private', token: env.upload.publicBlobToken,
+  });
+  if (!result || result.statusCode !== 200) throw ApiError.notFound('Image not found');
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(result.blob.contentType)) {
+    throw ApiError.notFound('Image not found');
+  }
+  return { stream: Readable.fromWeb(result.stream), contentType: result.blob.contentType };
+}
+
+module.exports = { processImage, publicUrlFor, privateUrlFor, openPrivatePermit, openPublicImage };

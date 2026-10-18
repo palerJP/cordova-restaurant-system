@@ -46,6 +46,8 @@ app.use(cookieParser(env.cookie.secret));
 app.use(morgan(env.isProduction ? 'combined' : 'dev', { stream: { write: (msg) => logger.info(msg.trim()) } }));
 app.use('/api', limitUploadRequest, apiLimiter);
 
+app.use(['/uploads', '/api/uploads'], require('./routes/uploads.routes'));
+
 // Local public images remain available in development. Private permits are
 // served only through the authenticated admin route.
 if (!env.isProduction) {
