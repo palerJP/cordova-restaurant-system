@@ -26,7 +26,7 @@ function createTransporter() {
 /**
  * Sends a real transactional email via SMTP, Resend API, or falls back to logger in dev.
  */
-async function sendEmail({ to, subject, html, text }) {
+async function sendEmail({ to, subject, html, text, headers }) {
   // 1. Try Resend API if API Key is configured
   if (env.email.resendApiKey) {
     try {
@@ -43,6 +43,7 @@ async function sendEmail({ to, subject, html, text }) {
           subject,
           html,
           text,
+          headers,
         }),
       });
       if (!response.ok) {
@@ -67,6 +68,7 @@ async function sendEmail({ to, subject, html, text }) {
         subject,
         html,
         text,
+        headers,
       });
       if (!result.accepted?.some((address) => address.toLowerCase() === to.toLowerCase())) {
         throw new Error('SMTP provider did not accept the recipient');
@@ -180,6 +182,7 @@ async function sendPasswordResetEmail(toEmail, userName, rawToken) {
 }
 
 module.exports = {
+  sendEmail,
   sendVerificationEmail,
   sendPasswordResetEmail,
 };

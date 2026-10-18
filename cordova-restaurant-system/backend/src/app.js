@@ -79,6 +79,7 @@ app.get('/ready', async (req, res) => {
 
 // ---- Routes ----
 app.use('/api/auth', authRoutes);
+app.use('/api/marketing', require('./routes/marketing.routes'));
 app.use('/api/users', userRoutes);
 app.use('/api/claims', require('./routes/claims.routes'));
 app.use('/api', require('./routes/reservations.routes'));
