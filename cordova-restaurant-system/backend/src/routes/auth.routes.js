@@ -3,7 +3,7 @@ const controller = require('../controllers/auth.controller');
 const validate = require('../middleware/validate');
 const { requireAuth } = require('../middleware/auth');
 const { authLimiter } = require('../middleware/rateLimiter');
-const { registerValidator, loginValidator, changePasswordValidator } = require('../validators/auth.validator');
+const { registerValidator, loginValidator, emailValidator, changePasswordValidator } = require('../validators/auth.validator');
 
 router.post('/register', authLimiter, validate(registerValidator), controller.register);
 router.post('/login', authLimiter, validate(loginValidator), controller.login);
@@ -12,7 +12,7 @@ router.post('/verify-email', controller.verifyEmail);
 router.post('/resend-verification', requireAuth, authLimiter, controller.resendVerification);
 if (!require('../config/env').isProduction) router.post('/dev-verify', authLimiter, controller.devVerifyEmail);
 
-router.post('/forgot-password', authLimiter, controller.forgotPassword);
+router.post('/forgot-password', authLimiter, validate(emailValidator), controller.forgotPassword);
 router.post('/reset-password', authLimiter, controller.resetPassword);
 
 router.post('/google', authLimiter, controller.googleOAuth);

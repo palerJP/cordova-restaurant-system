@@ -54,7 +54,7 @@ async function register({ email, password, fullName, role = 'customer', phone, a
   // Generate a single-use verification token and dispatch the email.
   try {
     const rawToken = await tokenModel.createEmailVerificationToken(user.id, 30);
-    await emailService.sendVerificationEmail(user.email, user.full_name, rawToken);
+    await emailService.sendVerificationEmail(user.email, user.full_name, rawToken, { welcome: true });
   } catch (emailErr) {
     if (env.isProduction) {
       throw new ApiError(503, 'Account created, but verification email could not be sent. Sign in and request a new verification email.');

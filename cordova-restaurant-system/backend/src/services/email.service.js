@@ -11,6 +11,9 @@ function createTransporter() {
       host: env.email.smtpHost,
       port: env.email.smtpPort,
       secure: env.email.smtpSecure,
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 20000,
       auth: {
         user: env.email.smtpUser,
         pass: env.email.smtpPass,
@@ -29,6 +32,7 @@ async function sendEmail({ to, subject, html, text }) {
     try {
       const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
+        signal: AbortSignal.timeout(15000),
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${env.email.resendApiKey}`,
@@ -57,14 +61,17 @@ async function sendEmail({ to, subject, html, text }) {
   const transporter = createTransporter();
   if (transporter) {
     try {
-      await transporter.sendMail({
+      const result = await transporter.sendMail({
         from: FROM_EMAIL,
         to,
         subject,
         html,
         text,
       });
-      logger.info(`Email sent via SMTP to ${to}: ${subject}`);
+      if (!result.accepted?.some((address) => address.toLowerCase() === to.toLowerCase())) {
+        throw new Error('SMTP provider did not accept the recipient');
+      }
+      logger.info('Email accepted by SMTP provider', { messageId: result.messageId, subject });
       return true;
     } catch (err) {
       logger.error('Nodemailer SMTP exception:', err);
@@ -90,22 +97,29 @@ async function sendEmail({ to, subject, html, text }) {
 /**
  * Sends an email verification link to a newly registered user.
  */
-async function sendVerificationEmail(toEmail, userName, rawToken) {
-  const verifyUrl = `${APP_URL}/verify-email?token=${rawToken}`;
-  const subject = 'Verify your CordovaEats Email Account';
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  })[character]);
+}
+
+async function sendVerificationEmail(toEmail, userName, rawToken, { welcome = false } = {}) {
+  const verifyUrl = `${APP_URL}/verify-email?token=${encodeURIComponent(rawToken)}`;
+  const subject = welcome ? 'Welcome to CordovaEats! Verify your email' : 'Verify your CordovaEats Email Account';
+  const safeName = escapeHtml(userName || 'there');
 
   const text = `Hello ${userName || 'Diner'},\n\nPlease verify your email address for CordovaEats by clicking the link below:\n${verifyUrl}\n\nThis link will expire in 30 minutes.\n\nIf you did not create a CordovaEats account, please ignore this email.`;
 
   const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; rounded-lg: 8px;">
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
       <div style="text-align: center; padding-bottom: 20px;">
         <h1 style="color: #1b241f; margin: 0;">CordovaEats</h1>
         <p style="color: #d97706; font-size: 14px; font-weight: bold; margin-top: 5px; text-transform: uppercase;">Cordova's Culinary Journey</p>
       </div>
       <div style="background-color: #fdfbf7; padding: 25px; border-radius: 8px; border: 1px solid #f3ebd8;">
-        <h2 style="color: #1b241f; margin-top: 0;">Verify Your Email Address</h2>
+        <h2 style="color: #1b241f; margin-top: 0;">${welcome ? 'Welcome to CordovaEats!' : 'Verify Your Email Address'}</h2>
         <p style="color: #4b5563; font-size: 15px; line-height: 1.6;">
-          Hi <strong>${userName || 'there'}</strong>, welcome to CordovaEats! Please verify your email address to complete your account setup and access personalized dining recommendations, reviews, and exclusive deals.
+          Hi <strong>${safeName}</strong>, thanks for joining our dining community. Please verify your email address to complete your account setup and discover places to eat in Cordova, save your favorites, and share your experiences.
         </p>
         <div style="text-align: center; margin: 30px 0;">
           <a href="${verifyUrl}" style="background-color: #d97706; color: #ffffff; padding: 14px 28px; text-decoration: none; font-weight: bold; font-size: 16px; border-radius: 6px; display: inline-block;">
@@ -130,7 +144,7 @@ async function sendVerificationEmail(toEmail, userName, rawToken) {
  * Sends a password reset link to a user.
  */
 async function sendPasswordResetEmail(toEmail, userName, rawToken) {
-  const resetUrl = `${APP_URL}/reset-password?token=${rawToken}`;
+  const resetUrl = `${APP_URL}/reset-password?token=${encodeURIComponent(rawToken)}`;
   const subject = 'Reset your CordovaEats Password';
 
   const text = `Hello ${userName || 'User'},\n\nYou requested a password reset for your CordovaEats account. Click the link below to set a new password:\n${resetUrl}\n\nThis link will expire in 15 minutes.\n\nIf you did not request this, please ignore this email.`;
@@ -144,7 +158,7 @@ async function sendPasswordResetEmail(toEmail, userName, rawToken) {
       <div style="background-color: #fdfbf7; padding: 25px; border-radius: 8px; border: 1px solid #f3ebd8;">
         <h2 style="color: #1b241f; margin-top: 0;">Password Reset Request</h2>
         <p style="color: #4b5563; font-size: 15px; line-height: 1.6;">
-          Hi <strong>${userName || 'there'}</strong>, we received a request to reset your password for your CordovaEats account.
+          Hi <strong>${escapeHtml(userName || 'there')}</strong>, we received a request to reset your password for your CordovaEats account.
         </p>
         <div style="text-align: center; margin: 30px 0;">
           <a href="${resetUrl}" style="background-color: #1b241f; color: #ffffff; padding: 14px 28px; text-decoration: none; font-weight: bold; font-size: 16px; border-radius: 6px; display: inline-block;">

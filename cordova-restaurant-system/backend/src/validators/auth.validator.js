@@ -19,6 +19,10 @@ const loginValidator = [
   body('password').notEmpty().withMessage('Password is required'),
 ];
 
+const emailValidator = [
+  body('email').trim().isEmail().withMessage('Valid email is required').normalizeEmail(),
+];
+
 const changePasswordValidator = [
   body('currentPassword').notEmpty().withMessage('Current password is required'),
   body('newPassword')
@@ -30,4 +34,4 @@ const changePasswordValidator = [
     .withMessage('New password must contain a number'),
 ];
 
-module.exports = { registerValidator, loginValidator, changePasswordValidator };
+module.exports = { registerValidator, loginValidator, emailValidator, changePasswordValidator };
