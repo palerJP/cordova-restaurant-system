@@ -53,6 +53,32 @@ test('private permit download only accepts a private permit Blob URL', async () 
   expect(get).toHaveBeenCalledWith(reference, { access: 'private', token: 'private-test-token' });
 });
 
+test.each(['/uploads/', '/api/uploads/'])('production reads legacy %s permits from private Blob storage', async (prefix) => {
+  env.isProduction = true;
+  env.upload.privateBlobToken = null;
+  env.upload.publicBlobToken = 'legacy-private-store-token';
+  get.mockResolvedValue({
+    statusCode: 200,
+    stream: new ReadableStream({ start(controller) { controller.enqueue(Buffer.from('%PDF-test')); controller.close(); } }),
+    blob: { contentType: 'application/pdf' },
+  });
+  const result = await service.openPrivatePermit(`${prefix}business-permits/permit-123.pdf`);
+  expect(get).toHaveBeenCalledWith('business-permits/permit-123.pdf', {
+    access: 'private', token: 'legacy-private-store-token',
+  });
+  const chunks = [];
+  for await (const chunk of result.stream) chunks.push(chunk);
+  expect(Buffer.concat(chunks).toString()).toBe('%PDF-test');
+});
+
+test('production rejects traversal and propagates missing legacy permits', async () => {
+  env.isProduction = true;
+  await expect(service.openPrivatePermit('/uploads/business-permits/../secret.pdf')).rejects.toMatchObject({ statusCode: 404 });
+  expect(get).not.toHaveBeenCalled();
+  get.mockResolvedValue(null);
+  await expect(service.openPrivatePermit('/uploads/business-permits/missing.pdf')).rejects.toMatchObject({ statusCode: 404 });
+});
+
 test('permit files have no public static route and admin route requires authentication', async () => {
   await supertest(app).get('/uploads/business-permits/example.pdf').expect(404);
   await supertest(app).get('/api/uploads/business-permits/example.pdf').expect(404);

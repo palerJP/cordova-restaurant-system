@@ -85,9 +85,9 @@ function localPermitPath(reference) {
   if (reference.startsWith('local-private:/business-permits/')) {
     root = PRIVATE_UPLOADS;
     relative = reference.slice('local-private:/'.length);
-  } else if (reference.startsWith('/uploads/business-permits/')) {
+  } else if (/^\/(?:api\/)?uploads\/business-permits\//.test(reference)) {
     root = PUBLIC_UPLOADS;
-    relative = reference.slice('/uploads/'.length);
+    relative = reference.replace(/^\/(?:api\/)?uploads\//, '');
   } else {
     return null;
   }
@@ -102,7 +102,15 @@ async function openPrivatePermit(reference) {
 
   const localPath = localPermitPath(reference);
   if (localPath) {
-    if (env.isProduction) throw ApiError.notFound('Permit must be migrated to private storage.');
+    if (env.isProduction) {
+      // Earlier uploads already live in the private Blob store, but their rows
+      // retain /uploads/... references and use the original store credential.
+      const pathname = `${PERMIT_PREFIX}${path.basename(localPath)}`;
+      const token = env.upload.privateBlobToken || env.upload.publicBlobToken;
+      const result = await get(pathname, { access: 'private', token });
+      if (!result || result.statusCode !== 200) throw ApiError.notFound('Permit not found');
+      return { stream: Readable.fromWeb(result.stream), contentType: result.blob.contentType };
+    }
     let stat;
     try { stat = await fs.promises.stat(localPath); } catch { throw ApiError.notFound('Permit not found'); }
     if (!stat.isFile()) throw ApiError.notFound('Permit not found');

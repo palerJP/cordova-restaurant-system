@@ -18,7 +18,7 @@ import {
   Trash2,
   AlertTriangle,
 } from 'lucide-react';
-import { api, ApiClientError, API_URL, getAccessToken } from '@/lib/api';
+import { api, ApiClientError } from '@/lib/api';
 import AdminClaims from '@/components/AdminClaims';
 import { useToast } from '@/lib/toast-context';
 import { Badge } from '@/components/ui/Badge';
@@ -138,14 +138,10 @@ function BusinessVerificationContent() {
     }
     tab.opener = null;
     try {
-      const token = getAccessToken();
-      if (!token) throw new Error('Sign in again to view the permit.');
-      const response = await fetch(`${API_URL}/api/admin/restaurants/${restaurantId}/permit`, {
-        headers: { Authorization: `Bearer ${token}` },
-        credentials: 'include',
+      const document = await api.get<Blob>(`/api/admin/restaurants/${restaurantId}/permit`, {
+        responseType: 'blob',
       });
-      if (!response.ok) throw new Error('Unable to load the permit document.');
-      const objectUrl = URL.createObjectURL(await response.blob());
+      const objectUrl = URL.createObjectURL(document);
       tab.location.replace(objectUrl);
       window.setTimeout(() => URL.revokeObjectURL(objectUrl), 5 * 60 * 1000);
     } catch (error) {
