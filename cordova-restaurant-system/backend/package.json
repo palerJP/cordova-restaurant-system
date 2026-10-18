@@ -17,6 +17,7 @@
     "db:seed-entoys-menu": "node src/scripts/seed_entoys_menu.js",
     "db:verify-users": "node src/scripts/verify_all_users.js",
     "storage:migrate": "node src/scripts/migrate_local_uploads_to_blob.js",
+    "release:check": "node src/scripts/check_release.js",
     "test": "jest --runInBand",
     "test:watch": "jest --watch --runInBand",
     "test:coverage": "jest --coverage --runInBand",

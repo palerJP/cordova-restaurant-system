@@ -1,0 +1,43 @@
+name: Release checks
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: release-checks-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cordova-restaurant-system/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: cordova-restaurant-system/backend/package-lock.json
+      - run: npm ci
+      - run: npm test -- --testPathPattern=tests/unit --forceExit
+        env:
+          NODE_ENV: test
+  frontend-checks:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cordova-restaurant-system/frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: cordova-restaurant-system/frontend/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: node --import tsx --test tests/*.test.ts tests/*.test.mjs
+      - run: npm run build

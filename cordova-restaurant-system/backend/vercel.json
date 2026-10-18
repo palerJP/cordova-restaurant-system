@@ -1,0 +1,5 @@
+{
+  "framework": "express",
+  "regions": ["iad1"],
+  "buildCommand": "npm run release:check"
+}
