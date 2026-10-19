@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   Search,
@@ -21,7 +20,6 @@ import {
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
-import { getTastePreferences } from '@/lib/taste-preferences';
 import { RestaurantCard } from '@/components/RestaurantCard';
 import { SearchRestaurantImage } from '@/components/SearchRestaurantImage';
 import { TastePreferencesDialog } from '@/components/TastePreferencesDialog';
@@ -39,7 +37,6 @@ import {
 } from '@/lib/activity-history';
 
 export default function HomePage() {
-  const router = useRouter();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
@@ -247,6 +244,12 @@ export default function HomePage() {
   }, [debouncedQuery, activeCategory, page, searchCatalog]);
 
   const fetchRecommendations = useCallback(async (requestId: number) => {
+    if (!user) {
+      setRecommendationState({ requestKey, items: [] });
+      setRecommendationIssue(null);
+      setRecLoading(false);
+      return;
+    }
     setRecLoading(true);
     setRecommendationIssue(null);
     try {
@@ -256,21 +259,9 @@ export default function HomePage() {
         matchedPreferences?: MatchedPreferences;
         reason?: string;
       }[] = [];
-      let recommendationsApiResponded = false;
       let recommendationRequestFailed = false;
       try {
-        const guestPreferences = user ? null : getTastePreferences();
-        const requestBody = user
-          ? { limit: 10 }
-          : {
-              preferredCuisines: guestPreferences?.preferredCuisines || [],
-              dietaryRestrictions: guestPreferences?.dietaryRestrictions || [],
-              requiredServices: guestPreferences?.preferredServices || [],
-              budgetRange: guestPreferences?.budgetRange || undefined,
-              limit: 10,
-            };
-        const res = await api.post('/api/recommendations', requestBody, { auth: !!user });
-        recommendationsApiResponded = true;
+        const res = await api.post('/api/recommendations', { limit: 10 });
         if (res.data && Array.isArray(res.data)) {
           recList = res.data
             .filter((r: any) => isRestaurantVisible(r.restaurant))
@@ -284,15 +275,6 @@ export default function HomePage() {
       } catch {
         recList = [];
         recommendationRequestFailed = true;
-      }
-
-      // Use generic offline fallback only for guests; never bypass a user's saved constraints.
-      if (process.env.NODE_ENV !== 'production' && recList.length === 0 && !recommendationsApiResponded && !user) {
-        const staticList = getAllStaticRestaurants().filter(isRestaurantVisible);
-        recList = staticList.slice(0, 8).map((r, i) => ({
-          restaurant: r,
-          score: 96 - i * 3,
-        }));
       }
 
       if (requestId === recommendationRequestId.current) {
@@ -601,7 +583,7 @@ export default function HomePage() {
       </section>
 
       {/* RECOMMENDED FOR YOU SWIPEABLE CAROUSEL SECTION */}
-      <section id="recommendations" className="max-w-6xl mx-auto px-4 mt-20 relative z-10 scroll-mt-8">
+      {user && <section id="recommendations" className="max-w-6xl mx-auto px-4 mt-20 relative z-10 scroll-mt-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
           <div>
             <div className="flex items-center gap-2">
@@ -611,29 +593,18 @@ export default function HomePage() {
               </h2>
             </div>
             <p className="text-xs sm:text-sm text-stone-500 dark:text-stone-400 mt-1">
-              {user
-                ? 'Ranked for your saved preferences and personalized by your feedback.'
-                : 'Local restaurant matches. Add your tastes to make them more personal.'}
+              Ranked for your saved preferences and personalized by your feedback.
             </p>
             <div className="h-0.5 w-16 bg-cordova-gold mt-3 rounded-full" />
           </div>
 
           <div className="flex items-center gap-3 self-end sm:self-center">
-            {user ? (
               <button
                 onClick={() => setPreferencesOpen(true)}
                 className="text-xs font-semibold text-cordova-green dark:text-emerald-400 hover:text-emerald-600 transition-colors px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 backdrop-blur-sm shadow-spatial-sm hover:scale-105 active:scale-95"
               >
                 Adjust Preferences
               </button>
-            ) : (
-              <button
-                onClick={() => router.push('/preferences?returnTo=%2F%23recommendations')}
-                className="text-xs font-semibold text-cordova-gold hover:text-amber-500 transition-colors px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 backdrop-blur-sm shadow-spatial-sm hover:scale-105 active:scale-95"
-              >
-                Personalize Tastes
-              </button>
-            )}
 
             {/* Swipe / Carousel Control Arrows */}
             {recommendations.length > 0 && (
@@ -697,9 +668,9 @@ export default function HomePage() {
             </button>
           </div>
         )}
-      </section>
+      </section>}
 
-      {preferencesOpen && (
+      {user && preferencesOpen && (
         <TastePreferencesDialog
           open={preferencesOpen}
           onClose={() => setPreferencesOpen(false)}
