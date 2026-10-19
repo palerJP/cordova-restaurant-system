@@ -602,6 +602,7 @@ function HoursTab({ restaurantId }: { restaurantId: string }) {
 
   return (
     <div className="card p-5 max-w-xl space-y-4">
+      <p className="text-sm text-stone-700 dark:text-stone-200">Enter your actual weekly opening and closing times, then save to publish them. Times use Philippine time. A closing time earlier than opening means the next day.</p>
       <div className="space-y-3">
         {days.map((d, idx) => (
           <div key={idx} className="flex items-center gap-3 flex-wrap">
