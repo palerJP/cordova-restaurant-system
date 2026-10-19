@@ -12,7 +12,7 @@ import { useCuisines } from '@/hooks/useCuisines';
 import { RequireRole } from '@/components/RequireRole';
 import { Input, Textarea } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { Badge } from '@/components/ui/Badge';
+import { SelectionOption } from '@/components/ui/SelectionOption';
 import { Button } from '@/components/ui/Button';
 import { BusinessAddressLookup, type BusinessLocation } from '@/components/BusinessAddressLookup';
 
@@ -243,6 +243,8 @@ export default function NewBusinessPage() {
               4. Dining Features & Cuisines
             </h2>
 
+            <p className="text-base text-stone-700 dark:text-stone-200">Choose all that apply. Selected options show a checkmark and the word “Selected”. Tap again to clear.</p>
+
             <Select label="Price Range" value={priceRange} onChange={(e) => setPriceRange(e.target.value)}>
               <option value="budget">₱ Budget-friendly (Under ₱200)</option>
               <option value="moderate">₱₱ Moderate (₱200 - ₱500)</option>
@@ -250,45 +252,45 @@ export default function NewBusinessPage() {
               <option value="premium">₱₱₱₱ Premium / Fine Dining (₱1000+)</option>
             </Select>
 
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300 mb-2">
+            <fieldset>
+              <legend className="text-base font-bold text-stone-800 dark:text-stone-100 mb-2">
                 Services Offered
-              </p>
+              </legend>
               <div className="flex flex-wrap gap-2">
                 {SERVICE_OPTIONS.map((s) => (
-                  <button key={s.value} type="button" onClick={() => toggle(services, setServices, s.value)}>
-                    <Badge color={services.includes(s.value) ? 'brand' : 'neutral'}>{s.label}</Badge>
-                  </button>
+                  <SelectionOption key={s.value} selected={services.includes(s.value)} onClick={() => toggle(services, setServices, s.value)}>
+                    {s.label}
+                  </SelectionOption>
                 ))}
               </div>
               {errors.services && <p className="text-sm text-red-500 mt-1">{errors.services}</p>}
-            </div>
+            </fieldset>
 
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300 mb-2">
+            <fieldset>
+              <legend className="text-base font-bold text-stone-800 dark:text-stone-100 mb-2">
                 Cuisine Categories
-              </p>
+              </legend>
               <div className="flex flex-wrap gap-2">
                 {cuisines.map((c) => (
-                  <button key={c.slug} type="button" onClick={() => toggle(selectedCuisines, setSelectedCuisines, c.slug)}>
-                    <Badge color={selectedCuisines.includes(c.slug) ? 'brand' : 'neutral'}>{c.name}</Badge>
-                  </button>
+                  <SelectionOption key={c.slug} selected={selectedCuisines.includes(c.slug)} onClick={() => toggle(selectedCuisines, setSelectedCuisines, c.slug)}>
+                    {c.name}
+                  </SelectionOption>
                 ))}
               </div>
-            </div>
+            </fieldset>
 
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300 mb-2">
+            <fieldset>
+              <legend className="text-base font-bold text-stone-800 dark:text-stone-100 mb-2">
                 Dietary Options
-              </p>
+              </legend>
               <div className="flex flex-wrap gap-2">
                 {DIETARY_OPTIONS.map((d) => (
-                  <button key={d} type="button" onClick={() => toggle(dietary, setDietary, d)}>
-                    <Badge color={dietary.includes(d) ? 'brand' : 'neutral'}>{d.replace('_', ' ')}</Badge>
-                  </button>
+                  <SelectionOption key={d} selected={dietary.includes(d)} onClick={() => toggle(dietary, setDietary, d)}>
+                    {d.replace('_', ' ')}
+                  </SelectionOption>
                 ))}
               </div>
-            </div>
+            </fieldset>
           </div>
 
           {/* Section: Business Permit Document (Optional) */}

@@ -9,6 +9,7 @@ import { OwnerReservations } from '@/components/reservations/OwnerReservations';
 import { useToast } from '@/lib/toast-context';
 import { RequireRole } from '@/components/RequireRole';
 import { Badge } from '@/components/ui/Badge';
+import { SelectionOption } from '@/components/ui/SelectionOption';
 import { Button } from '@/components/ui/Button';
 import { Input, Textarea } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
@@ -191,16 +192,17 @@ function OverviewTab({ restaurant, onUpdated }: { restaurant: Restaurant; onUpda
           <input id="cover" type="file" accept="image/*" onChange={(e) => setCoverFile(e.target.files?.[0] || null)} className="input" />
         </div>
 
-        <div>
-          <p className="label mb-2">Amenities</p>
+        <fieldset>
+          <legend className="text-base font-bold mb-2">Amenities</legend>
+          <p className="mb-3 text-base text-stone-700 dark:text-stone-200">Choose all that apply. Selected options show a checkmark and the word “Selected”. Tap again to clear.</p>
           <div className="flex flex-wrap gap-2">
             {AMENITIES.map((a) => (
-              <button key={a.value} type="button" onClick={() => toggleAmenity(a.value)}>
-                <Badge color={amenities.includes(a.value) ? 'brand' : 'neutral'}>{a.label}</Badge>
-              </button>
+              <SelectionOption key={a.value} selected={amenities.includes(a.value)} onClick={() => toggleAmenity(a.value)}>
+                {a.label}
+              </SelectionOption>
             ))}
           </div>
-        </div>
+        </fieldset>
 
         <Button onClick={save} loading={saving}>
           Save changes
