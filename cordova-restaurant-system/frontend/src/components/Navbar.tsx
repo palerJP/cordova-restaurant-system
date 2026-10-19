@@ -45,10 +45,10 @@ export function Navbar() {
           : 'bg-white/60 dark:bg-[#141815]/60 backdrop-blur-xl border-b border-stone-200/40 dark:border-white/5'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 sm:h-24 flex items-center justify-between">
+      <div className="page-container h-20 sm:h-24 flex items-center justify-between gap-3">
         {/* Brand Logo & Name */}
-        <Link href="/" className="flex items-center gap-3.5 group py-1">
-          <div className="relative h-14 w-14 sm:h-16 sm:w-16 shrink-0 aspect-square transition-transform duration-300 group-hover:scale-105 filter drop-shadow-md">
+        <Link href="/" className="flex items-center gap-2 sm:gap-3.5 min-w-0 group py-1">
+          <div className="relative h-10 w-10 sm:h-16 sm:w-16 shrink-0 aspect-square transition-transform duration-300 group-hover:scale-105 filter drop-shadow-md">
             <Image
               src="/cordova_eats_logo.png"
               alt="CordovaEats Logo"
@@ -58,13 +58,13 @@ export function Navbar() {
               priority
             />
           </div>
-          <span className="font-serif text-2xl sm:text-3xl font-bold text-[#1b241f] dark:text-white tracking-tight group-hover:text-cordova-green dark:group-hover:text-emerald-400 transition-colors drop-shadow-sm">
+          <span className="font-serif text-xl sm:text-3xl font-bold text-[#1b241f] dark:text-white tracking-tight group-hover:text-cordova-green dark:group-hover:text-emerald-400 transition-colors drop-shadow-sm">
             CordovaEats
           </span>
         </Link>
 
         {/* Center / Right Links */}
-        <div className="hidden md:flex items-center gap-6">
+        <div className="hidden lg:flex items-center gap-4 xl:gap-6">
           <nav className="flex items-center gap-1.5 p-1 rounded-full bg-stone-100/70 dark:bg-[#1a221d]/70 backdrop-blur-md border border-stone-200/50 dark:border-white/10 shadow-inner mr-2 transition-all duration-300 hover:border-emerald-500/60 dark:hover:border-emerald-400/60 hover:shadow-[0_0_20px_rgba(16,185,129,0.35)] dark:hover:shadow-[0_0_25px_rgba(52,211,153,0.4)] hover:ring-1 hover:ring-emerald-500/40 dark:hover:ring-emerald-400/40">
             {[...navLinks, ...roleLinks].map((link) => {
               const isActive = pathname === link.href;
@@ -109,12 +109,14 @@ export function Navbar() {
         </div>
 
         {/* Mobile menu trigger */}
-        <div className="flex items-center gap-2 md:hidden">
+        <div className="flex shrink-0 items-center gap-2 lg:hidden">
           <ThemeToggle />
           <button
             className="p-2 rounded-xl text-stone-700 dark:text-stone-200 hover:bg-black/5 dark:hover:bg-white/5 transition-colors border border-transparent hover:border-stone-200/50"
             onClick={() => setMenuOpen((o) => !o)}
             aria-label="Toggle menu"
+            aria-expanded={menuOpen}
+            aria-controls="public-mobile-nav"
           >
             {menuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
@@ -123,7 +125,7 @@ export function Navbar() {
 
       {/* Mobile Drawer */}
       {menuOpen && (
-        <div className="md:hidden border-t border-stone-200/60 dark:border-white/10 bg-white/95 dark:bg-[#141815]/95 backdrop-blur-2xl px-6 py-5 space-y-3 shadow-spatial-lg animate-fadeIn">
+        <div id="public-mobile-nav" className="lg:hidden border-t border-stone-200/60 dark:border-white/10 bg-white/95 dark:bg-[#141815]/95 backdrop-blur-2xl px-6 py-5 space-y-3 shadow-spatial-lg animate-fadeIn">
           <div className="space-y-1">
             {[...navLinks, ...roleLinks].map((link) => {
               const isActive = pathname === link.href;

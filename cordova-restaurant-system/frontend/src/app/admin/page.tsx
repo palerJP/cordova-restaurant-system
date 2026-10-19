@@ -37,7 +37,7 @@ export default function AdminOverviewPage() {
           <button onClick={load} className="mt-2 text-sm underline font-medium">Try again</button>
         </div>
       ) : !data ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,10rem),1fr))] gap-4">
           {Array.from({ length: 10 }).map((_, i) => (
             <Skeleton key={i} className="h-32 rounded-2xl" />
           ))}
@@ -45,7 +45,7 @@ export default function AdminOverviewPage() {
       ) : (
         <div className="space-y-8">
           {/* Interactive Metric Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,10rem),1fr))] gap-4">
             {/* Users */}
             <StatCard
               href="/admin/users?role=customer"

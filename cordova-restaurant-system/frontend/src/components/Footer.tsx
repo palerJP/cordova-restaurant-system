@@ -64,8 +64,8 @@ export function Footer() {
 
   return (
     <footer className="border-t border-stone-200/80 dark:border-white/10 mt-20 bg-white/70 dark:bg-[#141815]/70 backdrop-blur-xl relative z-10">
-      <div className="max-w-6xl mx-auto px-4 py-12">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
+      <div className="page-container py-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="col-span-2 sm:col-span-4 mb-2">
             <Link href="/" className="flex items-center gap-3.5 w-fit group">
               <div className="relative h-16 w-16 shrink-0 aspect-square transition-transform group-hover:scale-105 filter drop-shadow-sm">

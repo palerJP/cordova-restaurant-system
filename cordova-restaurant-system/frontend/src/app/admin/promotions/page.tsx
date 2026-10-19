@@ -206,7 +206,7 @@ function AdminPromotionsContent() {
         </div>
 
         {/* Search */}
-        <div className="relative min-w-[240px]">
+        <div className="relative w-full min-w-0 sm:w-60">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
           <Input
             placeholder={status === 'subscriptions' ? 'Search restaurant, tier, reference...' : 'Search deals, restaurant, reference...'}
