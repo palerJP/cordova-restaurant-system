@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { RestaurantHours } from '@/components/RestaurantHours';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import {
@@ -51,7 +52,6 @@ import type {
   MenuItem,
   MenuCategory,
   Review,
-  OperatingHour,
   RestaurantImage,
   Promotion,
 } from '@/lib/types';
@@ -195,7 +195,6 @@ export default function RestaurantDetailPage() {
   const [reviewsError,setReviewsError] = useState(false);
   const [reviewsLoading,setReviewsLoading] = useState(true);
   const liveStats=useLiveReviewStats(slug);
-  const [hours, setHours] = useState<OperatingHour[]>([]);
   const [gallery, setGallery] = useState<RestaurantImage[]>([]);
   const [activePromotions, setActivePromotions] = useState<Promotion[]>([]);
   const [loading, setLoading] = useState(true);
@@ -293,9 +292,8 @@ export default function RestaurantDetailPage() {
       });
 
       try {
-        const [menu, hoursRes, galleryRes, promoRes] = await Promise.all([
+        const [menu, galleryRes, promoRes] = await Promise.all([
           api.get(`/api/restaurants/${found.id}/menu`, { auth: false }).catch(() => ({ data: {} })),
-          api.get(`/api/restaurants/${found.id}/hours`, { auth: false }).catch(() => ({ data: [] })),
           api.get(`/api/restaurants/${found.id}/images`, { auth: false }).catch(() => ({ data: [] })),
           api.get(`/api/restaurants/${found.id}/promotions`, { auth: false }).catch(() => ({ data: [] })),
         ]);
@@ -606,12 +604,6 @@ export default function RestaurantDetailPage() {
             }
           ]);
         }
-        setHours(hoursRes.data?.length ? hoursRes.data : [0, 1, 2, 3, 4, 5, 6].map(d => ({
-          day_of_week: d,
-          open_time: '08:00',
-          close_time: '21:00',
-          is_closed: false,
-        })));
         setGallery(galleryRes.data || []);
 
         const today = new Date().toISOString().slice(0, 10);
@@ -793,7 +785,6 @@ export default function RestaurantDetailPage() {
   const hasContactPhone = Boolean(restaurant.phone && restaurant.phone.trim() !== '' && restaurant.phone !== 'N/A' && restaurant.phone !== 'null');
   const hasPublicEmail = Boolean(restaurant.email && restaurant.email.trim() !== '' && restaurant.email !== 'null');
   const phoneText = hasContactPhone ? (restaurant.phone as string) : 'Phone Not Listed';
-  const isCurrentlyOpen = restaurant.is_open !== false;
   
   const isSeafood = Boolean(
     (restaurant.name + ' ' + (restaurant.description || '') + ' ' + (restaurant.cuisines || []).join(' ')).toLowerCase().includes('seafood') ||
@@ -802,10 +793,6 @@ export default function RestaurantDetailPage() {
     (restaurant.name + ' ' + (restaurant.description || '')).toLowerCase().includes('lantaw')
   );
 
-  const hoursText = restaurant.hours || (hours.length > 0 && !hours[0].is_closed
-    ? `${hours[0].open_time.slice(0, 5)} - ${hours[0].close_time.slice(0, 5)}`
-    : '10:00 AM – 9:00 PM');
-    
   const tagText = isSeafood
     ? 'Seafood Specialist'
     : restaurant.cuisines?.[0]
@@ -1000,14 +987,8 @@ export default function RestaurantDetailPage() {
                 <Clock size={18} />
               </div>
               <div className="w-full px-2">
-                <div className="flex items-center justify-center gap-1.5">
-                  <span className={isCurrentlyOpen ? "spatial-status-open text-[11px] py-0.5" : "spatial-status-closed text-[11px] py-0.5"}>
-                    {isCurrentlyOpen ? "Open Now" : "Closed"}
-                  </span>
-                </div>
-                <p className="font-bold text-xs text-stone-900 dark:text-white mt-1 truncate" title={hoursText}>
-                  {hoursText}
-                </p>
+                <RestaurantHours restaurant={restaurant} badge />
+                <div className="mt-2 text-left"><RestaurantHours restaurant={restaurant} /></div>
               </div>
             </div>
 
