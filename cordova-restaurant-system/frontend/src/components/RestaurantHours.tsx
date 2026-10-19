@@ -1,26 +1,26 @@
 'use client';
 import { Clock } from 'lucide-react';
 import type { Restaurant } from '@/lib/types';
-import { describeHours, estimatedTimeRange } from '@/lib/operating-hours';
+import { describeHours, estimatedTimeRange, estimatedWeek } from '@/lib/operating-hours';
 import { useRestaurantHours } from '@/lib/live-operating-hours';
 
 export function RestaurantHours({ restaurant, compact = false }: { restaurant: Restaurant; compact?: boolean }) {
   const { rows, failed, now } = useRestaurantHours(restaurant.id);
   const estimated = rows?.length === 0;
   const value = estimated
-    ? { status: 'estimated', label: 'Estimated hours', text: estimatedTimeRange(restaurant.slug || restaurant.id) }
+    ? describeHours(estimatedWeek(restaurant.slug || restaurant.id), now)
     : rows ? describeHours(rows, now) : { status: 'unknown', label: failed ? 'Hours unavailable' : 'Checking hours…', text: failed ? 'Please contact the business.' : 'Loading hours…' };
   const color = value.status === 'open'
     ? 'border-emerald-700/30 bg-emerald-100 text-emerald-800 dark:border-emerald-400/30 dark:bg-emerald-900 dark:text-emerald-100'
     : value.status === 'closed'
     ? 'border-red-700/25 bg-red-50 text-red-800 dark:border-red-400/30 dark:bg-red-950 dark:text-red-100'
     : 'border-stone-400 bg-stone-100 text-stone-800 dark:border-stone-500 dark:bg-stone-800 dark:text-stone-100';
-  const statusBadge = <span className={`inline-flex rounded-full border px-3 py-0.5 text-[11px] font-bold leading-tight ${color}`}>{value.label}</span>;
+  const statusBadge = <span className={`inline-flex rounded-full border px-3 py-0.5 text-[11px] font-bold leading-tight ${color}`}>{value.status === 'open' ? 'Open Now' : value.status === 'closed' ? 'Closed' : value.label}</span>;
   const weekday = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Manila', weekday: 'long' }).format(now);
   const day = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].indexOf(weekday);
   const today = rows?.find(row => row.day_of_week === day);
   const overnight = today && today.close_time < today.open_time;
-  const range = estimated || value.text.includes('opened yesterday') ? value.text : today && !today.is_closed && value.status !== 'unknown'
+  const range = estimated ? estimatedTimeRange(restaurant.slug || restaurant.id) : value.text.includes('opened yesterday') ? value.text : today && !today.is_closed && value.status !== 'unknown'
     ? `${today.open_time.slice(0, 5)} - ${today.close_time.slice(0, 5)}${overnight ? ' (+1 day)' : ''}`
     : value.text;
   if (compact) return <div className="flex min-w-0 flex-wrap items-center gap-1.5" title="Philippine time (PHT). Estimated hours are generated and not confirmed by the business.">
@@ -29,11 +29,11 @@ export function RestaurantHours({ restaurant, compact = false }: { restaurant: R
       <p className="text-xs font-medium tabular-nums text-stone-700 dark:text-stone-200">{range}</p>
 
     </div>
-    {!estimated && statusBadge}
+    {statusBadge}
   </div>;
   return <div className="flex flex-col items-center gap-1 text-center" title="Philippine time (PHT). Regular hours may differ on holidays.">
     <span className="mb-1 flex h-10 w-10 items-center justify-center rounded-full border border-amber-300 bg-amber-50 text-amber-600 dark:border-amber-600/50 dark:bg-amber-950/40 dark:text-amber-400"><Clock size={18} strokeWidth={1.5} aria-hidden="true" /></span>
-    {!estimated && statusBadge}
+    {statusBadge}
     <p className="text-xs font-bold tabular-nums text-stone-900 dark:text-white">{range}</p>
     <span className="sr-only">{estimated ? 'Generated sample hours, not confirmed by the business. ' : ''}Philippine time. Regular hours may differ on holidays.</span>
   </div>;
