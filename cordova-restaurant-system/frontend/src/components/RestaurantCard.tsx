@@ -119,12 +119,11 @@ export const RestaurantCard = memo(function RestaurantCard({
           )}
         </div>
 
-        {/* Bottom Image Badges (Barangay Pill & Live Status) */}
+        {/* Barangay label */}
         <div className="absolute bottom-3 left-3 right-3 z-10 flex flex-wrap items-center justify-between gap-2 text-white text-xs">
           <span className="bg-black/60 backdrop-blur-md text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-white/20">
             {restaurant.barangay || 'Cordova'}
           </span>
-          <RestaurantHours restaurant={restaurant} badge />
         </div>
       </div>
 
@@ -159,7 +158,7 @@ export const RestaurantCard = memo(function RestaurantCard({
             )}
           </div>
 
-          <RestaurantHours restaurant={restaurant} />
+          <RestaurantHours restaurant={restaurant} compact />
 
           {/* Rating & Review Count */}
           <div className="flex flex-wrap items-center justify-between gap-2 text-xs pt-1.5 border-t border-stone-100 dark:border-white/5">
