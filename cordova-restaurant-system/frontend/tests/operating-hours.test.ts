@@ -47,3 +47,14 @@ test('generated fallback hours are stable and explicitly estimated', () => {
   const values=new Set(Array.from({length:24},(_,i)=>estimatedHours('restaurant-'+i)));
   assert.ok(values.size>1);
 });
+
+import { estimatedWeek } from '../src/lib/operating-hours';
+test('generated schedule automatically opens and closes at its displayed times', () => {
+  const rows = estimatedWeek('horizon-bean-cafe');
+  assert.equal(rows.length,7);
+  const open=rows[2].open_time, close=rows[2].close_time;
+  assert.equal(describeHours(rows,at(`${open}:00`)).status,'open');
+  assert.equal(describeHours(rows,at(`${close}:00`)).status,'closed');
+  assert.equal(describeHours(rows,at('03:00:00')).status,'closed');
+  assert.equal(describeHours(rows,at('12:00:00')).status,'open');
+});

@@ -9,6 +9,10 @@ export function estimatedTimeRange(key: string) {
   const close = `${20 + Math.floor(seed / 3) % 3}:00`;
   return `${open} - ${close}`;
 }
+export function estimatedWeek(key: string): OperatingHour[] {
+  const [open_time, close_time] = estimatedTimeRange(key).split(' - ');
+  return days.map((_, day_of_week) => ({ day_of_week, open_time, close_time, is_closed: false }));
+}
 export function estimatedHours(key: string) {
   const [open, close] = estimatedTimeRange(key).split(' - ');
   return `Estimated daily: ${formatTime(open)} – ${formatTime(close)}`;
