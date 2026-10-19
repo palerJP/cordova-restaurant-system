@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, Suspense } from 'react';
+import { useEffect, useState, useCallback, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Users,
@@ -22,8 +22,15 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { Pagination } from '@/components/ui/Pagination';
 import { useDebounce } from '@/hooks/useDebounce';
-import type { User } from '@/lib/types';
+import type { User, PageMeta } from '@/lib/types';
+
+const PAGE_SIZE = 5;
+function readPage(value: string | null) {
+  const page = Number(value);
+  return Number.isSafeInteger(page) && page > 0 ? page : 1;
+}
 
 function AdminUsersContent() {
   const { toast } = useToast();
@@ -35,6 +42,9 @@ function AdminUsersContent() {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
   const [roleFilter, setRoleFilter] = useState(initialRole);
+  const [page, setPage] = useState(() => readPage(searchParams.get('page')));
+  const [meta, setMeta] = useState<PageMeta | null>(null);
+  const requestId = useRef(0);
   const [loading, setLoading] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -43,36 +53,53 @@ function AdminUsersContent() {
   useEffect(() => {
     const urlRole = searchParams.get('role') || '';
     setRoleFilter((current) => current === urlRole ? current : urlRole);
+    setPage(readPage(searchParams.get('page')));
   }, [searchParams]);
 
+  const navigate = useCallback((role: string, nextPage: number) => {
+    setPage(nextPage);
+    const params = new URLSearchParams();
+    if (role) params.set('role', role);
+    if (nextPage > 1) params.set('page', String(nextPage));
+    router.replace(`/admin/users${params.size ? `?${params}` : ''}`, { scroll: false });
+  }, [router]);
+
   const load = useCallback(async () => {
+    const currentRequest = ++requestId.current;
     setLoading(true);
+    if (search !== debouncedSearch) return;
     try {
       const params = new URLSearchParams();
       if (debouncedSearch) params.set('search', debouncedSearch);
       if (roleFilter) params.set('role', roleFilter);
-      params.set('limit', '50');
-      const res = await api.get(`/api/admin/users?${params.toString()}`);
+      params.set('limit', String(PAGE_SIZE));
+      params.set('page', String(page));
+      const res = await api.get<{ data: User[]; meta: PageMeta }>(`/api/admin/users?${params.toString()}`);
+      if (currentRequest !== requestId.current) return;
+      if (page > res.meta.totalPages) {
+        navigate(roleFilter, res.meta.totalPages);
+        return;
+      }
       setUsers(res.data || []);
+      setMeta(res.meta);
     } catch (err) {
+      if (currentRequest !== requestId.current) return;
       setUsers([]);
+      setMeta(null);
       toast(err instanceof ApiClientError ? err.message : 'Failed to load users', 'error');
     } finally {
-      setLoading(false);
+      if (currentRequest === requestId.current) setLoading(false);
     }
-  }, [debouncedSearch, roleFilter, toast]);
+  }, [search, debouncedSearch, roleFilter, page, navigate, toast]);
 
   useEffect(() => {
     load();
+    return () => { requestId.current++; };
   }, [load]);
 
   const handleRoleChange = (role: string) => {
     setRoleFilter(role);
-    if (role) {
-      router.replace(`/admin/users?role=${role}`, { scroll: false });
-    } else {
-      router.replace(`/admin/users`, { scroll: false });
-    }
+    navigate(role, 1);
   };
 
   const toggleActive = async (user: User) => {
@@ -123,9 +150,9 @@ function AdminUsersContent() {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-[#1a211c] p-3 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-sm">
+      <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3 bg-white dark:bg-[#1a211c] p-3 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-sm">
         {/* Role Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+        <div className="flex flex-wrap items-center gap-1.5">
           {[
             { id: '', label: 'All Users', icon: Users },
             { id: 'customer', label: 'Customers', icon: UserCheck },
@@ -152,12 +179,12 @@ function AdminUsersContent() {
         </div>
 
         {/* Search */}
-        <div className="relative min-w-[240px]">
+        <div className="relative w-full xl:w-64 xl:shrink-0">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
           <Input
             placeholder="Search name, email, phone..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); navigate(roleFilter, 1); }}
             className="pl-9 pr-3 py-1.5 text-xs w-full"
           />
         </div>
@@ -181,15 +208,23 @@ function AdminUsersContent() {
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto bg-white dark:bg-[#1a211c] border border-stone-200 dark:border-stone-800 rounded-2xl shadow-sm">
-          <table className="w-full text-left text-xs sm:text-sm">
+        <div className="overflow-hidden bg-white dark:bg-[#1a211c] border border-stone-200 dark:border-stone-800 rounded-2xl shadow-sm">
+          <table className="w-full table-fixed text-left text-xs [&_th]:p-3 [&_td]:p-3 [&_td]:align-top [&_td]:break-words">
+            <colgroup>
+              <col className="w-[30%] md:w-[25%] lg:w-[22%]" />
+              <col className="w-[35%] lg:w-[30%] xl:w-[26%]" />
+              <col className="hidden lg:table-column lg:w-[15%] xl:w-[14%]" />
+              <col className="hidden md:table-column md:w-[15%] lg:w-[13%] xl:w-[12%]" />
+              <col className="hidden xl:table-column xl:w-[12%]" />
+              <col className="w-[35%] md:w-[25%] lg:w-[20%] xl:w-[14%]" />
+            </colgroup>
             <thead>
               <tr className="border-b border-stone-200 dark:border-stone-800 bg-stone-50/70 dark:bg-stone-900/50 font-serif text-stone-600 dark:text-stone-300">
                 <th className="p-4">User</th>
                 <th className="p-4">Contact</th>
-                <th className="p-4">Role</th>
-                <th className="p-4">Status</th>
-                <th className="p-4">Joined</th>
+                <th className="hidden lg:table-cell">Role</th>
+                <th className="hidden md:table-cell">Status</th>
+                <th className="hidden xl:table-cell">Joined</th>
                 <th className="p-4 text-right">Actions</th>
               </tr>
             </thead>
@@ -200,26 +235,29 @@ function AdminUsersContent() {
                   className="hover:bg-stone-50/80 dark:hover:bg-stone-800/40 transition-colors"
                 >
                   <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-cordova-green/10 text-cordova-green font-bold text-xs flex items-center justify-center border border-cordova-green/20 shrink-0">
+                    <div className="flex items-start gap-2">
+                      <div className="hidden sm:flex w-9 h-9 rounded-xl bg-cordova-green/10 text-cordova-green font-bold text-xs items-center justify-center border border-cordova-green/20 shrink-0">
                         {u.full_name?.charAt(0)?.toUpperCase() || 'U'}
                       </div>
-                      <div>
+                      <div className="min-w-0 space-y-1">
                         <p className="font-semibold text-stone-900 dark:text-white">
                           {u.full_name}
                         </p>
                         <p className="text-xs text-stone-400 font-mono">
                           ID: {u.id.substring(0, 8)}...
                         </p>
+                        <div className="lg:hidden">{getRoleBadge(u.role)}</div>
+                        <div className="md:hidden"><Badge color={u.is_active ? 'success' : 'danger'}>{u.is_active ? 'Active' : 'Deactivated'}</Badge></div>
+                        <p className="xl:hidden text-[10px] text-stone-500">Joined {new Date(u.created_at).toLocaleDateString()}</p>
                       </div>
                     </div>
                   </td>
 
                   <td className="p-4 text-stone-600 dark:text-stone-300">
                     <div className="space-y-0.5">
-                      <div className="flex items-center gap-1.5">
-                        <Mail size={12} className="text-stone-400" />
-                        <span>{u.email}</span>
+                      <div className="flex items-start gap-1.5">
+                        <Mail size={12} className="hidden sm:block shrink-0 mt-0.5 text-stone-400" />
+                        <span className="break-all">{u.email}</span>
                       </div>
                       {u.phone && (
                         <div className="flex items-center gap-1.5 text-xs text-stone-400">
@@ -230,17 +268,17 @@ function AdminUsersContent() {
                     </div>
                   </td>
 
-                  <td className="p-4">
+                  <td className="hidden lg:table-cell">
                     {getRoleBadge(u.role)}
                   </td>
 
-                  <td className="p-4">
+                  <td className="hidden md:table-cell">
                     <Badge color={u.is_active ? 'success' : 'danger'}>
                       {u.is_active ? 'Active' : 'Deactivated'}
                     </Badge>
                   </td>
 
-                  <td className="p-4 text-stone-500 text-xs">
+                  <td className="hidden xl:table-cell text-stone-500 text-xs">
                     <div className="flex items-center gap-1.5">
                       <Calendar size={12} className="text-stone-400" />
                       <span>{new Date(u.created_at).toLocaleDateString()}</span>
@@ -249,7 +287,7 @@ function AdminUsersContent() {
 
                   <td className="p-4 text-right">
                     {u.role !== 'admin' && (
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex flex-wrap items-center justify-end gap-2 [&_button]:max-w-full [&_button]:whitespace-normal [&_button]:px-2">
                         <Button
                           variant="secondary"
                           size="sm"
@@ -289,6 +327,15 @@ function AdminUsersContent() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {!loading && meta && meta.totalCount > 0 && (
+        <div className="space-y-3 [&_nav]:mt-0 [&_nav]:flex-wrap">
+          <p className="text-center text-xs text-stone-500" role="status" aria-live="polite">
+            Showing {(meta.page - 1) * meta.limit + 1}–{Math.min(meta.page * meta.limit, meta.totalCount)} of {meta.totalCount} users
+          </p>
+          <Pagination meta={meta} onPageChange={(nextPage) => navigate(roleFilter, nextPage)} />
         </div>
       )}
 

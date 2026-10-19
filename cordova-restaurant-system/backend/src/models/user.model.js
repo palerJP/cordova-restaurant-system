@@ -155,7 +155,7 @@ async function list({ role, search, limit, offset }) {
 
   const { rows: countRows } = await query(`SELECT COUNT(*) FROM users ${where}`, params);
   const { rows } = await query(
-    `SELECT ${PUBLIC_FIELDS} FROM users ${where} ORDER BY created_at DESC LIMIT $${idx++} OFFSET $${idx++}`,
+    `SELECT ${PUBLIC_FIELDS} FROM users ${where} ORDER BY created_at DESC, id DESC LIMIT $${idx++} OFFSET $${idx++}`,
     [...params, limit, offset]
   );
   return { rows, totalCount: parseInt(countRows[0].count, 10) };
