@@ -983,13 +983,7 @@ export default function RestaurantDetailPage() {
 
             {/* Operating Hours Tile */}
             <div className="p-5 flex flex-col items-center justify-center gap-2">
-              <div className="w-10 h-10 rounded-full bg-amber-500/15 dark:bg-amber-500/25 flex items-center justify-center text-cordova-gold border border-amber-400/30">
-                <Clock size={18} />
-              </div>
-              <div className="w-full px-2">
-                <RestaurantHours restaurant={restaurant} badge />
-                <div className="mt-2 text-left"><RestaurantHours restaurant={restaurant} /></div>
-              </div>
+              <RestaurantHours restaurant={restaurant} />
             </div>
 
             {/* Seafood & Cuisine Tile */}
