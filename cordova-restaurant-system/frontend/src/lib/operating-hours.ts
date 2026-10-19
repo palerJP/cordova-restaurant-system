@@ -1,6 +1,14 @@
 import type { OperatingHour } from './types';
 
 const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+// Stable sample hours for listings with no published schedule. Never persisted as owner data.
+export function estimatedHours(key: string) {
+  let seed = 0;
+  for (const char of key) seed = (seed * 31 + char.charCodeAt(0)) >>> 0;
+  const open = `${String(8 + seed % 3).padStart(2, '0')}:00`;
+  const close = `${20 + Math.floor(seed / 3) % 3}:00`;
+  return `Estimated daily: ${formatTime(open)} – ${formatTime(close)}`;
+}
 export function formatTime(value: string): string {
   const [h, m] = value.split(':').map(Number);
   return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;

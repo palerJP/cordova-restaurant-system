@@ -39,3 +39,11 @@ test('formats midnight and noon without ambiguity', () => {
   assert.equal(formatTime('00:00:00'),'12:00 AM');
   assert.equal(formatTime('12:30:00'),'12:30 PM');
 });
+import { estimatedHours } from '../src/lib/operating-hours';
+test('generated fallback hours are stable and explicitly estimated', () => {
+  const value=estimatedHours('horizon-bean-cafe');
+  assert.equal(value,estimatedHours('horizon-bean-cafe'));
+  assert.match(value,/^Estimated daily: (8|9|10):00 AM .* (8|9|10):00 PM$/);
+  const values=new Set(Array.from({length:24},(_,i)=>estimatedHours('restaurant-'+i)));
+  assert.ok(values.size>1);
+});
