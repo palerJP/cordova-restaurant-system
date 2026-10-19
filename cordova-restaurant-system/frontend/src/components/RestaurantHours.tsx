@@ -33,9 +33,8 @@ export function RestaurantHours({ restaurant, compact = false }: { restaurant: R
   </div>;
   return <div className="flex flex-col items-center gap-1 text-center" title="Philippine time (PHT). Regular hours may differ on holidays.">
     <span className="mb-1 flex h-10 w-10 items-center justify-center rounded-full border border-amber-300 bg-amber-50 text-amber-600 dark:border-amber-600/50 dark:bg-amber-950/40 dark:text-amber-400"><Clock size={18} strokeWidth={1.5} aria-hidden="true" /></span>
-    {statusBadge}
-    <p className="text-xs font-bold tabular-nums text-stone-900 dark:text-white">{range}</p>
-    {estimated && <p className="text-[10px] text-stone-600 dark:text-stone-300">Sample schedule · PHT · Not business-confirmed</p>}
+    {!estimated && statusBadge}
+    <p className="text-xs font-bold tabular-nums text-stone-900 dark:text-white">{estimated && <abbr title="Approximate generated hours; not confirmed by the business" className="no-underline decoration-transparent">≈ </abbr>}{range}</p>
     {!estimated && <span className="sr-only">Philippine time. Regular hours may differ on holidays.</span>}
   </div>;
 }
