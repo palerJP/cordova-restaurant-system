@@ -32,6 +32,23 @@ body {
 }
 
 @layer components {
+  /* Shared content width and gutters keep public sections aligned on every display. */
+  .page-container {
+    width: 100%;
+    max-width: 80rem;
+    margin-inline: auto;
+    padding-inline: clamp(1rem, 3vw, 2rem);
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .restaurant-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+    gap: 1.5rem;
+  }
+  .restaurant-grid > *, .page-container fieldset {
+    min-width: 0;
+  }
   .card {
     @apply bg-[var(--bg-elevated)] border border-[var(--border)] rounded-2xl shadow-premium
       transition-shadow duration-200;

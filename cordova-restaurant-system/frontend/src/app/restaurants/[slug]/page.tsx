@@ -760,7 +760,7 @@ export default function RestaurantDetailPage() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      <div className="page-container py-8 space-y-6">
         <Skeleton className="h-80 w-full rounded-2xl" />
         <Skeleton className="h-12 w-3/4" />
         <Skeleton className="h-64 w-full rounded-2xl" />
@@ -917,7 +917,7 @@ export default function RestaurantDetailPage() {
       </section>
 
       {/* OVERLAPPING MAIN CONTAINER */}
-      <section className="relative z-30 -mt-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <section className="relative z-30 -mt-10 page-container">
 
         {/* ACTIVE PROMOTION BANNER IF AVAILABLE */}
         {activePromotions.length > 0 && (
@@ -1035,12 +1035,12 @@ export default function RestaurantDetailPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTab('map')}
-                  className="font-extrabold text-sm text-stone-900 dark:text-white hover:text-cordova-green dark:hover:text-emerald-400 transition-colors group-hover:underline text-center max-w-full truncate block mx-auto"
+                  className="font-extrabold text-sm text-stone-900 dark:text-white hover:text-cordova-green dark:hover:text-emerald-400 transition-colors group-hover:underline text-center max-w-full break-words block mx-auto"
                   title="View on Interactive Map"
                 >
                   {locationText}
                 </button>
-                <p className="text-[11px] font-medium text-stone-500 dark:text-stone-400 mt-0.5 truncate text-center" title={restaurant.address || locationText}>
+                <p className="text-[11px] font-medium text-stone-500 dark:text-stone-400 mt-0.5 break-words text-center" title={restaurant.address || locationText}>
                   {restaurant.address || `${restaurant.barangay || 'Poblacion'}, Cordova, Cebu`}
                 </p>
               </div>
@@ -1049,7 +1049,7 @@ export default function RestaurantDetailPage() {
 
           {/* TAB NAVIGATION HEADER */}
           <div className="border-t-2 border-cordova-green dark:border-emerald-500 border-b border-stone-200/80 dark:border-white/10 bg-white/50 dark:bg-white/[0.02]">
-            <div className="grid grid-cols-5 text-center">
+            <div className="grid grid-cols-2 sm:grid-cols-5 text-center">
               {(['overview', 'menu', 'reservations', 'map', 'reviews'] as const).map((tab) => {
                 const isActive = activeTab === tab;
                 return (
@@ -1460,7 +1460,7 @@ export default function RestaurantDetailPage() {
       {/* Recently Viewed Restaurants Shelf */}
       {recentViews.length > 0 && (
         <section className="border-t border-stone-200/80 dark:border-white/10 py-10 bg-stone-50/70 dark:bg-[#121714]">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="page-container">
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
                 <Eye size={18} className="text-cordova-green dark:text-emerald-400" />

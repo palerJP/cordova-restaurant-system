@@ -54,6 +54,7 @@ export default function ManageBusinessPage() {
 
   return (
     <RequireRole roles={['owner', 'admin']}>
+      <div className="page-container py-8">
       {loading ? (
         <Skeleton className="h-96 w-full" />
       ) : loadError || !restaurant ? (
@@ -74,7 +75,7 @@ export default function ManageBusinessPage() {
             <p className="text-sm text-amber-600 dark:text-amber-400 mb-4">⏳ Awaiting admin verification. Your listing is not yet public.</p>
           )}
 
-          <div className="flex gap-1 border-b border-[var(--border)] mb-6 overflow-x-auto">
+          <div className="flex flex-wrap gap-1 border-b border-[var(--border)] mb-6">
             {TABS.map((t) => (
               <button
                 key={t}
@@ -97,6 +98,7 @@ export default function ManageBusinessPage() {
           {tab === 'analytics' && <AnalyticsTab restaurantId={restaurant.id} />}
         </div>
       )}
+      </div>
     </RequireRole>
   );
 }
@@ -1738,7 +1740,7 @@ function SubscriptionTab({ restaurant, onUpdated }: { restaurant: Restaurant; on
           Choose a Subscription & Ranking Tier
         </h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
           {TIERS.map((tier) => {
             const isCurrent = currentTier === tier.id;
             return (

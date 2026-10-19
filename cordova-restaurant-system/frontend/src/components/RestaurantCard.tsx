@@ -136,7 +136,7 @@ export const RestaurantCard = memo(function RestaurantCard({
       </div>
 
       {/* Card Content */}
-      <div className="p-5 flex flex-col flex-1 justify-between gap-4">
+      <div className="p-5 min-w-0 break-words flex flex-col flex-1 justify-between gap-4">
         <div className="space-y-3">
           {/* Title & Price Category */}
           <div>
@@ -154,10 +154,10 @@ export const RestaurantCard = memo(function RestaurantCard({
           </div>
 
           {/* Location & Distance */}
-          <div className="flex items-center justify-between text-xs text-stone-700 dark:text-stone-200">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-stone-700 dark:text-stone-200">
             <div className="flex items-center gap-1.5 min-w-0">
               <MapPin size={14} className="text-cordova-gold shrink-0" />
-              <span className="truncate font-medium">{locationText}</span>
+              <span className="break-words font-medium">{locationText}</span>
             </div>
             {restaurant.distance_km != null && (
               <span className="shrink-0 text-stone-600 dark:text-stone-300 font-bold ml-2 px-2 py-0.5 rounded-full bg-stone-100 dark:bg-white/10">
@@ -167,7 +167,7 @@ export const RestaurantCard = memo(function RestaurantCard({
           </div>
 
           {/* Rating & Review Count */}
-          <div className="flex items-center justify-between text-xs pt-1.5 border-t border-stone-100 dark:border-white/5">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs pt-1.5 border-t border-stone-100 dark:border-white/5">
             <div className="flex items-center gap-1.5 font-bold text-stone-900 dark:text-stone-100">
               <Star size={14} className="fill-cordova-gold text-cordova-gold" />
               <span>{ratingVal}</span>
@@ -177,7 +177,7 @@ export const RestaurantCard = memo(function RestaurantCard({
             </div>
 
             {restaurant.phone && (
-              <span className="text-[11px] font-mono text-stone-500 dark:text-stone-400 truncate max-w-[120px]">
+              <span className="text-[11px] font-mono text-stone-500 dark:text-stone-400 break-words">
                 {restaurant.phone}
               </span>
             )}

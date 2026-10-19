@@ -32,7 +32,7 @@ export default function DashboardPage() {
 
   return (
     <RequireRole roles={['owner', 'admin', 'customer']}>
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="page-container py-8">
         <div className="flex items-center justify-between mb-8 flex-wrap gap-4 pb-4 border-b border-stone-200/80 dark:border-stone-800/80">
           <div>
             <h1 className="font-serif text-3xl font-bold text-stone-900 dark:text-white">
@@ -74,7 +74,7 @@ export default function DashboardPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="restaurant-grid">
             {restaurants.map((r) => {
               const isVerified = r.status === 'verified';
               const isPending = r.status === 'pending';

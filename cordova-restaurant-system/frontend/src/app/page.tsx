@@ -541,7 +541,7 @@ export default function HomePage() {
       </section>
 
       {/* EXPLORE BY CATEGORY SECTION */}
-      <section className="max-w-6xl mx-auto px-4 mt-20 relative z-10">
+      <section className="page-container mt-20 relative z-10">
         <div className="text-center mb-10">
           <h2 className="font-serif text-3xl sm:text-4xl font-extrabold text-stone-900 dark:text-white">
             Explore by Category
@@ -583,7 +583,7 @@ export default function HomePage() {
       </section>
 
       {/* RECOMMENDED FOR YOU SWIPEABLE CAROUSEL SECTION */}
-      {user && <section id="recommendations" className="max-w-6xl mx-auto px-4 mt-20 relative z-10 scroll-mt-8">
+      {user && <section id="recommendations" className="page-container mt-20 relative z-10 scroll-mt-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
           <div>
             <div className="flex items-center gap-2">
@@ -642,7 +642,7 @@ export default function HomePage() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.35, delay: Math.min(idx, 8) * 0.06 }}
-                className="snap-start shrink-0 w-[290px] sm:w-[320px] lg:w-[350px]"
+                className="snap-start shrink-0 w-[min(100%,20rem)]"
               >
                 <RestaurantCard
                   restaurant={restaurant}
@@ -679,7 +679,7 @@ export default function HomePage() {
       )}
 
       {/* ALL ESTABLISHMENTS SECTION */}
-      <section ref={establishmentsRef} className="max-w-6xl mx-auto px-4 mt-24 scroll-mt-6 relative z-10">
+      <section ref={establishmentsRef} className="page-container mt-24 scroll-mt-6 relative z-10">
         {/* Active Search Feedback Banner */}
         {debouncedQuery.trim() && (
           <motion.div
@@ -760,7 +760,7 @@ export default function HomePage() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="restaurant-grid">
               {restaurants.map((restaurant, idx) => (
                 <motion.div
                   key={restaurant.id}
