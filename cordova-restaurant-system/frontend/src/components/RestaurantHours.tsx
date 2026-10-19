@@ -23,11 +23,11 @@ export function RestaurantHours({ restaurant, compact = false }: { restaurant: R
   const range = estimated || value.text.includes('opened yesterday') ? value.text : today && !today.is_closed && value.status !== 'unknown'
     ? `${today.open_time.slice(0, 5)} - ${today.close_time.slice(0, 5)}${overnight ? ' (+1 day)' : ''}`
     : value.text;
-  if (compact) return <div className="flex min-w-0 items-center gap-2.5 rounded-lg bg-stone-50 px-3 py-2 dark:bg-white/5" title="Philippine time (PHT). Estimated hours are generated and not confirmed by the business.">
-    <Clock size={16} className="shrink-0 text-stone-500 dark:text-stone-400" aria-hidden="true" />
+  if (compact) return <div className="flex min-w-0 flex-wrap items-center gap-1.5" title="Philippine time (PHT). Estimated hours are generated and not confirmed by the business.">
+    <Clock size={14} className="shrink-0 text-cordova-gold" aria-hidden="true" />
     <div className="min-w-0 flex-1">
-      <p className="text-xs font-semibold tabular-nums text-stone-900 dark:text-white">{range}</p>
-      <p className="mt-0.5 text-[11px] text-stone-600 dark:text-stone-300">{estimated ? 'Estimated · unconfirmed' : 'Today · Philippine time'}</p>
+      <p className="text-xs font-medium tabular-nums text-stone-700 dark:text-stone-200">{estimated && <abbr title="Approximate generated hours; not confirmed by the business" className="no-underline decoration-transparent">≈ </abbr>}{range}</p>
+
     </div>
     {!estimated && statusBadge}
   </div>;
