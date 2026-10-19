@@ -194,7 +194,7 @@ function OverviewTab({ restaurant, onUpdated }: { restaurant: Restaurant; onUpda
 
         <fieldset>
           <legend className="text-base font-bold mb-2">Amenities</legend>
-          <p className="mb-3 text-base text-stone-700 dark:text-stone-200">Choose all that apply. Selected options show a checkmark and the word “Selected”. Tap again to clear.</p>
+          <p className="mb-3 text-base text-stone-700 dark:text-stone-200">Choose all that apply. A checkmark means selected. Tap again to clear.</p>
           <div className="flex flex-wrap gap-2">
             {AMENITIES.map((a) => (
               <SelectionOption key={a.value} selected={amenities.includes(a.value)} onClick={() => toggleAmenity(a.value)}>

@@ -243,7 +243,7 @@ export default function NewBusinessPage() {
               4. Dining Features & Cuisines
             </h2>
 
-            <p className="text-base text-stone-700 dark:text-stone-200">Choose all that apply. Selected options show a checkmark and the word “Selected”. Tap again to clear.</p>
+            <p className="text-base text-stone-700 dark:text-stone-200">Choose all that apply. A checkmark means selected. Tap again to clear.</p>
 
             <Select label="Price Range" value={priceRange} onChange={(e) => setPriceRange(e.target.value)}>
               <option value="budget">₱ Budget-friendly (Under ₱200)</option>
