@@ -26,7 +26,7 @@ export function RestaurantHours({ restaurant, compact = false }: { restaurant: R
   if (compact) return <div className="flex min-w-0 flex-wrap items-center gap-1.5" title="Philippine time (PHT). Estimated hours are generated and not confirmed by the business.">
     <Clock size={14} className="shrink-0 text-cordova-gold" aria-hidden="true" />
     <div className="min-w-0 flex-1">
-      <p className="text-xs font-medium tabular-nums text-stone-700 dark:text-stone-200">{estimated && <abbr title="Approximate generated hours; not confirmed by the business" className="no-underline decoration-transparent">≈ </abbr>}{range}</p>
+      <p className="text-xs font-medium tabular-nums text-stone-700 dark:text-stone-200">{range}</p>
 
     </div>
     {!estimated && statusBadge}
@@ -34,7 +34,7 @@ export function RestaurantHours({ restaurant, compact = false }: { restaurant: R
   return <div className="flex flex-col items-center gap-1 text-center" title="Philippine time (PHT). Regular hours may differ on holidays.">
     <span className="mb-1 flex h-10 w-10 items-center justify-center rounded-full border border-amber-300 bg-amber-50 text-amber-600 dark:border-amber-600/50 dark:bg-amber-950/40 dark:text-amber-400"><Clock size={18} strokeWidth={1.5} aria-hidden="true" /></span>
     {!estimated && statusBadge}
-    <p className="text-xs font-bold tabular-nums text-stone-900 dark:text-white">{estimated && <abbr title="Approximate generated hours; not confirmed by the business" className="no-underline decoration-transparent">≈ </abbr>}{range}</p>
-    {!estimated && <span className="sr-only">Philippine time. Regular hours may differ on holidays.</span>}
+    <p className="text-xs font-bold tabular-nums text-stone-900 dark:text-white">{range}</p>
+    <span className="sr-only">{estimated ? 'Generated sample hours, not confirmed by the business. ' : ''}Philippine time. Regular hours may differ on holidays.</span>
   </div>;
 }
