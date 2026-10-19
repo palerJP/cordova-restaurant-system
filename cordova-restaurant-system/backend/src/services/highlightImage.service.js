@@ -10,6 +10,13 @@ const ApiError = require('../utils/apiError');
 const LOCAL_ROOT = path.resolve(process.cwd(), 'private-uploads', 'visit-highlights');
 const BLOB_PREFIX = 'visit-highlights/';
 
+function privateToken() {
+  const token = env.upload.privateBlobToken
+    || (env.upload.imageAccess === 'private' ? env.upload.publicBlobToken : null);
+  if (!token) throw ApiError.internal('Private gallery storage is not configured.');
+  return token;
+}
+
 async function save(file) {
   let image;
   try {
@@ -24,7 +31,7 @@ async function save(file) {
   if (env.isProduction) {
     const blob = await put(`${BLOB_PREFIX}${name}`, bytes, {
       access: 'private', contentType: 'image/webp', addRandomSuffix: false,
-      token: env.upload.privateBlobToken,
+      token: privateToken(),
     });
     return blob.url;
   }
@@ -58,7 +65,7 @@ async function open(ref) {
     catch { throw ApiError.notFound('Image unavailable'); }
   }
   if (!validBlobRef(ref)) throw ApiError.notFound('Image unavailable');
-  const result = await get(ref, { access: 'private', token: env.upload.privateBlobToken });
+  const result = await get(ref, { access: 'private', token: privateToken() });
   if (!result || result.statusCode !== 200) throw ApiError.notFound('Image unavailable');
   return { stream: Readable.fromWeb(result.stream), contentType: 'image/webp' };
 }
@@ -66,7 +73,7 @@ async function open(ref) {
 async function remove(ref) {
   const name = localName(ref);
   if (name) return fs.unlink(path.join(LOCAL_ROOT, name)).catch(() => {});
-  if (validBlobRef(ref)) return del(ref, { token: env.upload.privateBlobToken });
+  if (validBlobRef(ref)) return del(ref, { token: privateToken() });
 }
 
 module.exports = { save, open, remove };
