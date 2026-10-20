@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
+import { catalogDishPhoto, catalogImage } from '@/data/catalogImages';
 import { api, ApiClientError } from '@/lib/api';
 import { useLiveAnalytics } from '@/hooks/useLiveAnalytics';
 import { OwnerReservations } from '@/components/reservations/OwnerReservations';
@@ -217,7 +218,7 @@ function OverviewTab({ restaurant, onUpdated }: { restaurant: Restaurant; onUpda
           <div className="grid grid-cols-3 gap-2">
             {gallery.map((img) => (
               <div key={img.id} className="relative aspect-square rounded-lg overflow-hidden group">
-                <Image src={img.image_url} alt="Gallery photo" fill className="object-cover" />
+                <Image src={catalogImage(img.image_url) || img.image_url} alt="Gallery photo" fill className="object-cover" />
                 <button
                   onClick={() => deletePhoto(img.id)}
                   className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium"
@@ -418,7 +419,7 @@ function MenuTab({ restaurant }: { restaurant: Restaurant }) {
             <div className="flex gap-3 items-start">
               {item.image_url ? (
                 <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-stone-100 dark:bg-stone-800 shrink-0 border border-stone-200 dark:border-stone-700">
-                  <Image src={item.image_url} alt={item.name} fill className="object-cover" />
+                  <Image src={catalogDishPhoto(item.id, item.image_url).image || item.image_url} alt={item.name} fill className="object-cover" />
                 </div>
               ) : (
                 <div className="w-20 h-20 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center text-2xl shrink-0 border border-amber-500/20">
