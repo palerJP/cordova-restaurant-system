@@ -13,11 +13,22 @@ import {
 import type { Restaurant, MenuItem, MenuCategory } from '@/lib/types';
 import { BURANDAT_PRICE_UNITS } from '@/data/burandatMenu';
 import { CASCADJA_IMAGE_ATTRIBUTIONS, CASCADJA_REPRESENTATIVE_IMAGES } from '@/data/cascadjaMenu';
+import { catalogDishPhoto } from '@/data/catalogImages';
 
 interface SpatialRestaurantMenuProps {
   restaurant: Restaurant;
   items: MenuItem[];
   categories: MenuCategory[];
+}
+
+function DishPhoto({ image, name }: { image: string; name: string }) {
+  const [failed, setFailed] = useState(false);
+  if (!image || failed) return <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-stone-500 dark:text-stone-400">
+    <ImageOff size={25} aria-hidden="true" />
+    <span className="text-xs font-medium">Photo unavailable</span>
+  </div>;
+  return <Image src={image} alt={name} fill onError={() => setFailed(true)}
+    className="object-cover group-hover:scale-108 transition-transform duration-500" />;
 }
 
 function getBurandatPriceUnit(item: MenuItem): string {
@@ -388,8 +399,10 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
         startingPrice: it.description?.startsWith('Starting price') || false,
         priceUnit: isBurandat ? getBurandatPriceUnit(it) : '',
         description: isBurandat || isCascadja ? '' : it.description || (isRca || isMavericks || isEatNRepeat || isEntoys ? '' : 'Crafted fresh with traditional Cordova flavors.'),
-        image: it.image_url || (isEatNRepeat || isEntoys ? '' : defaultData.heroDish.image),
-        tag: isMavericks && hasMavericksFoundationCoffeePhoto(it, categories)
+        image: catalogDishPhoto(it.id, it.image_url).image || (isEatNRepeat || isEntoys ? '' : defaultData.heroDish.image),
+        tag: catalogDishPhoto(it.id, it.image_url).representative
+          ? 'Representative photo'
+          : isMavericks && hasMavericksFoundationCoffeePhoto(it, categories)
           ? 'Representative photo'
           : isCascadja && CASCADJA_REPRESENTATIVE_IMAGES.get(it.name) === it.image_url
           ? 'Representative photo'
@@ -423,8 +436,10 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
         startingPrice: it.description?.startsWith('Starting price') || false,
         priceUnit: isBurandat ? getBurandatPriceUnit(it) : '',
         description: isBurandat || isCascadja ? '' : it.description || (isRca || isMavericks || isEatNRepeat || isEntoys ? '' : 'Special house recipe prepared daily.'),
-        image: it.image_url || (isEatNRepeat || isEntoys ? '' : defaultData.heroDish.image),
-        tag: isMavericks && hasMavericksFoundationCoffeePhoto(it, categories)
+        image: catalogDishPhoto(it.id, it.image_url).image || (isEatNRepeat || isEntoys ? '' : defaultData.heroDish.image),
+        tag: catalogDishPhoto(it.id, it.image_url).representative
+          ? 'Representative photo'
+          : isMavericks && hasMavericksFoundationCoffeePhoto(it, categories)
           ? 'Representative photo'
           : isCascadja && CASCADJA_REPRESENTATIVE_IMAGES.get(it.name) === it.image_url
           ? 'Representative photo'
@@ -586,12 +601,7 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
                   <div className="relative h-48 w-full overflow-hidden bg-stone-100 dark:bg-stone-800">
                     {item.image ? (
                       <>
-                        <Image
-                          src={item.image}
-                          alt={item.name}
-                          fill
-                          className="object-cover group-hover:scale-108 transition-transform duration-500"
-                        />
+                        <DishPhoto image={item.image} name={item.name} />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80 group-hover:opacity-60 transition-opacity" />
                         {isEatNRepeat && isEatNRepeatDrinkCard(item.category, item.image) && (
                           <div className="pointer-events-none absolute inset-0 flex items-center justify-center">

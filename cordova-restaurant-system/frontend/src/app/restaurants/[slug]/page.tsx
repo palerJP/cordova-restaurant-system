@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { RestaurantHours } from '@/components/RestaurantHours';
 import Image from 'next/image';
+import { catalogImage } from '@/data/catalogImages';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
@@ -801,7 +802,7 @@ export default function RestaurantDetailPage() {
 
   const allPhotos = [
     ...(restaurant.cover_image_url ? [{ id: 'cover', image_url: restaurant.cover_image_url }] : []),
-    ...gallery,
+    ...gallery.map((photo) => ({ ...photo, image_url: catalogImage(photo.image_url) || photo.image_url })),
   ];
 
   const categoryKey = restaurant.category || 'Restaurant';

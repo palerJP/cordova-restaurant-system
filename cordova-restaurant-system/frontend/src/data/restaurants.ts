@@ -1,4 +1,5 @@
 import type { Restaurant } from '@/lib/types';
+import { catalogRestaurantCover } from './catalogImages';
 
 /**
  * ============================================================================
@@ -458,7 +459,7 @@ export function getAllStaticRestaurants(): Restaurant[] {
       hours: config.hours,
       price_range: priceRange,
       services_offered: ['dine_in', 'takeout'],
-      cover_image_url: config.coverImage || undefined,
+      cover_image_url: catalogRestaurantCover(slug, config.coverImage),
       status: 'verified',
       avg_rating: stats.rating,
       review_count: stats.count,
@@ -570,7 +571,7 @@ export function applyRestaurantCustomization(restaurant: Restaurant): Restaurant
     const logo = ORIGINAL_LOGO_SLUGS.has(restaurant.slug)
       ? RESTAURANT_CUSTOMIZATIONS[restaurant.slug]?.coverImage
       : null;
-    return logo ? { ...restaurant, cover_image_url: logo } : restaurant;
+    return { ...restaurant, cover_image_url: catalogRestaurantCover(restaurant.slug, logo || restaurant.cover_image_url) };
   }
   const custom = getRestaurantCustomization(restaurant);
   if (!custom) {
@@ -586,9 +587,9 @@ export function applyRestaurantCustomization(restaurant: Restaurant): Restaurant
     name: custom.name || restaurant.name,
     category: custom.category || restaurant.category,
     cover_image_url:
-      custom.coverImage !== undefined && custom.coverImage !== null && custom.coverImage.trim() !== ''
+      catalogRestaurantCover(restaurant.slug, custom.coverImage !== undefined && custom.coverImage !== null && custom.coverImage.trim() !== ''
         ? custom.coverImage
-        : restaurant.cover_image_url,
+        : restaurant.cover_image_url),
     barangay: custom.barangay || restaurant.barangay,
     description: custom.description || restaurant.description,
     address: custom.address || restaurant.address,
