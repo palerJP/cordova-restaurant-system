@@ -63,7 +63,7 @@ export default function ManageBusinessPage() {
           <p>Could not load this business. It may not exist, or you may not have access to it.</p>
         </div>
       ) : (
-        <div>
+        <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 min-w-0">
           <div className="flex items-center gap-3 mb-1 flex-wrap">
             <h1 className="text-2xl font-bold">{restaurant.name}</h1>
             <StatusBadge status={restaurant.status} />
@@ -183,8 +183,8 @@ function OverviewTab({ restaurant, onUpdated }: { restaurant: Restaurant; onUpda
   };
 
   return (
-    <div className="space-y-6 max-w-xl">
-      <div className="card p-5 space-y-4">
+    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+      <div className="card min-w-0 p-5 space-y-4">
         <Textarea label="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
         <Input label="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
         <div>
@@ -211,7 +211,7 @@ function OverviewTab({ restaurant, onUpdated }: { restaurant: Restaurant; onUpda
         </Button>
       </div>
 
-      <div className="card p-5 space-y-4">
+      <div className="card min-w-0 p-5 space-y-4">
         <p className="font-medium">Photo Gallery</p>
         {gallery.length > 0 && (
           <div className="grid grid-cols-3 gap-2">
@@ -228,12 +228,12 @@ function OverviewTab({ restaurant, onUpdated }: { restaurant: Restaurant; onUpda
             ))}
           </div>
         )}
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
           <input
             type="file"
             accept="image/*"
             onChange={(e) => setGalleryFile(e.target.files?.[0] || null)}
-            className="input flex-1"
+            className="input w-full min-w-0 flex-1"
           />
           <Button onClick={uploadGalleryPhoto} loading={uploadingPhoto} disabled={!galleryFile}>
             Add
