@@ -56,8 +56,14 @@ export default function PreferencesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isFirstTime = searchParams.get('firstTime') === 'true';
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, refreshUser } = useAuth();
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (!authLoading && user && isFirstTime && user.onboarding_required !== true) {
+      router.replace(user.role === 'admin' ? '/admin' : user.role === 'owner' ? '/dashboard' : '/');
+    }
+  }, [authLoading, user, isFirstTime, router]);
 
   const [selectedCuisines, setSelectedCuisines] = useState<string[]>([]);
   const [selectedDietary, setSelectedDietary] = useState<string[]>([]);
@@ -157,6 +163,7 @@ export default function PreferencesPage() {
     try {
       await api.put('/api/users/me/preferences', preferences);
       saveTastePreferences(preferences, user.id);
+      await refreshUser();
       toast('Preferences saved successfully! Welcome to CordovaEats.', 'success');
       router.push(returnTo);
     } catch (err) {
@@ -165,6 +172,10 @@ export default function PreferencesPage() {
       setLoading(false);
     }
   };
+
+  if (isFirstTime && user && user.onboarding_required !== true) {
+    return <div role="status">Opening your account...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 flex items-center justify-center p-4 sm:p-6 my-auto">

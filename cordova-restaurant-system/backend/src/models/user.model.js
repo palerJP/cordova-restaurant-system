@@ -1,26 +1,40 @@
 const { query } = require('../config/db');
 
 const PUBLIC_FIELDS = `id, email, full_name, phone, role, avatar_url, is_active, accepts_marketing,
-  email_verified, google_id, facebook_id, email_verified_at, last_login_at, created_at`;
+  email_verified, onboarding_required, google_id, facebook_id, email_verified_at, last_login_at, created_at`;
+
+async function reconcileOnboarding(user) {
+  if (!user?.onboarding_required) return user;
+  // Saved preferences predate the onboarding flag for some accounts. Repair
+  // that flag on every authentication lookup, including social and refresh.
+  const { rows } = await query(
+    `UPDATE users SET onboarding_required = FALSE
+     WHERE id = $1 AND EXISTS (SELECT 1 FROM user_preferences WHERE user_id = $1)
+     RETURNING id`,
+    [user.id]
+  );
+  if (rows.length) user.onboarding_required = false;
+  return user;
+}
 
 async function findById(id) {
   const { rows } = await query(`SELECT * FROM users WHERE id = $1`, [id]);
-  return rows[0] || null;
+  return reconcileOnboarding(rows[0] || null);
 }
 
 async function findByEmail(email) {
   const { rows } = await query(`SELECT * FROM users WHERE email = $1`, [email.toLowerCase()]);
-  return rows[0] || null;
+  return reconcileOnboarding(rows[0] || null);
 }
 
 async function findByGoogleId(googleId) {
   const { rows } = await query(`SELECT * FROM users WHERE google_id = $1`, [googleId]);
-  return rows[0] || null;
+  return reconcileOnboarding(rows[0] || null);
 }
 
 async function findByFacebookId(facebookId) {
   const { rows } = await query(`SELECT * FROM users WHERE facebook_id = $1`, [facebookId]);
-  return rows[0] || null;
+  return reconcileOnboarding(rows[0] || null);
 }
 
 async function create({ email, passwordHash, fullName, role = 'customer', phone = null, acceptsMarketing = true, emailVerified = false }) {
@@ -178,7 +192,7 @@ async function upsertPreferences(userId, prefs) {
   } = prefs;
 
   const { rows } = await query(
-    `INSERT INTO user_preferences
+    `WITH saved AS (INSERT INTO user_preferences
        (user_id, preferred_cuisines, dietary_restrictions, budget_range, preferred_services,
         home_latitude, home_longitude, max_distance_km, updated_at)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8, now())
@@ -191,7 +205,9 @@ async function upsertPreferences(userId, prefs) {
        home_longitude = EXCLUDED.home_longitude,
        max_distance_km = EXCLUDED.max_distance_km,
        updated_at = now()
-     RETURNING *`,
+     RETURNING *), completed AS (
+       UPDATE users SET onboarding_required = FALSE WHERE id = $1
+     ) SELECT * FROM saved`,
     [userId, preferredCuisines, dietaryRestrictions, budgetRange, preferredServices,
       homeLatitude, homeLongitude, maxDistanceKm]
   );

@@ -78,9 +78,7 @@ export default function LoginPage() {
           return;
         }
       } catch {
-        // Offer onboarding if the preferences service cannot confirm it was completed.
-        router.replace(preferencesOnboardingDestination(destination));
-        return;
+        // A temporary preferences failure must not restart completed onboarding.
       }
     }
     router.replace(destination);
