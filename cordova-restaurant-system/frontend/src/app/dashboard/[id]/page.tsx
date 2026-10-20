@@ -80,7 +80,7 @@ export default function ManageBusinessPage() {
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px capitalize whitespace-nowrap ${
+                className={`px-4 py-2.5 text-sm font-medium border-b-2 capitalize whitespace-nowrap ${
                   tab === t ? 'border-brand-500 text-brand-600 dark:text-brand-400 font-bold' : 'border-transparent text-[var(--text-muted)]'
                 }`}
               >
