@@ -43,8 +43,25 @@ body {
   }
   .restaurant-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+    /* Keep empty slots so partial pages and new listings retain the same card width. */
+    grid-template-columns: minmax(0, 1fr);
     gap: 1.5rem;
+    align-items: stretch;
+  }
+  .restaurant-grid > * {
+    grid-column: auto / span 1;
+    width: 100%;
+    max-width: 100%;
+  }
+  @media (min-width: 640px) {
+    .restaurant-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (min-width: 1024px) {
+    .restaurant-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
   }
   .restaurant-grid > *, .page-container fieldset {
     min-width: 0;
