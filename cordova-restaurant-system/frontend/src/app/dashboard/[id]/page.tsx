@@ -1496,32 +1496,35 @@ function PromotionsTab({ restaurantId }: { restaurantId: string }) {
 
 // ---------------- Analytics tab ----------------
 function AnalyticsTab({ restaurantId }: { restaurantId: string }) {
-  const { data: stats, error, refresh } = useLiveAnalytics(`/api/restaurants/${restaurantId}/analytics?days=30`, 'owner');
-  return <div className="space-y-5">
-    <div className="flex flex-wrap items-center justify-between gap-3">
-      <div><h3 className="font-semibold">Database analytics</h3><p className="text-xs text-stone-500">Refreshes every 5 seconds while this tab is visible. Times use Philippine time.</p></div>
-      <Button variant="secondary" onClick={refresh}>Refresh now</Button>
+  const [days, setDays] = useState(30);
+  const { data: stats, error, refresh } = useLiveAnalytics(`/api/restaurants/${restaurantId}/analytics?days=${days}`, 'owner');
+  return <div className="mx-auto max-w-6xl space-y-8 pb-8">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div><p className="text-xs font-semibold uppercase tracking-widest text-cordova-green dark:text-emerald-400 mb-2">Analytics</p><h3 className="font-serif text-2xl sm:text-3xl font-bold">Business performance</h3><p className="text-sm text-stone-500 mt-2">A clear view of your establishment’s activity.</p></div>
+      <div className="flex flex-wrap items-center gap-2"><label className="sr-only" htmlFor="analytics-period">Activity period</label><select id="analytics-period" className="rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2.5 text-sm" value={days} onChange={(event) => setDays(Number(event.target.value))}><option value={7}>Last 7 days</option><option value={30}>Last 30 days</option></select>
+      <Button variant="secondary" onClick={refresh}>Refresh</Button></div>
     </div>
     {error && <div role="alert" className="rounded-xl border border-red-300 p-4 text-sm">Live analytics could not be refreshed. {stats ? 'The figures below are from the last successful update.' : 'No numbers are shown until the database can be checked.'} <button className="underline" onClick={refresh}>Try again</button></div>}
     {!stats ? (!error && <Skeleton className="h-40 w-full" />) : <>
-      <p className="text-xs text-stone-500">Last database update: {new Date(stats.asOf).toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}. Activity tracking began {new Date(stats.trackingSince).toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}. Earlier demo/history logs are excluded.</p>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard label="Profile requests (30 days)" value={stats.totalViews} />
-        <StatCard label="Requests from recommendation links (30 days)" value={stats.viewsFromRecommendation} />
-        <StatCard label="Included in recommendation results (30 days)" value={stats.timesRecommended} />
-        <StatCard label="Ranked first in recommendations (30 days)" value={stats.timesTopResult} />
-        <StatCard label="Accounts saving this business (current)" value={stats.favorites} />
-        <StatCard label="Visible reviews (current)" value={stats.visibleReviews} />
-        <StatCard label="Average visible review rating" value={stats.averageRating === null ? 'No ratings' : stats.averageRating} />
-        <StatCard label="Admin-verified payments (30 days)" value={stats.verifiedPayments} />
-      </div>
-      <p className="text-sm">Active paid boost supported by a verified payment: <strong>{stats.activePaidSubscription ? 'Yes' : 'No'}</strong></p>
-      <div className="card p-4 text-sm space-y-2">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-stone-500"><span className="inline-flex items-center gap-2"><span aria-hidden="true" className={`h-2 w-2 rounded-full ${error ? 'bg-amber-500' : 'bg-emerald-500'}`} />{error ? 'Last saved update' : 'Auto-updating'}</span><span>Updated {new Date(stats.asOf).toLocaleTimeString('en-PH', { timeZone: 'Asia/Manila', hour: 'numeric', minute: '2-digit' })} PHT</span><span>Request counts may include repeat visits</span></div>
+      <section className="space-y-4"><div className="flex flex-wrap items-baseline justify-between gap-2"><h4 className="font-semibold">Discovery</h4><span className="text-xs text-stone-500">Last {days} days · recorded activity</span></div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard label={`Profile requests (${days} days)`} value={stats.totalViews} description="Recorded detail-page requests. Your signed-in visits and admin visits are excluded." />
+        <StatCard label={`From recommendation links (${days} days)`} value={stats.viewsFromRecommendation} description="Profile requests attributed to recommendation links; repeat requests can count." />
+        <StatCard label={`Recommendation inclusions (${days} days)`} value={stats.timesRecommended} description="Generated recommendation results containing your business, not confirmed card views." />
+        <StatCard label={`First-place rankings (${days} days)`} value={stats.timesTopResult} description="Generated recommendation results placing your business first, not clicks or paid placements." />
+      </div></section>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6"><section className="lg:col-span-2 rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-[#1d2320] p-5 sm:p-6"><div className="flex flex-wrap items-baseline justify-between gap-2 mb-6"><h4 className="font-semibold">Customer engagement</h4><span className="text-xs text-stone-500">Current totals</span></div><dl className="grid grid-cols-1 sm:grid-cols-3 gap-6"><div><dt className="text-sm text-stone-500">Saved by customers</dt><dd className="text-3xl font-semibold tabular-nums mt-2">{stats.favorites}</dd></div><div><dt className="text-sm text-stone-500">Visible reviews</dt><dd className="text-3xl font-semibold tabular-nums mt-2">{stats.visibleReviews}</dd></div><div><dt className="text-sm text-stone-500">Average rating</dt><dd className="text-3xl font-semibold tabular-nums mt-2">{stats.averageRating === null ? '—' : stats.averageRating}<span className="text-sm font-normal text-stone-500 ml-2">{stats.averageRating === null ? 'No ratings yet' : '/ 5'}</span></dd></div></dl></section>
+      <section className="rounded-2xl border border-stone-200 dark:border-stone-800 p-5 sm:p-6"><div className="flex items-center justify-between gap-3"><h4 className="font-semibold">Paid promotion</h4><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${stats.activePaidSubscription ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200' : 'bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-300'}`}>{stats.activePaidSubscription ? 'Active' : 'Inactive'}</span></div><p className="text-3xl font-semibold tabular-nums mt-6">{stats.verifiedPayments}</p><p className="text-xs text-stone-500 mt-2">Admin-verified payments · last {days} days</p></section></div>
+      <details className="rounded-2xl border border-stone-200 dark:border-stone-800 p-5 text-sm"><summary className="cursor-pointer font-medium">How these numbers are counted</summary><div className="space-y-3 mt-4 text-stone-500 leading-relaxed">
+        <p>Tracking began {new Date(stats.trackingSince).toLocaleString('en-PH', { timeZone: 'Asia/Manila' })} PHT. Activity covers the last {days} days, starting no earlier than that date. Earlier demo/history logs are excluded.</p>
         <p>Profile requests count recorded detail-page requests, not unique people. Your own signed-in visits and admin visits are excluded.</p>
         <p>Recommendation counts record inclusion in generated API results, not proof that a person saw or clicked the card. Normal searches and admin previews are excluded.</p>
         <p>Saved businesses are favorites, not paying subscribers. Payment counts require an administrator verification record; pending or sample tiers are not counted.</p>
-      </div>
-      <details className="card p-4"><summary className="cursor-pointer text-sm font-semibold">Daily profile requests</summary>
+        <p>Updates every 5 seconds while this tab is visible. All times use Philippine time. Recommendation rankings alone do not indicate a paid boost.</p>
+      </div></details>
+      <details className="rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-[#1d2320] p-5 sm:p-6"><summary className="cursor-pointer text-sm font-semibold">Daily profile requests · last {days} days</summary>
+        {stats.dailyViews.length === 0 && <p className="text-sm text-stone-500 mt-3">No recorded profile requests in this period.</p>}
         <table className="mt-3 w-full text-sm"><thead><tr><th className="text-left">Date (Philippines)</th><th className="text-right">Recorded requests</th></tr></thead>
           <tbody>{stats.dailyViews.map((row: { day: string; views: number }) => <tr key={row.day}><td>{row.day}</td><td className="text-right">{row.views}</td></tr>)}</tbody></table>
       </details>
@@ -1529,11 +1532,12 @@ function AnalyticsTab({ restaurantId }: { restaurantId: string }) {
   </div>;
 }
 
-function StatCard({ label, value }: { label: string; value: number | string }) {
+function StatCard({ label, value, description }: { label: string; value: number | string; description?: string }) {
   return (
-    <div className="card p-4">
-      <p className="text-2xl font-bold">{value}</p>
-      <p className="text-xs text-[var(--text-muted)] mt-1">{label}</p>
+    <div className="rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-[#1d2320] p-5 sm:p-6">
+      <p className="text-xs font-medium text-[var(--text-muted)] leading-relaxed">{label}</p>
+      <p className="text-3xl font-semibold tabular-nums tracking-tight mt-3">{value}</p>
+      {description && <details className="mt-4 text-xs text-[var(--text-muted)]"><summary className="cursor-pointer hover:text-cordova-green">About this metric</summary><p className="mt-2 leading-relaxed">{description}</p></details>}
     </div>
   );
 }
