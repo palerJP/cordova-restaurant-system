@@ -353,9 +353,16 @@ const removeRecentlyViewedItem = asyncHandler(async (req, res) => {
   res.json({ success: true, message: 'Removed from recently viewed' });
 });
 
+const ownerDelete = asyncHandler(async (req, res) => {
+  const { deleteOwnedRestaurant } = require('../services/ownerDeletion.service');
+  const restaurant = await deleteOwnedRestaurant(req.params.id, req.user.id, req.body?.confirmationName);
+  removeFromRestaurantTs(restaurant);
+  res.json({ success: true, message: 'Establishment deleted' });
+});
+
 module.exports = {
   search, getById, getBySlug, listMine, create, update, uploadCoverImage,
-  listCuisines, adminList, getPermit, verify, suspend, adminDelete, getSimilar, listImages, uploadImage, deleteImage,
+  listCuisines, adminList, getPermit, verify, suspend, adminDelete, ownerDelete, getSimilar, listImages, uploadImage, deleteImage,
   updateSubscription, getSubscriptionStatus,
   getRecentlyViewed, clearRecentlyViewed, removeRecentlyViewedItem,
 };

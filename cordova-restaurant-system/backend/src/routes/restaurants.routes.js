@@ -32,6 +32,7 @@ router.get('/mine', requireAuth, requireRole('owner', 'admin', 'customer'), rest
 router.get('/recently-viewed', requireAuth, restaurantController.getRecentlyViewed);
 router.delete('/recently-viewed', requireAuth, restaurantController.clearRecentlyViewed);
 router.delete('/recently-viewed/:restaurantId', requireAuth, restaurantController.removeRecentlyViewedItem);
+router.delete('/:id', requireAuth, requireRole('owner', 'admin', 'customer'), restaurantController.ownerDelete);
 router.get('/by-slug/:slug', optionalAuth, restaurantController.getBySlug);
 router.get('/:id/similar', restaurantController.getSimilar);
 router.get('/:id', optionalAuth, restaurantController.getById);
