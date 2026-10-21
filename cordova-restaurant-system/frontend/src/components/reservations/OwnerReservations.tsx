@@ -9,6 +9,8 @@ import {Button} from '@/components/ui/Button';
 
 export function OwnerReservations({restaurantId}:{restaurantId:string}) {
   const [settings,setSettings]=useState<ReservationSettings|null>(null);
+  const [numbers,setNumbers]=useState({capacity:'',maxPartySize:'',minNoticeMinutes:''});
+  const normalizeNumber=(field:keyof typeof numbers)=>setNumbers((old)=>({...old,[field]:/^\d+$/.test(old[field])?String(Number(old[field])):old[field]}));
   const [error,setError]=useState('');
   const [message,setMessage]=useState('');
   const [saving,setSaving]=useState(false);
@@ -16,16 +18,18 @@ export function OwnerReservations({restaurantId}:{restaurantId:string}) {
   useEffect(()=>{
     let stopped=false;
     api.get(`/api/restaurants/${restaurantId}/reservations/settings`,{cache:'no-store'})
-      .then((res)=>{if(!stopped){setSettings(res.data.settings);setError('');}})
+      .then((res)=>{if(!stopped){const loaded:ReservationSettings=res.data.settings;setSettings(loaded);setNumbers({capacity:String(loaded.capacity),maxPartySize:String(loaded.maxPartySize),minNoticeMinutes:String(loaded.minNoticeMinutes)});setError('');}})
       .catch((err)=>{if(!stopped)setError(err instanceof ApiClientError?err.message:'Reservation settings could not be loaded.');});
     return()=>{stopped=true;};
   },[restaurantId,version]);
   const save=async(event:FormEvent)=>{
     event.preventDefault();if(!settings)return;
-    if(settings.maxPartySize>settings.capacity){setError('Maximum guests per request cannot exceed your online booking capacity.');return;}
+    const capacity=Number(numbers.capacity),maxPartySize=Number(numbers.maxPartySize),minNoticeMinutes=Number(numbers.minNoticeMinutes);
+    if(Object.values(numbers).some((value)=>!/^\d+$/.test(value))||!Number.isSafeInteger(capacity)||capacity<1||capacity>200||!Number.isSafeInteger(maxPartySize)||maxPartySize<1||maxPartySize>20||!Number.isSafeInteger(minNoticeMinutes)||minNoticeMinutes<0||minNoticeMinutes>4320){setError('Enter whole numbers: 1–200 online seats, 1–20 guests per request, and 0–4320 minutes advance notice.');return;}
+    if(maxPartySize>capacity){setError('Maximum guests per request cannot exceed your online booking capacity.');return;}
     setSaving(true);setError('');setMessage('');
     try{
-      await api.patch(`/api/restaurants/${restaurantId}/reservations/settings`,{enabled:settings.configuredEnabled,capacity:settings.capacity,maxPartySize:settings.maxPartySize,durationMinutes:settings.durationMinutes,minNoticeMinutes:settings.minNoticeMinutes});
+      await api.patch(`/api/restaurants/${restaurantId}/reservations/settings`,{enabled:settings.configuredEnabled,capacity,maxPartySize,durationMinutes:settings.durationMinutes,minNoticeMinutes});
       setMessage('Reservation settings saved.');setVersion((n)=>n+1);
     }catch(err){setError(err instanceof ApiClientError?err.message:'Settings could not be saved.');}
     finally{setSaving(false);}
@@ -40,12 +44,12 @@ export function OwnerReservations({restaurantId}:{restaurantId:string}) {
       <p className="text-xs text-stone-500">Online booking opens when your business is verified, your owner account is active, and you have published business hours. Disabling new requests preserves existing reservations.</p>
       {!settings.hasHours&&<p className="text-sm">Set your weekly schedule in the Hours tab before enabling reservations.</p>}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Input id="reservation-capacity" label="Guests available for online bookings at once" type="number" min={1} max={200} value={settings.capacity} disabled={saving} required onChange={(e)=>setSettings({...settings,capacity:Number(e.target.value)})}/>
-        <Input id="reservation-max-party" label="Maximum guests per request" type="number" min={1} max={Math.min(20,settings.capacity)} value={settings.maxPartySize} disabled={saving} required onChange={(e)=>setSettings({...settings,maxPartySize:Number(e.target.value)})}/>
+        <Input id="reservation-capacity" label="Guests available for online bookings at once" type="number" inputMode="numeric" step={1} min={1} max={200} value={numbers.capacity} disabled={saving} required onChange={(e)=>setNumbers({...numbers,capacity:e.target.value})} onBlur={()=>normalizeNumber('capacity')}/>
+        <Input id="reservation-max-party" label="Maximum guests per request" type="number" inputMode="numeric" step={1} min={1} max={numbers.capacity===''?20:Math.min(20,Number(numbers.capacity))} value={numbers.maxPartySize} disabled={saving} required onChange={(e)=>setNumbers({...numbers,maxPartySize:e.target.value})} onBlur={()=>normalizeNumber('maxPartySize')}/>
         <div><label className="label" htmlFor="reservation-duration">Booking duration</label><select id="reservation-duration" className="input" value={settings.durationMinutes} disabled={saving} onChange={(e)=>setSettings({...settings,durationMinutes:Number(e.target.value)})}><option value={60}>60 minutes</option><option value={90}>90 minutes</option><option value={120}>120 minutes</option></select></div>
-        <Input id="reservation-notice" label="Minimum advance notice (minutes)" type="number" min={0} max={4320} value={settings.minNoticeMinutes} disabled={saving} required onChange={(e)=>setSettings({...settings,minNoticeMinutes:Number(e.target.value)})}/>
+        <Input id="reservation-notice" label="Minimum advance notice (minutes)" type="number" inputMode="numeric" step={1} min={0} max={4320} value={numbers.minNoticeMinutes} disabled={saving} required onChange={(e)=>setNumbers({...numbers,minNoticeMinutes:e.target.value})} onBlur={()=>normalizeNumber('minNoticeMinutes')}/>
       </div>
-      {settings.maxPartySize>settings.capacity&&<p role="alert" className="text-sm text-amber-800 dark:text-amber-300">The party limit exceeds your online seats. Reduce the maximum guests per request or increase capacity before saving.</p>}
+      {numbers.capacity!==''&&numbers.maxPartySize!==''&&Number(numbers.maxPartySize)>Number(numbers.capacity)&&<p role="alert" className="text-sm text-amber-800 dark:text-amber-300">The party limit exceeds your online seats. Reduce the maximum guests per request or increase capacity before saving.</p>}
       <p className="text-xs text-stone-500">Time slots start every 30 minutes, up to 90 days ahead. Confirmed bookings consume this capacity. Pending requests do not hold seats. Keep this capacity separate from seats you need for walk-in customers.</p>
       <Button type="submit" loading={saving}>Save reservation settings</Button>
     </form></details>}
