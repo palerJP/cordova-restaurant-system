@@ -6,8 +6,9 @@ import { api } from '@/lib/api';
 import { RequireRole } from '@/components/RequireRole';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
 import { RestaurantGridSkeleton } from '@/components/ui/Skeleton';
-import { Utensils, Lock, CheckCircle2 } from 'lucide-react';
+import { Utensils, CheckCircle2, Trash2 } from 'lucide-react';
 import type { Restaurant, BusinessStatus } from '@/lib/types';
 import { LiveReviewSummary } from '@/components/LiveReviewSummary';
 
@@ -21,6 +22,25 @@ const STATUS_COLOR: Record<BusinessStatus, 'success' | 'warning' | 'danger' | 'n
 export default function DashboardPage() {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showRejected, setShowRejected] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Restaurant | null>(null);
+  const [confirmationName, setConfirmationName] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  const [notice, setNotice] = useState('');
+  const rejectedCount = restaurants.filter((r) => r.status === 'rejected').length;
+  const visibleRestaurants = restaurants.filter((r) => showRejected ? r.status === 'rejected' : r.status !== 'rejected');
+  const deleteEstablishment = async () => {
+    if (!deleteTarget || deleting || confirmationName.trim() !== deleteTarget.name.trim()) return;
+    setDeleting(true); setDeleteError('');
+    try {
+      await api.delete(`/api/restaurants/${deleteTarget.id}`, { body: JSON.stringify({ confirmationName }) });
+      setRestaurants((current) => current.filter((r) => r.id !== deleteTarget.id));
+      setNotice(`${deleteTarget.name} was deleted.`); setDeleteTarget(null);
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : 'Could not delete this establishment. Please try again.');
+    } finally { setDeleting(false); }
+  };
 
   useEffect(() => {
     api
@@ -54,6 +74,11 @@ export default function DashboardPage() {
           <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">Find your establishment on <Link href="/search" className="underline">Browse restaurants</Link> and claim it instead of creating a duplicate.</p>
           <Link href="/dashboard/claims" className="mt-2 inline-block text-sm font-semibold text-cordova-green underline">My business claims and notifications</Link>
         </div>
+        {notice && <p role="status" className="mb-4 rounded-xl bg-emerald-50 dark:bg-emerald-950 p-3 text-sm text-emerald-800 dark:text-emerald-200">{notice}</p>}
+        {!loading && restaurants.length > 0 && <div className="flex flex-wrap gap-2 mb-5" role="group" aria-label="Filter establishments">
+          <button aria-pressed={!showRejected} onClick={() => setShowRejected(false)} className={`rounded-full px-4 py-2 text-sm font-semibold ${!showRejected ? 'bg-cordova-green text-white' : 'bg-stone-100 dark:bg-stone-800'}`}>My establishments ({restaurants.length - rejectedCount})</button>
+          <button aria-pressed={showRejected} onClick={() => setShowRejected(true)} className={`rounded-full px-4 py-2 text-sm font-semibold ${showRejected ? 'bg-cordova-green text-white' : 'bg-stone-100 dark:bg-stone-800'}`}>Rejected ({rejectedCount})</button>
+        </div>}
         {loading ? (
           <RestaurantGridSkeleton count={3} />
         ) : restaurants.length === 0 ? (
@@ -75,7 +100,8 @@ export default function DashboardPage() {
           </div>
         ) : (
           <div className="restaurant-grid">
-            {restaurants.map((r) => {
+            {visibleRestaurants.length === 0 && <p className="text-sm text-stone-500 p-4">{showRejected ? 'No rejected establishments.' : 'No active or pending establishments. Check Rejected to review earlier submissions.'}</p>}
+            {visibleRestaurants.map((r) => {
               const isVerified = r.status === 'verified';
               const isPending = r.status === 'pending';
 
@@ -92,15 +118,13 @@ export default function DashboardPage() {
                       >
                         {r.name}
                       </Link>
-                      <Badge color={STATUS_COLOR[r.status]}>{r.status}</Badge>
+                      <div className="flex items-center gap-2"><Badge color={STATUS_COLOR[r.status]}>{r.status}</Badge><button type="button" aria-label={`Delete ${r.name}`} title="Delete establishment" onClick={() => {setDeleteTarget(r);setConfirmationName('');setDeleteError('');}} className="rounded-lg p-2 text-stone-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-600"><Trash2 size={16} /></button></div>
                     </div>
 
                     <p className="text-xs text-stone-500 dark:text-stone-400 line-clamp-2">{r.address}</p>
 
                     {r.status === 'rejected' && r.rejection_reason && (
-                      <p className="text-xs text-red-500 mt-3 bg-red-500/10 p-2.5 rounded-xl border border-red-500/20">
-                        <strong>Reason:</strong> {r.rejection_reason}
-                      </p>
+                      <details className="text-xs mt-3 rounded-xl border border-red-200 dark:border-red-900 p-3"><summary className="cursor-pointer font-medium text-red-700 dark:text-red-300">Why was this rejected?</summary><p className="mt-2 text-stone-600 dark:text-stone-300 whitespace-pre-wrap break-words">{r.rejection_reason}</p></details>
                     )}
 
                     {isPending && (
@@ -132,13 +156,13 @@ export default function DashboardPage() {
                   {/* Action Buttons */}
                   <div className="mt-4 pt-3 border-t border-stone-100 dark:border-stone-800/60">
                     <div className="grid grid-cols-2 gap-2">
-                      <Link
+                      {r.status !== 'rejected' && <Link
                         href={`/dashboard/${r.id}?tab=menu`}
                         className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-cordova-green hover:bg-cordova-greenHover text-white font-bold text-xs shadow-sm transition-all text-center hover:scale-[1.02] active:scale-[0.98]"
                       >
                         <Utensils size={13} />
                         + Add Menu
-                      </Link>
+                      </Link>}
                       <Link
                         href={`/dashboard/${r.id}`}
                         className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 font-semibold text-xs transition-all text-center"
@@ -169,6 +193,14 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+      <Modal open={Boolean(deleteTarget)} onClose={() => {if (!deleting) setDeleteTarget(null);}} title="Delete establishment?">
+        <p className="text-sm text-stone-600 dark:text-stone-300">This permanently deletes <strong>{deleteTarget?.name}</strong>, including its menu, reviews, photos, promotions, and reservation history stored with the listing. This cannot be undone.</p>
+        <p className="mt-3 text-sm text-stone-500">Resolve upcoming reservations first. Protected ownership records may require administrator assistance.</p>
+        <label htmlFor="delete-establishment-name" className="block text-sm font-medium mt-5">Type “{deleteTarget?.name}” to confirm</label>
+        <input id="delete-establishment-name" className="input mt-2 w-full" autoComplete="off" value={confirmationName} disabled={deleting} onChange={(event) => setConfirmationName(event.target.value)} />
+        {deleteError && <p role="alert" className="text-sm text-red-600 mt-3">{deleteError}</p>}
+        <div className="flex flex-wrap justify-end gap-2 mt-6"><Button variant="secondary" disabled={deleting} onClick={() => setDeleteTarget(null)}>Keep establishment</Button><Button variant="secondary" className="text-red-700 border-red-300 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950" loading={deleting} disabled={confirmationName.trim() !== deleteTarget?.name.trim()} onClick={deleteEstablishment}>Delete permanently</Button></div>
+      </Modal>
     </RequireRole>
   );
 }
