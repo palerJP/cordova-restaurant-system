@@ -40,6 +40,8 @@ app.use(
   })
 );
 app.use(compression());
+// Signature verification needs the bytes before express.json() consumes them.
+app.post('/api/payments/paymongo/webhook', express.raw({ type: 'application/json', limit: '256kb' }), require('./controllers/paymongo.controller').webhook);
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 app.use(cookieParser(env.cookie.secret));
@@ -88,6 +90,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/highlights', highlightRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/promotions', promotionRoutes);
+app.use('/api/payments', require('./routes/paymongo.routes'));
 app.use('/api/cuisines', cuisineRoutes);
 app.use('/api/recommendations/provider', aiProviderSettingsRoutes);
 app.use('/api/recommendations', recommendationRoutes);

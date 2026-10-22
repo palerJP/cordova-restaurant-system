@@ -19,6 +19,7 @@ import { AMENITIES } from '@/lib/amenities';
 import { Copy, Check, QrCode, ArrowLeft, ArrowRight, Smartphone, Sparkles, AlertCircle, Clock, Calendar, ShoppingBag, Utensils, Tag, Percent, Download } from 'lucide-react';
 import type { Restaurant, MenuItem, MenuCategory, Promotion, OperatingHour, RestaurantImage } from '@/lib/types';
 import { PaymentPortalModal, PaymentTier } from '@/components/payments/PaymentPortalModal';
+import { PayMongoRecurring } from '@/components/payments/PayMongoRecurring';
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const TABS = ['overview', 'menu', 'hours', 'promotions', 'subscription', 'reservations', 'analytics'] as const;
@@ -647,6 +648,11 @@ function HoursTab({ restaurantId }: { restaurantId: string }) {
 // ---------------- Promotions tab ----------------
 function PromotionsTab({ restaurantId }: { restaurantId: string }) {
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+  const [packages, setPackages] = useState<Array<{ id: string; name: string; amount_centavos: number; duration_days: number }>>([]);
+  const [selectedPackage, setSelectedPackage] = useState('standard-30');
+  const [returnedOrder, setReturnedOrder] = useState<string | null>(null);
+  const [returnedStatus, setReturnedStatus] = useState<string | null>(null);
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [step, setStep] = useState<'details' | 'payment'>('details');
@@ -699,6 +705,59 @@ function PromotionsTab({ restaurantId }: { restaurantId: string }) {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    api.get('/api/payments/promotion-packages').then((res) => {
+      setPackages(res.data);
+      if (res.data[0]) setSelectedPackage(res.data[0].id);
+    }).catch(() => setPackages([]));
+  }, []);
+
+  useEffect(() => {
+    const orderId = searchParams.get('order');
+    if (!orderId) return;
+    setReturnedOrder(orderId);
+    if (searchParams.get('payment') === 'cancelled') {
+      api.post(`/api/payments/orders/${orderId}/cancel`).catch(() => {
+        // Status polling below remains the source of truth.
+      });
+    }
+    const check = () => api.get(`/api/payments/orders/${orderId}`)
+      .then((res) => { setReturnedStatus(res.data.status); if (res.data.status === 'paid') load(); })
+      .catch(() => setReturnedStatus('unavailable'));
+    check();
+    const timer = window.setInterval(check, 5000);
+    const stop = window.setTimeout(() => window.clearInterval(timer), 60000);
+    return () => { window.clearInterval(timer); window.clearTimeout(stop); };
+  }, [searchParams, load]);
+
+  const startPayMongoCheckout = async (promotionId?: string) => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      let id = promotionId;
+      if (!id) {
+        const draft = imageFile ? new FormData() : { ...form, paymentMethod: 'paymongo' };
+        if (draft instanceof FormData) {
+          for (const [key, value] of Object.entries(form)) draft.append(key, value);
+          draft.append('paymentMethod', 'paymongo');
+          draft.append('image', imageFile!);
+        }
+        const created = await api.post(`/api/restaurants/${restaurantId}/promotions`, draft,
+          draft instanceof FormData ? { isFormData: true } : undefined);
+        id = created.data.promotion.id;
+      }
+      const result = await api.post('/api/payments/promotions/checkout', {
+        promotionId: id, packageId: selectedPackage,
+      });
+      window.location.assign(result.data.checkoutUrl);
+    } catch (err) {
+      toast(err instanceof ApiClientError ? err.message : 'Could not start PayMongo test checkout', 'error');
+      load();
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleProceedToPayment = () => {
     if (!form.title.trim()) {
@@ -813,6 +872,14 @@ function PromotionsTab({ restaurantId }: { restaurantId: string }) {
 
   return (
     <div className="space-y-6">
+      {returnedOrder && (
+        <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-stone-800">
+          PayMongo order {returnedOrder.slice(0, 8)}: {returnedStatus === 'paid'
+            ? 'Payment confirmed. Your promotion is active.'
+            : returnedStatus === 'pending' ? 'Awaiting verified payment. This page checks the order for one minute.'
+              : returnedStatus || 'Checking payment status…'}
+        </div>
+      )}
       {/* ₱199 Promotion Feature Banner */}
       <div className="bg-gradient-to-r from-emerald-950 via-stone-900 to-amber-950 text-white p-5 sm:p-6 rounded-2xl border border-cordova-gold/30 shadow-md relative overflow-hidden">
         <div className="absolute right-0 top-0 translate-x-6 -translate-y-6 w-40 h-40 bg-cordova-gold/10 rounded-full blur-2xl pointer-events-none" />
@@ -908,6 +975,10 @@ function PromotionsTab({ restaurantId }: { restaurantId: string }) {
                     <p className="text-[11px] text-stone-600 dark:text-stone-300">
                       The administrator is reviewing your ₱199 payment (Ref: <span className="font-mono font-bold">{p.payment_reference || 'N/A'}</span> via {p.payment_method?.toUpperCase() || 'GCash'}). Once verified, your promotion will immediately go live to diners!
                     </p>
+                    <Button type="button" disabled={saving || packages.length === 0}
+                      onClick={() => startPayMongoCheckout(p.id)}>
+                      {saving ? 'Opening checkout…' : 'Pay with PayMongo test checkout'}
+                    </Button>
                   </div>
                 )}
 
@@ -1110,7 +1181,7 @@ function PromotionsTab({ restaurantId }: { restaurantId: string }) {
                   Promotion Flat Fee: <span className="font-mono text-sm text-cordova-gold font-extrabold">₱199.00</span>
                 </p>
                 <p className="text-[11px] text-amber-700 dark:text-amber-300">
-                  One-time flat fee for your entire selected promotional period.
+                  Manual payments use your selected dates. PayMongo test checkout uses the package duration shown next.
                 </p>
               </div>
               <span className="text-xl">💳</span>
@@ -1125,6 +1196,22 @@ function PromotionsTab({ restaurantId }: { restaurantId: string }) {
           </div>
         ) : (
           <div className="space-y-4">
+            <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-4 text-sm text-stone-900">
+              <label htmlFor="paymongo-promotion-package" className="block font-bold mb-2">PayMongo test checkout</label>
+              <select id="paymongo-promotion-package" value={selectedPackage}
+                onChange={(event) => setSelectedPackage(event.target.value)}
+                className="w-full rounded-lg border border-stone-300 p-2 mb-2">
+                {packages.map((item) => <option key={item.id} value={item.id}>
+                  {item.name} — ₱{(item.amount_centavos / 100).toFixed(2)}
+                </option>)}
+              </select>
+              <p className="text-xs mb-3">The paid period starts when PayMongo confirms payment. Your requested dates below are replaced by the package duration.</p>
+              <Button type="button" disabled={saving || packages.length === 0}
+                onClick={() => startPayMongoCheckout()} className="w-full">
+                {saving ? 'Opening checkout…' : 'Continue to PayMongo test checkout'}
+              </Button>
+            </div>
+            <p className="text-xs font-semibold text-stone-500">Manual GCash/Maya reference verification</p>
             {/* Top Summary Box (matching Subscription style) */}
             <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 flex items-center justify-between">
               <div>
@@ -1678,6 +1765,7 @@ function SubscriptionTab({ restaurant, onUpdated }: { restaurant: Restaurant; on
 
   return (
     <div className="space-y-8">
+      <PayMongoRecurring restaurantId={restaurant.id} onUpdated={onUpdated} />
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
         <p>Manual GCash/Maya verification. A reference submission does not confirm payment.</p>
         <Button variant="secondary" onClick={fetchSubscriptionData}>Refresh status</Button>

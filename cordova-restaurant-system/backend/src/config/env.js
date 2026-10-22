@@ -41,6 +41,11 @@ const env = {
   isProduction: process.env.NODE_ENV === 'production',
   port: parseInt(process.env.PORT || '4000', 10),
   clientUrl: required('CLIENT_URL', 'http://localhost:3000'),
+  paymongo: {
+    secretKey: process.env.PAYMONGO_SECRET_KEY || null,
+    publicKey: process.env.PAYMONGO_PUBLIC_KEY || null,
+    webhookSecret: process.env.PAYMONGO_WEBHOOK_SECRET || null,
+  },
 
   db: {
     url: required('DATABASE_URL', 'postgres://postgres:postgres@localhost:5433/cordova_restaurants'),
