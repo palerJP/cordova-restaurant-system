@@ -94,6 +94,15 @@ const adminList = asyncHandler(async (req, res) => {
 
 const adminUpdateStatus = asyncHandler(async (req, res) => {
   const { status, paymentStatus } = req.body;
+  const existing = await promotionModel.findById(req.params.id);
+  if (!existing) throw ApiError.notFound('Promotion not found');
+  if (existing.payment_method === 'paymongo' && (status === 'active' || paymentStatus === 'verified')) {
+    const { query } = require('../config/db');
+    const { rows } = await query(
+      "SELECT 1 FROM promotion_payment_orders WHERE promotion_id = $1 AND status = 'paid' LIMIT 1", [req.params.id]
+    );
+    if (!rows.length) throw ApiError.conflict('PayMongo payment has not been verified');
+  }
   const updatePayload = {};
   if (status) updatePayload.status = status;
   if (paymentStatus) updatePayload.paymentStatus = paymentStatus;

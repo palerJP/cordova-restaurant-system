@@ -1,0 +1,14 @@
+const router = require('express').Router();
+const { requireAuth } = require('../middleware/auth');
+const controller = require('../controllers/paymongo.controller');
+const subscriptions = require('../controllers/recurringSubscription.controller');
+router.get('/subscription-plans', subscriptions.plans);
+router.get('/subscriptions/restaurant/:restaurantId', requireAuth, subscriptions.current);
+router.post('/subscriptions', requireAuth, subscriptions.start);
+router.get('/subscriptions/:id', requireAuth, subscriptions.status);
+router.post('/subscriptions/:id/cancel', requireAuth, subscriptions.cancel);
+router.get('/promotion-packages', controller.packages);
+router.post('/promotions/checkout', requireAuth, controller.checkout);
+router.get('/orders/:id', requireAuth, controller.orderStatus);
+router.post('/orders/:id/cancel', requireAuth, controller.cancelOrder);
+module.exports = router;

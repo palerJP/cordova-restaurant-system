@@ -32,6 +32,9 @@ async function submit(id, body, actor) {
   return withTransaction(async client=>{
     if(tier!=='none') await client.query('SELECT pg_advisory_xact_lock(hashtext($1))',['subscription-reference:'+method+':'+ref]);
     const r=await restaurant(client,id,actor);
+    if (r.paymongo_recurring_subscription_id) {
+      throw ApiError.conflict('Cancel the PayMongo recurring subscription before changing the manual tier');
+    }
     if(tier==='none') {
       await client.query("UPDATE subscription_transactions SET status='rejected' WHERE restaurant_id=$1 AND status='pending_verification'",[id]);
       const {rows}=await client.query("UPDATE restaurants SET subscription_tier='none',subscription_expires_at=NULL WHERE id=$1 RETURNING *",[id]);
