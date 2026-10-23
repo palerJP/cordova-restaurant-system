@@ -46,10 +46,10 @@ beforeAll(async()=>{
 },20000);
 afterAll(async()=>{if(pool)await pool.end();if(control){await control.query(`DROP SCHEMA IF EXISTS ${schema} CASCADE`);await control.end();}});
 
-test('guests cannot book; only the owner can enable bookings; availability exposes no customer data',async()=>{
+test('bookings default to enabled; guests cannot book and only owners can change settings',async()=>{
   expect((await request(app).post(endpoint).send(payload())).status).toBe(401);
   const initial=await request(app).get(`${endpoint}/options?date=${day}`);
-  expect(initial.status).toBe(200);expect(initial.body.data.settings.enabled).toBe(false);
+  expect(initial.status).toBe(200);expect(initial.body.data.settings.enabled).toBe(true);
   expect((await auth('patch',`${endpoint}/settings`,'otherOwner').send(settings)).status).toBe(403);
   expect((await auth('patch',`${endpoint}/settings`,'owner').send(settings)).status).toBe(200);
   const options=await request(app).get(`${endpoint}/options?date=${day}&partySize=3`);

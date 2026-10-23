@@ -637,39 +637,6 @@ export default function RestaurantDetailPage() {
             {/* OVERVIEW TAB */}
             {activeTab === 'overview' && (
               <div className="space-y-12">
-                {/* Story Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-                  <div className="lg:col-span-7 space-y-4">
-                    <h2 className="font-serif text-3xl sm:text-4xl font-bold text-cordova-green dark:text-emerald-400">
-                      Our Story
-                    </h2>
-                    <p className="text-stone-700 dark:text-stone-200 text-sm sm:text-base leading-relaxed font-sans font-medium">
-                      {restaurant.description ||
-                        `Famous for authentic Cebuano dining and traditional Filipino dishes. Family-owned and dedicated to delivering fresh, local seafood and traditional flavors to every guest.`}
-                    </p>
-                    <div className="pt-3 border-t border-stone-200 dark:border-stone-800">
-                      <p className="font-serif italic text-cordova-gold text-sm sm:text-base font-semibold">
-                        &quot;Where tradition meets excellence in Cordova&quot;
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Story Image with Circular Accent */}
-                  <div className="lg:col-span-5 relative flex justify-center">
-                    <div className="absolute -top-4 -right-4 w-48 h-48 rounded-full bg-amber-100/70 dark:bg-amber-950/30 -z-10" />
-                    <div className={`relative h-72 sm:h-80 w-full rounded-2xl overflow-hidden shadow-spatial-md border border-stone-200 dark:border-stone-800 ${isHorizonLogo ? 'bg-[#3b2923]' : ''}`}>
-                      <Image
-                        src={restaurant.cover_image_url || '/hero_background.png'}
-                        alt={restaurant.name}
-                        fill
-                        className={hasOriginalRestaurantLogo(restaurant.slug) ? 'object-contain' : 'object-cover'}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-
-
                 {/* Gallery Section */}
                 <section className="space-y-6">
                   <h3 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900 dark:text-white">

@@ -4,7 +4,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import ClaimBusinessLink from './ClaimBusinessLink';
 import { PwaControls } from './PwaControls';
 
 interface FooterLink {
@@ -56,7 +55,6 @@ const COLUMNS: FooterColumn[] = [
 export function Footer() {
   const { user } = useAuth();
   const pathname = usePathname();
-  const restaurantSlug = pathname?.match(/^\/restaurants\/([^/]+)$/)?.[1];
 
   // Do not display footer on admin portal pages or when admin views profile
   if (pathname?.startsWith('/admin') || (user?.role === 'admin' && pathname?.startsWith('/profile'))) {
@@ -93,9 +91,6 @@ export function Footer() {
               <div key={col.title}>
                 <h3 className="text-sm font-semibold mb-3 text-stone-900 dark:text-stone-100">{col.title}</h3>
                 <ul className="space-y-2">
-                  {col.title === 'For Restaurant Owners' && user?.role !== 'admin' && (
-                    <li><ClaimBusinessLink restaurantSlug={restaurantSlug} /></li>
-                  )}
                   {col.title === 'Explore' && <li><PwaControls /></li>}
                   {visibleLinks.map((link) => (
                     <li key={link.label}>

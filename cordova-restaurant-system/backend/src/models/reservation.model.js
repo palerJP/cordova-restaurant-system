@@ -5,7 +5,7 @@ const rules = require('../services/reservationRules');
 const SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS restaurant_reservation_settings (
   restaurant_id UUID PRIMARY KEY REFERENCES restaurants(id) ON DELETE CASCADE,
-  enabled BOOLEAN NOT NULL DEFAULT FALSE,
+  enabled BOOLEAN NOT NULL DEFAULT TRUE,
   capacity INTEGER NOT NULL DEFAULT 20 CHECK(capacity BETWEEN 1 AND 200),
   max_party_size INTEGER NOT NULL DEFAULT 10 CHECK(max_party_size BETWEEN 1 AND 20 AND max_party_size<=capacity),
   duration_minutes INTEGER NOT NULL DEFAULT 90 CHECK(duration_minutes IN(60,90,120)),
