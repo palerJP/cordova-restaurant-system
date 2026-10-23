@@ -9,8 +9,12 @@ test('retired claims calls to action are absent from public and owner entry poin
   }
 });
 
-test('user overview does not render the retired story block or invented quote', () => {
+test('overview includes the saved story and reservation form without a separate Reserve tab', () => {
   const source = fs.readFileSync(new URL('../src/app/restaurants/[slug]/page.tsx', import.meta.url), 'utf8');
-  assert.doesNotMatch(source, /Our Story|Where tradition meets excellence|Story Image/);
+  assert.match(source, /Our Story/);
+  assert.match(source, /restaurant.description/);
+  assert.match(source, /<ReservationForm restaurant=\{restaurant\} \/>/);
+  assert.doesNotMatch(source, /Where tradition meets excellence|activeTab === 'reservations'/);
+  assert.match(source, /\['overview', 'menu', 'map', 'reviews'\]/);
   assert.match(source, /Gallery Section/);
 });

@@ -90,10 +90,13 @@ export default function RestaurantDetailPage() {
   const [activePromotions, setActivePromotions] = useState<Promotion[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'menu' | 'map' | 'reviews' | 'reservations'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'menu' | 'map' | 'reviews'>('overview');
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get('tab') === 'reservations') setActiveTab('reservations');
-  }, [slug]);
+    if (!loading && new URLSearchParams(window.location.search).get('tab') === 'reservations') {
+      setActiveTab('overview');
+      document.getElementById('reservations')?.scrollIntoView({ block: 'start' });
+    }
+  }, [slug, loading]);
 
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
@@ -612,8 +615,8 @@ export default function RestaurantDetailPage() {
 
           {/* TAB NAVIGATION HEADER */}
           <div className="border-t-2 border-cordova-green dark:border-emerald-500 border-b border-stone-200/80 dark:border-white/10 bg-white/50 dark:bg-white/[0.02]">
-            <div className="grid grid-cols-2 sm:grid-cols-5 text-center">
-              {(['overview', 'menu', 'reservations', 'map', 'reviews'] as const).map((tab) => {
+            <div className="grid grid-cols-2 sm:grid-cols-4 text-center">
+              {(['overview', 'menu', 'map', 'reviews'] as const).map((tab) => {
                 const isActive = activeTab === tab;
                 return (
                   <button
@@ -625,7 +628,7 @@ export default function RestaurantDetailPage() {
                         : 'text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white hover:bg-black/[0.02] dark:hover:bg-white/[0.03]'
                     }`}
                   >
-                    {tab === 'reservations' ? 'Reserve' : tab}
+                    {tab}
                   </button>
                 );
               })}
@@ -637,6 +640,13 @@ export default function RestaurantDetailPage() {
             {/* OVERVIEW TAB */}
             {activeTab === 'overview' && (
               <div className="space-y-12">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                <section className="space-y-4 lg:col-span-5">
+                  <h2 className="font-serif text-3xl sm:text-4xl font-bold text-cordova-green dark:text-emerald-400">Our Story</h2>
+                  <p className="text-stone-700 dark:text-stone-200 text-sm sm:text-base leading-relaxed whitespace-pre-line">{restaurant.description || 'The restaurant has not added its story yet.'}</p>
+                </section>
+                <div className="lg:col-span-7"><ReservationForm restaurant={restaurant} /></div>
+                </div>
                 {/* Gallery Section */}
                 <section className="space-y-6">
                   <h3 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900 dark:text-white">
@@ -673,7 +683,6 @@ export default function RestaurantDetailPage() {
               </div>
             )}
 
-            {activeTab === 'reservations' && <ReservationForm restaurant={restaurant} />}
 
             {/* MENU TAB */}
             {activeTab === 'menu' && (
