@@ -13,7 +13,7 @@ import {
 import type { Restaurant, MenuItem, MenuCategory } from '@/lib/types';
 import { BURANDAT_PRICE_UNITS } from '@/data/burandatMenu';
 import { CASCADJA_IMAGE_ATTRIBUTIONS, CASCADJA_REPRESENTATIVE_IMAGES } from '@/data/cascadjaMenu';
-import { catalogDishPhoto } from '@/data/catalogImages';
+import { catalogDishPhoto, catalogRestaurantCover } from '@/data/catalogImages';
 
 interface SpatialRestaurantMenuProps {
   restaurant: Restaurant;
@@ -21,14 +21,18 @@ interface SpatialRestaurantMenuProps {
   categories: MenuCategory[];
 }
 
-function DishPhoto({ image, name }: { image: string; name: string }) {
-  const [failed, setFailed] = useState(false);
-  if (!image || failed) return <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-stone-500 dark:text-stone-400">
+function DishPhoto({ image, fallback, name }: { image?: string; fallback?: string; name: string }) {
+  const [failedSources, setFailedSources] = useState<string[]>([]);
+  const source = [image, fallback].find((candidate) => candidate && !failedSources.includes(candidate));
+  if (!source) return <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-stone-500 dark:text-stone-400">
     <ImageOff size={25} aria-hidden="true" />
     <span className="text-xs font-medium">Photo unavailable</span>
   </div>;
-  return <Image src={image} alt={name} fill onError={() => setFailed(true)}
-    className="object-cover group-hover:scale-108 transition-transform duration-500" />;
+  return <>
+    <Image src={source} alt={name} fill onError={() => setFailedSources((previous) => [...previous, source])}
+      className="object-cover group-hover:scale-108 transition-transform duration-500" />
+    {source === fallback && source !== image && <span className="absolute bottom-2 left-2 z-10 rounded bg-black/65 px-2 py-1 text-[10px] text-white">Representative photo</span>}
+  </>;
 }
 
 function getBurandatPriceUnit(item: MenuItem): string {
@@ -371,6 +375,7 @@ const CATEGORY_DEFAULT_MENUS: Record<
 export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] }: SpatialRestaurantMenuProps) {
   const categoryKey = restaurant.category || 'Restaurant';
   const defaultData = CATEGORY_DEFAULT_MENUS[categoryKey] || CATEGORY_DEFAULT_MENUS.Restaurant;
+  const menuCover = catalogRestaurantCover(restaurant.slug, restaurant.cover_image_url) || '/hero_background.png';
   const isRca = restaurant.slug === 'rca-bilao-food-station';
   const isBurandat = restaurant.slug === 'burandat-seafood-bucket';
   const isCascadja = restaurant.slug === 'cascaja-cafe' || restaurant.slug === 'cascadja-cafe';
@@ -389,18 +394,22 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
   // Merge API items with curated default items if API items are sparse
   const allMenuItems = useMemo(() => {
     if (items.length >= 4 || (isSuppliedMenu && items.length > 0)) {
-      return items.map((it) => ({
+      return items.map((it) => {
+        const category = categories.find((c) => c.id === it.category_id)?.name || (it as any).category_name || 'Main Dishes';
+        const photo = catalogDishPhoto(restaurant.slug, category, it.name, it.id, it.image_url);
+        return {
         id: it.id,
         name: it.name,
         outOfStock: it.is_available === false,
-        category: categories.find((c) => c.id === it.category_id)?.name || (it as any).category_name || 'Main Dishes',
+        category,
         price: Number(it.price),
         priceLabel: it.price_label || '',
         startingPrice: it.description?.startsWith('Starting price') || false,
         priceUnit: isBurandat ? getBurandatPriceUnit(it) : '',
         description: isBurandat || isCascadja ? '' : it.description || (isRca || isMavericks || isEatNRepeat || isEntoys ? '' : 'Crafted fresh with traditional Cordova flavors.'),
-        image: catalogDishPhoto(it.id, it.image_url).image || (isEatNRepeat || isEntoys ? '' : defaultData.heroDish.image),
-        tag: catalogDishPhoto(it.id, it.image_url).representative
+        image: photo.image,
+        fallbackImage: photo.fallback || menuCover,
+        tag: photo.representative
           ? 'Representative photo'
           : isMavericks && hasMavericksFoundationCoffeePhoto(it, categories)
           ? 'Representative photo'
@@ -411,7 +420,8 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
           ? CASCADJA_IMAGE_ATTRIBUTIONS.get(it.name)
           : undefined,
         popular: true,
-      }));
+        };
+      });
     }
 
     // Combine any existing with default items
@@ -422,22 +432,27 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
       startingPrice: false,
       priceUnit: '',
       photoAttribution: undefined,
+      fallbackImage: menuCover,
       ...it,
     }));
 
     if (items.length > 0) {
-      const customOnes = items.map((it) => ({
+      const customOnes = items.map((it) => {
+        const category = categories.find((c) => c.id === it.category_id)?.name || 'House Specialties';
+        const photo = catalogDishPhoto(restaurant.slug, category, it.name, it.id, it.image_url);
+        return {
         id: it.id,
         name: it.name,
         outOfStock: it.is_available === false,
-        category: categories.find((c) => c.id === it.category_id)?.name || 'House Specialties',
+        category,
         price: Number(it.price),
         priceLabel: it.price_label || '',
         startingPrice: it.description?.startsWith('Starting price') || false,
         priceUnit: isBurandat ? getBurandatPriceUnit(it) : '',
         description: isBurandat || isCascadja ? '' : it.description || (isRca || isMavericks || isEatNRepeat || isEntoys ? '' : 'Special house recipe prepared daily.'),
-        image: catalogDishPhoto(it.id, it.image_url).image || (isEatNRepeat || isEntoys ? '' : defaultData.heroDish.image),
-        tag: catalogDishPhoto(it.id, it.image_url).representative
+        image: photo.image,
+        fallbackImage: photo.fallback || menuCover,
+        tag: photo.representative
           ? 'Representative photo'
           : isMavericks && hasMavericksFoundationCoffeePhoto(it, categories)
           ? 'Representative photo'
@@ -448,12 +463,13 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
           ? CASCADJA_IMAGE_ATTRIBUTIONS.get(it.name)
           : undefined,
         popular: true,
-      }));
+        };
+      });
       return [...customOnes, ...defaults];
     }
 
     return defaults;
-  }, [items, categories, defaultData, isRca, isBurandat, isCascadja, isMavericks, isEatNRepeat, isEntoys, isSuppliedMenu]);
+  }, [items, categories, defaultData, menuCover, restaurant.slug, isRca, isBurandat, isCascadja, isMavericks, isEatNRepeat, isEntoys, isSuppliedMenu]);
 
   // List of unique categories for tabs
   const categoryTabs = useMemo(() => {
@@ -599,11 +615,11 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
                 {/* Dish Card Top / Image */}
                 <div>
                   <div className="relative h-48 w-full overflow-hidden bg-stone-100 dark:bg-stone-800">
-                    {item.image ? (
+                    {item.image || item.fallbackImage ? (
                       <>
-                        <DishPhoto image={item.image} name={item.name} />
+                        <DishPhoto image={item.image} fallback={item.fallbackImage} name={item.name} />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80 group-hover:opacity-60 transition-opacity" />
-                        {isEatNRepeat && isEatNRepeatDrinkCard(item.category, item.image) && (
+                        {isEatNRepeat && isEatNRepeatDrinkCard(item.category, item.image || '') && (
                           <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                             <Image
                               src="/images/eat-n-repeat/logo.png"
