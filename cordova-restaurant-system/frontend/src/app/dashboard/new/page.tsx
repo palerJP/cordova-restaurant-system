@@ -3,7 +3,6 @@
 import { useState, FormEvent, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import Link from 'next/link';
 import { UploadCloud, Image as ImageIcon, X, CheckCircle2 } from 'lucide-react';
 import { api, ApiClientError } from '@/lib/api';
 import { useToast } from '@/lib/toast-context';
@@ -143,15 +142,6 @@ export default function NewBusinessPage() {
           </p>
         </div>
 
-        <div className="mb-6 rounded-xl border border-emerald-500/30 bg-emerald-50 p-5 text-stone-900 dark:bg-emerald-950/30 dark:text-white">
-          <h2 className="font-semibold">Is your business already listed?</h2>
-          <p className="mt-1 text-sm">Search for your establishment and select “Claim Your Business” in its footer. Submit ownership evidence and wait for admin approval.</p>
-          <div className="mt-3 flex flex-wrap gap-4">
-            <Link href="/search" className="rounded-lg bg-cordova-green px-4 py-2 text-sm font-semibold text-white">Find and claim your business</Link>
-            <Link href="/dashboard/claims" className="self-center text-sm underline">My claims and notifications</Link>
-          </div>
-          <p className="mt-3 text-xs">Use the registration form below when your establishment is not listed yet.</p>
-        </div>
         <form onSubmit={onSubmit} className="bg-white dark:bg-[#1a211c] border border-stone-200 dark:border-stone-800 rounded-2xl shadow-sm p-6 sm:p-8 space-y-6" noValidate>
           {/* Section: Basic Info */}
           <div className="space-y-4">

@@ -69,11 +69,6 @@ export default function DashboardPage() {
           </Link>
         </div>
 
-        <div className="mb-6 rounded-xl border border-stone-200 p-4 dark:border-stone-700">
-          <p className="font-semibold text-stone-900 dark:text-white">Already listed on CordovaEats?</p>
-          <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">Find your establishment on <Link href="/search" className="underline">Browse restaurants</Link> and claim it instead of creating a duplicate.</p>
-          <Link href="/dashboard/claims" className="mt-2 inline-block text-sm font-semibold text-cordova-green underline">My business claims and notifications</Link>
-        </div>
         {notice && <p role="status" className="mb-4 rounded-xl bg-emerald-50 dark:bg-emerald-950 p-3 text-sm text-emerald-800 dark:text-emerald-200">{notice}</p>}
         {!loading && restaurants.length > 0 && <div className="flex flex-wrap gap-2 mb-5" role="group" aria-label="Filter establishments">
           <button aria-pressed={!showRejected} onClick={() => setShowRejected(false)} className={`rounded-full px-4 py-2 text-sm font-semibold ${!showRejected ? 'bg-cordova-green text-white' : 'bg-stone-100 dark:bg-stone-800'}`}>My establishments ({restaurants.length - rejectedCount})</button>

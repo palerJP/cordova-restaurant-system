@@ -20,16 +20,7 @@ export default function ForRestaurantsPage() {
         </p>
       </div>
 
-      <section id="claim" className="scroll-mt-24 rounded-2xl border border-stone-200 bg-white p-6 sm:p-8 dark:border-stone-700 dark:bg-[#1a211c]">
-        <h2 className="font-serif text-2xl font-bold text-stone-900 dark:text-white">Claim an existing business</h2>
-        <p className="mt-3 text-sm text-stone-600 dark:text-stone-300">Already listed on CordovaEats? Find your restaurant, then use “Claim Your Business” under “For Restaurant Owners” in the page footer. Sign in, verify your email, and submit ownership evidence for admin review.</p>
-        <div className="mt-5 flex flex-wrap gap-4">
-          <Link href="/search" className="rounded-lg bg-cordova-green px-4 py-2 text-sm font-semibold text-white">Find your restaurant</Link>
-          <Link href="/dashboard/claims" className="self-center text-sm text-cordova-green underline dark:text-emerald-400">My claims and notifications</Link>
-        </div>
-      </section>
-
-      {/* Grid of Key Features */}
+{/* Grid of Key Features */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Card 1: Free Verified Listing */}
         <div className="spatial-card p-8 rounded-3xl bg-white/80 dark:bg-[#1a211c]/90 backdrop-blur-xl border border-stone-200/80 dark:border-stone-800/80 shadow-spatial-md flex flex-col justify-between">
