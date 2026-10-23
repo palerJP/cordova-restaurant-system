@@ -640,11 +640,13 @@ export default function RestaurantDetailPage() {
             {/* OVERVIEW TAB */}
             {activeTab === 'overview' && (
               <div className="space-y-12">
-                <section className="space-y-4">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                <section className="space-y-4 lg:col-span-5">
                   <h2 className="font-serif text-3xl sm:text-4xl font-bold text-cordova-green dark:text-emerald-400">Our Story</h2>
                   <p className="text-stone-700 dark:text-stone-200 text-sm sm:text-base leading-relaxed whitespace-pre-line">{restaurant.description || 'The restaurant has not added its story yet.'}</p>
                 </section>
-                <ReservationForm restaurant={restaurant} />
+                <div className="lg:col-span-7"><ReservationForm restaurant={restaurant} /></div>
+                </div>
                 {/* Gallery Section */}
                 <section className="space-y-6">
                   <h3 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900 dark:text-white">
