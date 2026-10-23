@@ -420,7 +420,13 @@ function MenuTab({ restaurant }: { restaurant: Restaurant }) {
             <div className="flex gap-3 items-start">
               {item.image_url ? (
                 <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-stone-100 dark:bg-stone-800 shrink-0 border border-stone-200 dark:border-stone-700">
-                  <Image src={catalogDishPhoto(item.id, item.image_url).image || item.image_url} alt={item.name} fill className="object-cover" />
+                  <Image src={catalogDishPhoto(
+                    restaurant.slug,
+                    categories.find((category) => category.id === item.category_id)?.name || (item as any).category_name || '',
+                    item.name,
+                    item.id,
+                    item.image_url,
+                  ).image || item.image_url} alt={item.name} fill className="object-cover" />
                 </div>
               ) : (
                 <div className="w-20 h-20 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center text-2xl shrink-0 border border-amber-500/20">
