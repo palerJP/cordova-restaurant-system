@@ -42,6 +42,12 @@ router.post('/restaurants/:restaurantId/reservations',requireAuth,requireRole('c
   const result=await model.create(req.params.restaurantId,req.user,req.body||{});
   send(res,result,result.created?201:200);
 }));
+router.get('/reservations/notifications',requireAuth,requireRole('owner'),asyncHandler(async(req,res)=>{
+  send(res,await model.notifications(req.user.id));
+}));
+router.patch('/reservations/notifications/:reservationId/read',requireAuth,requireRole('owner'),validIds,asyncHandler(async(req,res)=>{
+  send(res,await model.readNotification(req.user.id,req.params.reservationId));
+}));
 router.get('/reservations/mine',requireAuth,asyncHandler(async(req,res)=>{
   send(res,await model.list({actor:req.user,...listParams(req)}));
 }));

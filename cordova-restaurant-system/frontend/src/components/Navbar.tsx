@@ -8,6 +8,7 @@ import { Menu, X } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { ThemeToggle } from './ThemeToggle';
 import { ProfileDropdown } from './ProfileDropdown';
+import { ReservationNotifications } from './reservations/ReservationNotifications';
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -86,6 +87,7 @@ export function Navbar() {
 
           <div className="flex items-center gap-3 pl-2 border-l border-stone-200/60 dark:border-white/10">
             <ThemeToggle />
+            <ReservationNotifications key={user?.id || 'guest'} />
 
             {user ? (
               <ProfileDropdown />
@@ -111,6 +113,7 @@ export function Navbar() {
         {/* Mobile menu trigger */}
         <div className="flex shrink-0 items-center gap-2 lg:hidden">
           <ThemeToggle />
+          <ReservationNotifications key={user?.id || 'guest'} />
           <button
             className="p-2 rounded-xl text-stone-700 dark:text-stone-200 hover:bg-black/5 dark:hover:bg-white/5 transition-colors border border-transparent hover:border-stone-200/50"
             onClick={() => setMenuOpen((o) => !o)}
