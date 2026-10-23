@@ -11,6 +11,7 @@ import { RestaurantGridSkeleton } from '@/components/ui/Skeleton';
 import { Utensils, CheckCircle2, Trash2 } from 'lucide-react';
 import type { Restaurant, BusinessStatus } from '@/lib/types';
 import { LiveReviewSummary } from '@/components/LiveReviewSummary';
+import { ReservationList } from '@/components/reservations/ReservationList';
 
 const STATUS_COLOR: Record<BusinessStatus, 'success' | 'warning' | 'danger' | 'neutral'> = {
   verified: 'success',
@@ -23,6 +24,10 @@ export default function DashboardPage() {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(true);
   const [showRejected, setShowRejected] = useState(false);
+  const [showReservations, setShowReservations] = useState(false);
+  const [reservationRestaurantId, setReservationRestaurantId] = useState('');
+  const reservationRestaurants = restaurants.filter((r) => r.status !== 'rejected');
+  const reservationRestaurant = reservationRestaurants.find((r) => r.id === reservationRestaurantId) || reservationRestaurants[0];
   const [deleteTarget, setDeleteTarget] = useState<Restaurant | null>(null);
   const [confirmationName, setConfirmationName] = useState('');
   const [deleting, setDeleting] = useState(false);
@@ -71,11 +76,19 @@ export default function DashboardPage() {
 
         {notice && <p role="status" className="mb-4 rounded-xl bg-emerald-50 dark:bg-emerald-950 p-3 text-sm text-emerald-800 dark:text-emerald-200">{notice}</p>}
         {!loading && restaurants.length > 0 && <div className="flex flex-wrap gap-2 mb-5" role="group" aria-label="Filter establishments">
-          <button aria-pressed={!showRejected} onClick={() => setShowRejected(false)} className={`rounded-full px-4 py-2 text-sm font-semibold ${!showRejected ? 'bg-cordova-green text-white' : 'bg-stone-100 dark:bg-stone-800'}`}>My establishments ({restaurants.length - rejectedCount})</button>
-          <button aria-pressed={showRejected} onClick={() => setShowRejected(true)} className={`rounded-full px-4 py-2 text-sm font-semibold ${showRejected ? 'bg-cordova-green text-white' : 'bg-stone-100 dark:bg-stone-800'}`}>Rejected ({rejectedCount})</button>
+          <button aria-pressed={!showRejected && !showReservations} onClick={() => {setShowRejected(false);setShowReservations(false);}} className={`rounded-full px-4 py-2 text-sm font-semibold ${!showRejected && !showReservations ? 'bg-cordova-green text-white' : 'bg-stone-100 dark:bg-stone-800'}`}>My establishments ({restaurants.length - rejectedCount})</button>
+          <button aria-pressed={showRejected && !showReservations} onClick={() => {setShowRejected(true);setShowReservations(false);}} className={`rounded-full px-4 py-2 text-sm font-semibold ${showRejected && !showReservations ? 'bg-cordova-green text-white' : 'bg-stone-100 dark:bg-stone-800'}`}>Rejected ({rejectedCount})</button>
+          <button aria-pressed={showReservations} onClick={() => setShowReservations(true)} className={`rounded-full px-4 py-2 text-sm font-semibold ${showReservations ? 'bg-cordova-green text-white' : 'bg-stone-100 dark:bg-stone-800'}`}>Reservations</button>
         </div>}
         {loading ? (
           <RestaurantGridSkeleton count={3} />
+        ) : showReservations ? (
+          <section className="space-y-5">
+            {reservationRestaurant ? <>
+              {reservationRestaurants.length > 1 ? <div className="max-w-sm"><label htmlFor="reservation-establishment" className="label">Establishment</label><select id="reservation-establishment" className="input" value={reservationRestaurant.id} onChange={(event) => setReservationRestaurantId(event.target.value)}>{reservationRestaurants.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}</select></div> : <h2 className="font-serif text-xl font-bold">Reservations · {reservationRestaurant.name}</h2>}
+              <ReservationList key={reservationRestaurant.id} restaurantId={reservationRestaurant.id} />
+            </> : <p className="text-sm text-stone-500">No establishments available for reservations.</p>}
+          </section>
         ) : restaurants.length === 0 ? (
           <div className="spatial-card p-12 text-center rounded-3xl bg-white/80 dark:bg-[#1a211c]/90 backdrop-blur-xl border border-stone-200/80 dark:border-stone-800/80 shadow-spatial-md max-w-lg mx-auto">
             <div className="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center text-3xl mx-auto mb-4 border border-amber-500/20">
