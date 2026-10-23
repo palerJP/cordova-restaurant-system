@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { PwaControls } from '@/components/PwaControls';
+
 import '@fontsource-variable/inter/wght.css';
 import '@fontsource-variable/playfair-display/wght.css';
 import '@/styles/globals.css';
@@ -49,7 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <main className="min-h-[70vh]">{children}</main>
                 <PublicSiteChrome position="footer" />
                 <CookieBanner />
-                <PwaControls />
+
               </CookieConsentProvider>
             </AuthProvider>
           </ToastProvider>
