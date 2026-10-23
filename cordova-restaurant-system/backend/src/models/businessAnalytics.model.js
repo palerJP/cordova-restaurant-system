@@ -103,7 +103,7 @@ async function adminStats() {
       'new_last_30d',count(*) FILTER(WHERE created_at>=b.start_at)) FROM users
         WHERE NOT EXISTS(SELECT 1 FROM business_analytics_demo_users demo WHERE demo.user_id=users.id)),
     'restaurants', (SELECT jsonb_build_object('verified',count(*) FILTER(WHERE status='verified'), 'pending',count(*) FILTER(WHERE status='pending'),
-      'rejected',count(*) FILTER(WHERE status='rejected'), 'suspended',count(*) FILTER(WHERE status='suspended')) FROM restaurants),
+      'rejected',count(*) FILTER(WHERE status='rejected'), 'suspended',count(*) FILTER(WHERE status='suspended')) FROM restaurants WHERE is_active = TRUE),
     'reviews', (SELECT jsonb_build_object('flagged',count(*) FILTER(WHERE status='flagged'),'visible',count(*) FILTER(WHERE status='visible')) FROM reviews
       WHERE NOT EXISTS(SELECT 1 FROM business_analytics_demo_users demo WHERE demo.user_id=reviews.user_id)),
     'promotions', (SELECT jsonb_build_object('active',count(*) FILTER(WHERE status='active' AND start_date<=(b.as_of AT TIME ZONE 'Asia/Manila')::date AND end_date>=(b.as_of AT TIME ZONE 'Asia/Manila')::date),

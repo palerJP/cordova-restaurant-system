@@ -19,7 +19,7 @@ beforeAll(async () => {
   await client.query(`CREATE SCHEMA ${schema}; SET LOCAL search_path TO ${schema}, public;
     CREATE TABLE users(id uuid primary key, role text, is_active boolean default true, created_at timestamptz default now());
     CREATE TYPE analytics_subscription_tier AS ENUM ('none','basic','premium');
-    CREATE TABLE restaurants(id uuid primary key, owner_id uuid, status text default 'verified', subscription_tier analytics_subscription_tier default 'none', subscription_expires_at timestamptz);
+    CREATE TABLE restaurants(id uuid primary key, owner_id uuid, status text default 'verified', is_active boolean default true, subscription_tier analytics_subscription_tier default 'none', subscription_expires_at timestamptz);
     CREATE TABLE favorites(user_id uuid, restaurant_id uuid);
     CREATE TABLE reviews(restaurant_id uuid, user_id uuid, rating int, status text);
     CREATE TABLE subscription_transactions(restaurant_id uuid, tier varchar(20), status text, verified_at timestamptz, verified_by uuid, expires_at timestamptz);
@@ -80,6 +80,18 @@ test('a sample tier or pending payment is not a verified paid subscription', asy
   await client.query("INSERT INTO subscription_transactions VALUES($1,'premium','verified',now(),$2,now()+interval '30 days')",[r1,admin]);
   expect(await analytics.ownerStats(r1,30)).toMatchObject({activePaidSubscription:true,verifiedPayments:1});
   expect((await analytics.adminStats()).subscriptions.activePaidBusinesses).toBe(1);
+});
+
+test('restaurant totals exclude inactive records in every verification status', async () => {
+  const ids = Array.from({ length: 8 }, () => randomUUID());
+  for (const [index, status] of ['pending', 'verified', 'rejected', 'suspended'].entries()) {
+    await client.query('INSERT INTO restaurants(id,status,is_active) VALUES($1,$3,true),($2,$3,false)', [ids[index * 2], ids[index * 2 + 1], status]);
+  }
+  try {
+    expect((await analytics.adminStats()).restaurants).toEqual({ pending: 1, verified: 3, rejected: 1, suspended: 1 });
+  } finally {
+    await client.query('DELETE FROM restaurants WHERE id=ANY($1::uuid[])', [ids]);
+  }
 });
 
 test('database failures propagate instead of returning fabricated zeros', async () => {
