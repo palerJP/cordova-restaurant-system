@@ -33,7 +33,14 @@ CREATE TABLE IF NOT EXISTS restaurant_reservations (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS restaurant_reservations_active_request ON restaurant_reservations(restaurant_id,customer_id,starts_at) WHERE status IN('pending','confirmed');
 CREATE INDEX IF NOT EXISTS restaurant_reservations_schedule ON restaurant_reservations(restaurant_id,starts_at,ends_at) WHERE status='confirmed';
-CREATE INDEX IF NOT EXISTS restaurant_reservations_customer ON restaurant_reservations(customer_id,starts_at);`;
+CREATE INDEX IF NOT EXISTS restaurant_reservations_customer ON restaurant_reservations(customer_id,starts_at);
+CREATE TABLE IF NOT EXISTS reservation_notifications (
+  reservation_id UUID PRIMARY KEY REFERENCES restaurant_reservations(id) ON DELETE CASCADE,
+  owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  read_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS reservation_notifications_owner ON reservation_notifications(owner_id,created_at DESC);`;
 let ready;
 function ensureSchema() {
   if (!ready) ready = withTransaction(async (client) => {
@@ -133,6 +140,7 @@ async function create(restaurantId,actor,body) {
       if (rules.seatsAvailable(await overlaps(client,restaurantId,v.starts,v.ends),v.starts,v.ends,p.capacity)<body.partySize) throw ApiError.conflict('This time is fully booked for your party. Choose another time.');
       const {rows}=await client.query(`INSERT INTO restaurant_reservations(request_key,restaurant_id,customer_id,starts_at,ends_at,party_size,contact_name,contact_phone,notes)
         VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,[body.requestKey,restaurantId,actor.id,new Date(v.starts),new Date(v.ends),body.partySize,v.name,v.phone,v.notes]);
+      await client.query('INSERT INTO reservation_notifications(reservation_id,owner_id) VALUES($1,$2)',[rows[0].id,p.owner_id]);
       return {reservation:rows[0],created:true};
     });
   } catch(err) {
@@ -189,4 +197,25 @@ async function changeStatus(id,actor,body) {
   });
 }
 
-module.exports={ensureSchema,options,getSettings,saveSettings,create,list,changeStatus,SCHEMA_SQL};
+async function notifications(ownerId) {
+  await ensureSchema();
+  const {rows}=await query(`SELECT n.reservation_id,b.restaurant_id,r.name AS restaurant_name,
+    b.contact_name,b.party_size,b.starts_at,n.created_at,
+    count(*) OVER()::int AS unread_count
+    FROM reservation_notifications n JOIN restaurant_reservations b ON b.id=n.reservation_id
+    JOIN restaurants r ON r.id=b.restaurant_id
+    WHERE n.owner_id=$1 AND r.owner_id=$1 AND n.read_at IS NULL
+    ORDER BY n.created_at DESC,n.reservation_id LIMIT 20`,[ownerId]);
+  return {notifications:rows.map(({unread_count,...row})=>row),unreadCount:rows[0]?.unread_count||0};
+}
+
+async function readNotification(ownerId,id) {
+  await ensureSchema();
+  const {rowCount}=await query(`UPDATE reservation_notifications n SET read_at=COALESCE(n.read_at,now())
+    FROM restaurant_reservations b JOIN restaurants r ON r.id=b.restaurant_id
+    WHERE n.reservation_id=$2 AND n.owner_id=$1 AND b.id=n.reservation_id AND r.owner_id=$1`,[ownerId,id]);
+  if(!rowCount) throw ApiError.notFound('Notification not found');
+  return {read:true};
+}
+
+module.exports={ensureSchema,options,getSettings,saveSettings,create,list,changeStatus,notifications,readNotification,SCHEMA_SQL};

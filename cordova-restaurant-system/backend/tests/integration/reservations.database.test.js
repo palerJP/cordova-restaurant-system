@@ -75,6 +75,20 @@ test('customer request is persisted, returned in both inboxes, and retrying crea
   expect((await auth('get','/api/reservations/mine','otherCustomer')).body.data.rows).toEqual([]);
 });
 
+test('new requests notify only their owner once and unread state persists until opened',async()=>{
+  const path='/api/reservations/notifications';
+  expect((await request(app).get(path)).status).toBe(401);
+  expect((await auth('get',path,'customer')).status).toBe(403);
+  const notices=await auth('get',path,'owner');
+  expect(notices.body.data.unreadCount).toBe(1);
+  expect(notices.body.data.notifications[0]).toMatchObject({reservation_id:first.id,restaurant_id:ids.restaurant,party_size:3});
+  expect((await auth('get',path,'owner')).body.data.unreadCount).toBe(1);
+  expect((await auth('get',path,'otherOwner')).body.data.unreadCount).toBe(0);
+  expect((await auth('patch',`${path}/${first.id}/read`,'otherOwner').send({})).status).toBe(404);
+  expect((await auth('patch',`${path}/${first.id}/read`,'owner').send({})).status).toBe(200);
+  expect((await auth('get',path,'owner')).body.data.unreadCount).toBe(0);
+});
+
 test('only owner can confirm; capacity is rechecked; customer can see and cancel the confirmed booking',async()=>{
   const other=await auth('post',endpoint,'otherCustomer').send(payload());second=other.body.data.reservation;
   expect(other.status).toBe(201);
