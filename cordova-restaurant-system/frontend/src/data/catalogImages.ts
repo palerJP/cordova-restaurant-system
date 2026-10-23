@@ -34,18 +34,16 @@ export function catalogDishPhoto(
   const indexed = indexedPhotos.byCategoryAndName[`${slugKey}|${key(category)}|${key(name)}`]
     || indexedPhotos.byName[`${slugKey}|${key(name)}`];
   const packaged = representative[id] || indexed?.image;
-  const cover = indexedPhotos.covers[slugKey] || coverRepresentative[slugKey] || '/hero_background.png';
-  const categoryPhoto = indexedPhotos.byRestaurantCategory[`${slugKey}|${key(category)}`];
   const mapped = url ? mirrored[url] : undefined;
   const image = mapped || (url?.startsWith('/images/') ? url : undefined)
     || (url && (!legacyPhoto(url) || !packaged) ? url : undefined)
-    || packaged || categoryPhoto || cover;
+    || packaged;
   return {
     image,
     fallback: packaged && packaged !== image ? packaged
-      : categoryPhoto && categoryPhoto !== image ? categoryPhoto : cover !== image ? cover : undefined,
+      : undefined,
     representative: image === packaged ? Boolean(representative[id] || indexed?.representative)
-      : image === categoryPhoto || image === cover,
+      : false,
   };
 }
 

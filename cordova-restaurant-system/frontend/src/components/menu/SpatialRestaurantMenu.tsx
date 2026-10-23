@@ -13,7 +13,7 @@ import {
 import type { Restaurant, MenuItem, MenuCategory } from '@/lib/types';
 import { BURANDAT_PRICE_UNITS } from '@/data/burandatMenu';
 import { CASCADJA_IMAGE_ATTRIBUTIONS, CASCADJA_REPRESENTATIVE_IMAGES } from '@/data/cascadjaMenu';
-import { catalogDishPhoto, catalogRestaurantCover } from '@/data/catalogImages';
+import { catalogDishPhoto } from '@/data/catalogImages';
 
 interface SpatialRestaurantMenuProps {
   restaurant: Restaurant;
@@ -55,327 +55,7 @@ function isEatNRepeatDrinkCard(category: string, image: string): boolean {
     || /espresso|non[\s-]?coffee|milk[\s-]?tea|shake|smoothie/i.test(category);
 }
 
-// Curated signature dishes & fallback category menus tailored for Cordova restaurants
-const CATEGORY_DEFAULT_MENUS: Record<
-  string,
-  {
-    heroDish: {
-      name: string;
-      tagline: string;
-      price: number;
-      image: string;
-      description: string;
-      hotspots: { x: number; y: number; title: string; desc: string }[];
-    };
-    menuItems: {
-      name: string;
-      category: string;
-      price: number;
-      description: string;
-      image: string;
-      tag: string;
-      popular?: boolean;
-    }[];
-  }
-> = {
-  Cafe: {
-    heroDish: {
-      name: 'Artisan Spanish Latte & Toast',
-      tagline: 'CREAMY • BOLD • ROASTED',
-      price: 185,
-      image: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=800&auto=format&fit=crop&q=80',
-      description: 'Slow-dripped Arabica espresso infused with condensed milk and velvety steamed milk.',
-      hotspots: [
-        { x: 30, y: 35, title: 'Single-Origin Arabica', desc: 'Freshly ground and pulled at 9 bars of pressure.' },
-        { x: 65, y: 55, title: 'Velvety Micro-Foam', desc: 'Steamed to silky perfection with subtle sweet notes.' },
-        { x: 45, y: 75, title: 'Artisan Glaze', desc: 'Caramelized sugar drizzle with cinnamon dusting.' },
-      ],
-    },
-    menuItems: [
-      {
-        name: 'Spanish Latte (Iced/Hot)',
-        category: 'Coffee & Espresso',
-        price: 165,
-        description: 'Rich espresso layered over sweetened milk and ice.',
-        image: 'https://images.unsplash.com/photo-1517256064527-09c73fc73e38?w=600&auto=format&fit=crop&q=80',
-        tag: '⭐ Bestseller',
-        popular: true,
-      },
-      {
-        name: 'Caramel Macchiato',
-        category: 'Coffee & Espresso',
-        price: 175,
-        description: 'Freshly steamed milk with vanilla-flavored syrup marked with espresso and caramel.',
-        image: 'https://images.unsplash.com/photo-1485808191679-5f86510681a2?w=600&auto=format&fit=crop&q=80',
-        tag: '✨ House Favorite',
-      },
-      {
-        name: 'Creamy Carbonara Pasta',
-        category: 'Mains & Pasta',
-        price: 245,
-        description: 'Al dente fettuccine tossed in rich egg yolk, parmesan cheese, and crispy bacon bits.',
-        image: 'https://images.unsplash.com/photo-1612874742237-6526221588e3?w=600&auto=format&fit=crop&q=80',
-        tag: '🍝 Must Try',
-        popular: true,
-      },
-      {
-        name: 'Avocado Sourdough Toast',
-        category: 'Snacks & Toast',
-        price: 195,
-        description: 'Toasted sourdough topped with mashed ripe avocado, poached egg, and chili flakes.',
-        image: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=600&auto=format&fit=crop&q=80',
-        tag: '🌿 Healthy',
-      },
-      {
-        name: 'Matcha Green Tea Cooler',
-        category: 'Beverages',
-        price: 170,
-        description: 'Authentic ceremonial grade Uji matcha with oat milk and honey drizzle.',
-        image: 'https://images.unsplash.com/photo-1536256263959-770b48d82b0a?w=600&auto=format&fit=crop&q=80',
-        tag: '🍵 Refreshing',
-      },
-      {
-        name: 'Choco Lava Cake',
-        category: 'Desserts',
-        price: 160,
-        description: 'Warm molten dark chocolate cake served with vanilla bean ice cream.',
-        image: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=600&auto=format&fit=crop&q=80',
-        tag: '🍫 Sweet Treat',
-      },
-    ],
-  },
-  'Fast Food': {
-    heroDish: {
-      name: 'Signature Crispy Crunch Burger',
-      tagline: 'CRUNCHY • JUICY • SIZZLING',
-      price: 210,
-      image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&auto=format&fit=crop&q=80',
-      description: 'Flame-grilled 100% beef patty with melted cheddar, crispy bacon, and smoky secret sauce on toasted brioche.',
-      hotspots: [
-        { x: 35, y: 30, title: 'Toasted Golden Brioche', desc: 'Butter-toasted artisan bun with golden shine.' },
-        { x: 55, y: 50, title: 'Flame-Grilled Beef Patty', desc: 'Seasoned to perfection and seared for rich juiciness.' },
-        { x: 45, y: 70, title: 'Secret Smokey Sauce', desc: 'House recipe blend of roasted garlic, smoked paprika, and honey.' },
-      ],
-    },
-    menuItems: [
-      {
-        name: 'Double Cheeseburger Deluxe',
-        category: 'Burgers',
-        price: 240,
-        description: 'Two pure beef patties, double cheddar cheese, lettuce, tomato, and special sauce.',
-        image: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=600&auto=format&fit=crop&q=80',
-        tag: '🔥 Top Seller',
-        popular: true,
-      },
-      {
-        name: 'Crispy Fried Chicken (2 Pcs)',
-        category: 'Chicken & Combos',
-        price: 195,
-        description: 'Crisp and juicy golden fried chicken with warm savory gravy and steamed rice.',
-        image: 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=600&auto=format&fit=crop&q=80',
-        tag: '🍗 Bestseller',
-        popular: true,
-      },
-      {
-        name: 'Loaded Cheesy Bacon Fries',
-        category: 'Sides',
-        price: 145,
-        description: 'Golden fries smothered in melted cheese sauce, sour cream, and crispy bacon bits.',
-        image: 'https://images.unsplash.com/photo-1585109649139-366815a0d713?w=600&auto=format&fit=crop&q=80',
-        tag: '🧀 Cheesy',
-      },
-      {
-        name: 'Spicy Buffalo Wings (6 Pcs)',
-        category: 'Chicken & Combos',
-        price: 230,
-        description: 'Tender chicken wings tossed in tangy cayenne pepper glaze served with ranch dip.',
-        image: 'https://images.unsplash.com/photo-1567620832903-9fc6debc209f?w=600&auto=format&fit=crop&q=80',
-        tag: '🌶️ Spicy',
-      },
-      {
-        name: 'Thick Vanilla Milkshake',
-        category: 'Drinks',
-        price: 120,
-        description: 'Hand-spun ice cream milkshake with whipped cream and cherry on top.',
-        image: 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=600&auto=format&fit=crop&q=80',
-        tag: '🥤 Classic',
-      },
-    ],
-  },
-  Pizza: {
-    heroDish: {
-      name: 'Artisan Brick-Oven Supreme Pizza',
-      tagline: 'WOOD-FIRED • CRISPY CRUST • CHEESY',
-      price: 495,
-      image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&auto=format&fit=crop&q=80',
-      description: 'Hand-stretched dough baked in wood fire with mozzarella, pepperoni, bell peppers, olives, and basil.',
-      hotspots: [
-        { x: 30, y: 35, title: 'Crispy Leopard Crust', desc: 'Fermented 48 hours and charred over mangrove wood.' },
-        { x: 60, y: 45, title: '100% Mozzarella Blend', desc: 'Rich, stringy, melted cheese pull with olive oil.' },
-        { x: 45, y: 65, title: 'San Marzano Tomato Sauce', desc: 'Slow-simmered vine-ripened tomatoes and fresh herbs.' },
-      ],
-    },
-    menuItems: [
-      {
-        name: 'Quattro Formaggi (4 Cheese)',
-        category: 'Pizzas',
-        price: 480,
-        description: 'Mozzarella, Gorgonzola, Parmesan, and Fontina cheese with a touch of honey.',
-        image: 'https://images.unsplash.com/photo-1573821663912-569905455b1c?w=600&auto=format&fit=crop&q=80',
-        tag: '🧀 Cheese Lover',
-        popular: true,
-      },
-      {
-        name: 'Pepperoni Feast Pizza',
-        category: 'Pizzas',
-        price: 460,
-        description: 'Generous layers of premium cured pepperoni, spicy tomato sauce, and herbs.',
-        image: 'https://images.unsplash.com/photo-1628840042765-356cda07504e?w=600&auto=format&fit=crop&q=80',
-        tag: '🍕 Classic',
-        popular: true,
-      },
-      {
-        name: 'Creamy Truffle Pasta',
-        category: 'Pasta',
-        price: 320,
-        description: 'Penne in decadent white truffle cream sauce with sauteed wild mushrooms.',
-        image: 'https://images.unsplash.com/photo-1621996346565-e3adc6d7d0f4?w=600&auto=format&fit=crop&q=80',
-        tag: '✨ Chef Choice',
-      },
-      {
-        name: 'Garlic Butter Parmesan Wings',
-        category: 'Appetizers',
-        price: 260,
-        description: 'Crispy tossed chicken in garlic herb butter and grated aged parmesan.',
-        image: 'https://images.unsplash.com/photo-1527477321055-43615b6294a5?w=600&auto=format&fit=crop&q=80',
-        tag: '🧄 Savory',
-      },
-    ],
-  },
-  'Resto Bar': {
-    heroDish: {
-      name: 'Sizzling Ribeye Steak & Cocktails',
-      tagline: 'SIZZLING • CHARGRILLED • VIBRANT',
-      price: 580,
-      image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800&auto=format&fit=crop&q=80',
-      description: 'Prime cut ribeye steak grilled to medium-rare on a piping hot skillet with peppercorn gravy and garlic butter.',
-      hotspots: [
-        { x: 35, y: 35, title: 'Flame-Seared Ribeye', desc: 'Marbled prime beef seared for caramelized crust.' },
-        { x: 60, y: 50, title: 'Garlic Herb Compound Butter', desc: 'Melts over hot steak for unmatched richness.' },
-        { x: 45, y: 70, title: 'Peppercorn Red Wine Sauce', desc: 'Simmered with crushed peppercorns and red wine reduction.' },
-      ],
-    },
-    menuItems: [
-      {
-        name: 'Crispy Pork Sisig on Cast Iron',
-        category: 'Bar Chow & Sizzlers',
-        price: 280,
-        description: 'Minced crispy pork face and belly with onions, chili, calamansi, and fresh farm egg.',
-        image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=600&auto=format&fit=crop&q=80',
-        tag: '🔥 Island Legend',
-        popular: true,
-      },
-      {
-        name: 'Gambas Al Ajillo (Garlic Shrimp)',
-        category: 'Bar Chow & Sizzlers',
-        price: 340,
-        description: 'Fresh local shrimp sauteed in olive oil, toasted garlic, and spicy paprika.',
-        image: 'https://images.unsplash.com/photo-1559742811-82286364ceaf?w=600&auto=format&fit=crop&q=80',
-        tag: '🦐 Seafood',
-        popular: true,
-      },
-      {
-        name: 'Cordova Sunset Mojito',
-        category: 'Signature Cocktails',
-        price: 190,
-        description: 'White rum, fresh mint leaves, lime juice, brown sugar, and sparkling soda.',
-        image: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=600&auto=format&fit=crop&q=80',
-        tag: '🍹 Signature Drink',
-      },
-      {
-        name: 'Smoked BBQ Ribs Full Rack',
-        category: 'Mains',
-        price: 620,
-        description: 'Slow-smoked baby back ribs glazed in hickory honey BBQ sauce with butter corn.',
-        image: 'https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?w=600&auto=format&fit=crop&q=80',
-        tag: '🍖 Generous Share',
-      },
-    ],
-  },
-  // Default Seafood / Traditional Filipino Restaurant
-  Restaurant: {
-    heroDish: {
-      name: 'Cordova Seafood Platter & Bakasi Special',
-      tagline: 'FRESH CATCH • CHARCOAL GRILLED • CEBUANO',
-      price: 680,
-      image: 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=800&auto=format&fit=crop&q=80',
-      description: 'Generous feast of charcoal-grilled pompano, garlic butter scallops, bakasi eel soup, and grilled squid.',
-      hotspots: [
-        { x: 30, y: 35, title: 'Fresh Daily Catch', desc: 'Directly sourced every morning from Cordova fishing boats.' },
-        { x: 65, y: 45, title: 'Baked Cheesy Garlic Scallops', desc: 'Broiled in rich butter, minced garlic, and melted cheese.' },
-        { x: 45, y: 70, title: 'Charcoal Smoke Infusion', desc: 'Grilled over coconut husks for authentic Cebuano aroma.' },
-      ],
-    },
-    menuItems: [
-      {
-        name: 'Grilled Stuffed Squid (Inihaw na Pusit)',
-        category: 'Seafood & Grills',
-        price: 360,
-        description: 'Fresh whole squid stuffed with onions, tomatoes, and herbs, basted in sweet-savory soy glaze.',
-        image: 'https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?w=600&auto=format&fit=crop&q=80',
-        tag: '⭐ House Signature',
-        popular: true,
-      },
-      {
-        name: 'Baked Scallops with Cheese & Garlic',
-        category: 'Seafood & Grills',
-        price: 320,
-        description: 'Locally harvested scallops broiled in golden butter, garlic, and melted cheddar.',
-        image: 'https://images.unsplash.com/photo-1625944525533-a5868999824a?w=600&auto=format&fit=crop&q=80',
-        tag: '🐚 Seafood Classic',
-        popular: true,
-      },
-      {
-        name: 'Cordova Bakasi Soup (Reef Eel Soup)',
-        category: 'Soups & Traditional',
-        price: 250,
-        description: 'Famous Cordova delicacy simmered in ginger, lemongrass, tomatoes, and native spices.',
-        image: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=600&auto=format&fit=crop&q=80',
-        tag: '🏆 Cordova Legend',
-        popular: true,
-      },
-      {
-        name: 'Crispy Pork Pata Especial',
-        category: 'Traditional Favorites',
-        price: 650,
-        description: 'Deep-fried pork knuckle with crackling skin and tender meat, served with spiced vinegar dip.',
-        image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=600&auto=format&fit=crop&q=80',
-        tag: '🔥 Family Feast',
-      },
-      {
-        name: 'Sinigang na Lapu-Lapu sa Miso',
-        category: 'Soups & Traditional',
-        price: 420,
-        description: 'Fresh grouper fish in sour tamarind and fermented soybean broth with island greens.',
-        image: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=600&auto=format&fit=crop&q=80',
-        tag: '🌿 Sour & Savory',
-      },
-      {
-        name: 'Buko Halo-Halo Tropical Supreme',
-        category: 'Desserts',
-        price: 180,
-        description: 'Served inside a fresh young coconut shell with shaved ice, ube, leche flan, and sweet fruits.',
-        image: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=600&auto=format&fit=crop&q=80',
-        tag: '🥥 Island Sweet',
-      },
-    ],
-  },
-};
-
 export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] }: SpatialRestaurantMenuProps) {
-  const categoryKey = restaurant.category || 'Restaurant';
-  const defaultData = CATEGORY_DEFAULT_MENUS[categoryKey] || CATEGORY_DEFAULT_MENUS.Restaurant;
-  const menuCover = catalogRestaurantCover(restaurant.slug, restaurant.cover_image_url) || '/hero_background.png';
   const isRca = restaurant.slug === 'rca-bilao-food-station';
   const isBurandat = restaurant.slug === 'burandat-seafood-bucket';
   const isCascadja = restaurant.slug === 'cascaja-cafe' || restaurant.slug === 'cascadja-cafe';
@@ -383,17 +63,13 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
     || (restaurant.name || '').toLowerCase().includes('maverick');
   const isEatNRepeat = restaurant.slug === 'eat-n-repeat'
     || /\beat\s*(?:n'?|&)\s*repeat\b/i.test(restaurant.name || '');
-  const isEntoys = restaurant.slug === 'entoys-bakasihan'
-    || /entoy'?s?\s+bakasihan/i.test(restaurant.name || '');
-  const isSuppliedMenu = isRca || isBurandat || isCascadja || isMavericks || isEatNRepeat || isEntoys;
 
   // Selected Category filter
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Merge API items with curated default items if API items are sparse
+  // Show only saved menu records, even when there are fewer than four.
   const allMenuItems = useMemo(() => {
-    if (items.length >= 4 || (isSuppliedMenu && items.length > 0)) {
       return items.map((it) => {
         const category = categories.find((c) => c.id === it.category_id)?.name || (it as any).category_name || 'Main Dishes';
         const photo = catalogDishPhoto(restaurant.slug, category, it.name, it.id, it.image_url);
@@ -406,70 +82,24 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
         priceLabel: it.price_label || '',
         startingPrice: it.description?.startsWith('Starting price') || false,
         priceUnit: isBurandat ? getBurandatPriceUnit(it) : '',
-        description: isBurandat || isCascadja ? '' : it.description || (isRca || isMavericks || isEatNRepeat || isEntoys ? '' : 'Crafted fresh with traditional Cordova flavors.'),
+        description: it.description || '',
         image: photo.image,
-        fallbackImage: photo.fallback || menuCover,
+        fallbackImage: photo.fallback,
         tag: photo.representative
           ? 'Representative photo'
           : isMavericks && hasMavericksFoundationCoffeePhoto(it, categories)
           ? 'Representative photo'
           : isCascadja && CASCADJA_REPRESENTATIVE_IMAGES.get(it.name) === it.image_url
           ? 'Representative photo'
-          : isSuppliedMenu ? '' : '✨ Chef Special',
+          : '',
         photoAttribution: isCascadja && CASCADJA_IMAGE_ATTRIBUTIONS.get(it.name)?.imageUrl === it.image_url
           ? CASCADJA_IMAGE_ATTRIBUTIONS.get(it.name)
           : undefined,
         popular: true,
         };
       });
-    }
 
-    // Combine any existing with default items
-    const defaults = defaultData.menuItems.map((it, idx) => ({
-      id: `curated-${idx}`,
-      outOfStock: false,
-      priceLabel: '',
-      startingPrice: false,
-      priceUnit: '',
-      photoAttribution: undefined,
-      fallbackImage: menuCover,
-      ...it,
-    }));
-
-    if (items.length > 0) {
-      const customOnes = items.map((it) => {
-        const category = categories.find((c) => c.id === it.category_id)?.name || 'House Specialties';
-        const photo = catalogDishPhoto(restaurant.slug, category, it.name, it.id, it.image_url);
-        return {
-        id: it.id,
-        name: it.name,
-        outOfStock: it.is_available === false,
-        category,
-        price: Number(it.price),
-        priceLabel: it.price_label || '',
-        startingPrice: it.description?.startsWith('Starting price') || false,
-        priceUnit: isBurandat ? getBurandatPriceUnit(it) : '',
-        description: isBurandat || isCascadja ? '' : it.description || (isRca || isMavericks || isEatNRepeat || isEntoys ? '' : 'Special house recipe prepared daily.'),
-        image: photo.image,
-        fallbackImage: photo.fallback || menuCover,
-        tag: photo.representative
-          ? 'Representative photo'
-          : isMavericks && hasMavericksFoundationCoffeePhoto(it, categories)
-          ? 'Representative photo'
-          : isCascadja && CASCADJA_REPRESENTATIVE_IMAGES.get(it.name) === it.image_url
-          ? 'Representative photo'
-          : isSuppliedMenu ? '' : '⭐ Signature',
-        photoAttribution: isCascadja && CASCADJA_IMAGE_ATTRIBUTIONS.get(it.name)?.imageUrl === it.image_url
-          ? CASCADJA_IMAGE_ATTRIBUTIONS.get(it.name)
-          : undefined,
-        popular: true,
-        };
-      });
-      return [...customOnes, ...defaults];
-    }
-
-    return defaults;
-  }, [items, categories, defaultData, menuCover, restaurant.slug, isRca, isBurandat, isCascadja, isMavericks, isEatNRepeat, isEntoys, isSuppliedMenu]);
+  }, [items, categories, restaurant.slug, isBurandat, isCascadja, isMavericks]);
 
   // List of unique categories for tabs
   const categoryTabs = useMemo(() => {
@@ -591,7 +221,7 @@ export function SpatialRestaurantMenu({ restaurant, items = [], categories = [] 
         {filteredItems.length === 0 ? (
           <div className="py-16 text-center text-stone-400 bg-white/40 dark:bg-white/5 rounded-2xl border border-stone-200/60 dark:border-white/10">
             <Utensils size={36} className="mx-auto mb-2 opacity-50" />
-            <p className="text-sm font-semibold">No menu dishes found matching &quot;{searchQuery}&quot;</p>
+            <p className="text-sm font-semibold">{allMenuItems.length === 0 ? 'No menu has been added yet.' : 'No dishes match your filters.'}</p>
             <button
               onClick={() => {
                 setSearchQuery('');
