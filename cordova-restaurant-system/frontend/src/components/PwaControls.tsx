@@ -34,10 +34,11 @@ export function PwaControls() {
     try { await install.prompt(); await install.userChoice; } finally { setInstall(null); }
   };
   return <>
-    {!standalone && <div className="border-t border-stone-200 bg-stone-50 px-4 py-4 text-center text-sm text-stone-800 dark:border-white/10 dark:bg-stone-900 dark:text-white">
-      <button type="button" onClick={doInstall} className="rounded-lg bg-[#1B5232] px-5 py-2 font-semibold text-white hover:bg-[#123c24]">Install CordovaEats</button>
+    {!standalone && <div className="text-sm text-stone-500 dark:text-stone-400">
+      <button type="button" onClick={doInstall} className="text-left hover:text-cordova-green dark:hover:text-emerald-400 transition-colors">Install CordovaEats</button>
       {help && <div className="mx-auto mt-3 max-w-md" role="status"><p>On iPhone or iPad, open this site in Safari, tap Share, then Add to Home Screen. On Android or desktop, use your browser menu and choose Install app or Add to Home screen when available.</p><button type="button" className="mt-2 underline" onClick={() => setHelp(false)}>Close instructions</button></div>}
     </div>}
     {waiting && <div role="status" className="fixed bottom-4 left-4 right-4 z-[100] mx-auto max-w-md rounded-xl bg-[#1B5232] p-4 text-white shadow-lg"><p>A CordovaEats update is ready. Save any changes before updating.</p><button type="button" className="mt-2 rounded bg-white px-3 py-2 font-semibold text-[#1B5232]" onClick={() => { navigator.serviceWorker.addEventListener('controllerchange', () => location.reload(), { once: true }); waiting.postMessage({ type: 'ACTIVATE_UPDATE' }); }}>Update now</button><button type="button" className="ml-4 underline" onClick={() => setWaiting(null)}>Later</button></div>}
   </>;
 }
+

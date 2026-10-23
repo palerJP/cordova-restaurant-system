@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import ClaimBusinessLink from './ClaimBusinessLink';
+import { PwaControls } from './PwaControls';
 
 interface FooterLink {
   label: string;
@@ -95,6 +96,7 @@ export function Footer() {
                   {col.title === 'For Restaurant Owners' && user?.role !== 'admin' && (
                     <li><ClaimBusinessLink restaurantSlug={restaurantSlug} /></li>
                   )}
+                  {col.title === 'Explore' && <li><PwaControls /></li>}
                   {visibleLinks.map((link) => (
                     <li key={link.label}>
                       <Link
@@ -118,3 +120,4 @@ export function Footer() {
     </footer>
   );
 }
+
