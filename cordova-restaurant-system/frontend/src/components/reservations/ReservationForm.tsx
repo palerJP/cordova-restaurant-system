@@ -13,7 +13,7 @@ export function ReservationForm({restaurant}:{restaurant:Restaurant}) {
   const {user}=useAuth();
   const manages=user?.role==='admin'||user?.id===restaurant.owner_id;
   const [date,setDate]=useState(()=>philippineDate());
-  const [party,setParty]=useState('2');
+  const [party,setParty]=useState('1');
   const [slots,setSlots]=useState<ReservationSlot[]>([]);
   const [settings,setSettings]=useState<ReservationSettings|null>(null);
   const [startsAt,setStartsAt]=useState('');
@@ -59,7 +59,7 @@ export function ReservationForm({restaurant}:{restaurant:Restaurant}) {
   if(manages)return <section id="reservations" className="card p-6 space-y-3"><h2 className="font-serif text-2xl font-bold">Reservations</h2><Link className="btn-primary" href={`/dashboard/${restaurant.id}?tab=reservations`}>Manage reservations and booking settings</Link></section>;
   return <section id="reservations" className="card p-5 sm:p-7 space-y-4 max-w-2xl">
     <h2 className="font-serif text-2xl font-bold">Request a reservation</h2>
-    <p className="text-sm text-stone-600 dark:text-stone-300">All dates and times use Philippine time. Your request becomes a confirmed reservation only after the restaurant accepts it.</p>
+    <p className="text-sm text-stone-600 dark:text-stone-300">Plan ahead, even while the restaurant is closed. Choose a future visit during its booking hours. All times use Philippine time; the restaurant must accept your request to confirm it.</p>
     {error&&<p role="alert" className="rounded-xl border border-red-300 p-3 text-sm">{error} <button type="button" onClick={()=>setVersion((n)=>n+1)} className="underline">Reload times</button></p>}
     {saved?<div role="status" className="space-y-3 rounded-xl border border-green-500 p-4">
       <h3 className="font-semibold">Request saved — awaiting restaurant confirmation</h3>
@@ -72,8 +72,10 @@ export function ReservationForm({restaurant}:{restaurant:Restaurant}) {
         <Input id="reservation-date" label="Date" type="date" min={philippineDate()} max={philippineDate(Date.now()+(settings?.advanceDays||90)*86400000)} value={date} disabled={saving} onChange={(e)=>{changed();setDate(e.target.value);}} required/>
         <Input id="reservation-party" label="Number of guests" type="number" min={1} max={settings?.maxPartySize||20} value={party} disabled={saving} onChange={(e)=>{changed();setParty(e.target.value);}} required/>
       </div>
-      {loading?<p role="status">Checking available times…</p>:settings&&!settings.enabled?<p className="text-sm">This restaurant is not accepting online reservation requests. Please contact the restaurant directly.</p>:<>
+      {settings&&<p className="text-xs text-stone-500">Up to {settings.maxPartySize} {settings.maxPartySize===1?'guest':'guests'} per request · Book up to {settings.advanceDays} days ahead</p>}
+      {loading?<p role="status">Checking available times…</p>:settings&&!settings.enabled?<div className="rounded-xl bg-stone-50 dark:bg-white/5 p-4 space-y-2"><p className="text-sm font-semibold">Online bookings are unavailable</p><p className="text-sm text-stone-500">This is separate from whether the restaurant is open right now. Contact the restaurant to arrange a future visit.</p>{restaurant.phone&&<a className="inline-block text-sm font-semibold text-cordova-green underline" href={`tel:${restaurant.phone}`}>Call the restaurant</a>}</div>:<>
         {message&&<p role="status" className="text-sm">{message}</p>}
+        {settings?.enabled&&!slots.length&&date===philippineDate()&&!error&&<div className="rounded-xl border border-stone-200 dark:border-stone-700 p-4 space-y-3"><p className="text-sm">No bookable times remain today. You can still send a request now for a later date.</p><Button type="button" variant="secondary" onClick={()=>{changed();setDate(philippineDate(Date.now()+86400000));}}>Check tomorrow’s times</Button></div>}
         {settings?.enabled&&<p className="text-xs text-stone-500">Bookings last {settings.durationMinutes} minutes. Minimum notice: {settings.minNoticeMinutes} minutes. Pending requests do not hold seats; availability is checked again when submitted and confirmed.</p>}
         {!user?<Link className="btn-primary" href={`/login?redirect=${encodeURIComponent(`/restaurants/${restaurant.slug}?tab=reservations`)}`}>Sign in to request a reservation</Link>:!user.email_verified?<Link className="btn-primary" href="/verify-email-required">Verify your email to reserve</Link>:settings?.enabled&&<form onSubmit={submit} className="space-y-4">
           <div><label className="label" htmlFor="reservation-time">Available time</label><select id="reservation-time" className="input" value={startsAt} disabled={saving||!slots.length} onChange={(e)=>{changed();setStartsAt(e.target.value);}} required>
